@@ -123,9 +123,9 @@
                             <i class="bi bi-three-dots"></i> 更多功能
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('comparison_page') }}"><i class="bi bi-bar-chart"></i> 多文档对比</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('industry_chain_page') }}"><i class="bi bi-diagram-2"></i> 产业链图谱</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('casual_learning_page') }}"><i class="bi bi-book"></i> 顺手了解</a></li>
+                            <li><a class="dropdown-item disabled" style="color: #adb5bd;" href="#"><i class="bi bi-bar-chart"></i> 多文档对比<span class="badge bg-secondary ms-2">开发中</span></a></li>
+                            <li><a class="dropdown-item disabled" style="color: #adb5bd;" href="#"><i class="bi bi-diagram-2"></i> 产业链图谱<span class="badge bg-secondary ms-2">开发中</span></a></li>
                             <li><a class="dropdown-item disabled" style="color: #adb5bd;" href="#"><i class="bi bi-film"></i> 数据故事<span class="badge bg-secondary ms-2">开发中</span></a></li>
                         </ul>
                     </li>
@@ -234,25 +234,25 @@
                 <div class="row">
                     <div class="col-md-3 mb-4">
                         <div class="card feature-card h-100">
-                            <div class="card-body text-center">
+                            <div class="card-body text-center opacity-50" style="pointer-events: none;">
                                 <div class="mb-3">
                                     <img class="feature-logo" src="{{ url_for('static', filename='img/logos/logo_documents_compare.svg') }}" alt="多文档对比" width="64" height="64">
                                 </div>
-                                <h5 class="card-title">多文档对比</h5>
-                                <p class="card-text">横向对比不同城市或产业，生成综合排名和雷达图</p>
-                                <a href="{{ url_for('comparison_page') }}" class="btn btn-outline-primary btn-sm">开始对比</a>
+                                <h5 class="card-title text-muted">多文档对比</h5>
+                                <p class="card-text text-muted">横向对比不同城市或产业，生成综合排名和雷达图</p>
+                                <a href="#" class="btn btn-outline-primary btn-sm disabled">功能开发中</a>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3 mb-4">
                         <div class="card feature-card h-100">
-                            <div class="card-body text-center">
+                            <div class="card-body text-center opacity-50" style="pointer-events: none;">
                                 <div class="mb-3">
                                     <img class="feature-logo" src="{{ url_for('static', filename='img/logos/logo_industry_chain.svg') }}" alt="产业链图谱" width="64" height="64">
                                 </div>
-                                <h5 class="card-title">产业链图谱</h5>
-                                <p class="card-text">上中下游识别、完整度评估、薄弱环节分析</p>
-                                <a href="{{ url_for('industry_chain_page') }}" class="btn btn-outline-secondary btn-sm">查看产业链</a>
+                                <h5 class="card-title text-muted">产业链图谱</h5>
+                                <p class="card-text text-muted">上中下游识别、完整度评估、薄弱环节分析</p>
+                                <a href="#" class="btn btn-outline-secondary btn-sm disabled">功能开发中</a>
                             </div>
                         </div>
                     </div>

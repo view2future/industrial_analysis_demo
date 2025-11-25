@@ -12,6 +12,7 @@ import markdown2
 import os
 import sys
 import json
+from leadership_scraper import LeadershipScraper
 import logging
 from pathlib import Path
 from datetime import datetime, timezone
@@ -76,6 +77,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+# Initialize leadership scraper
+leadership_scraper = LeadershipScraper()
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'txt', 'md', 'json', 'doc', 'docx', 'pdf'}
@@ -1488,6 +1492,27 @@ def casual_learning_page():
         logger.error(f"Error loading casual learning page: {e}")
         flash('无法加载顺手了解页面', 'error')
         return redirect(url_for('index'))
+
+
+@app.route('/api/leadership/<region>')
+@login_required
+def get_leadership_data(region):
+    """API endpoint to get leadership data for a specific region."""
+    try:
+        # Get leadership data using the scraper
+        leadership_data = leadership_scraper.get_leadership_data(region)
+
+        return jsonify({
+            'success': True,
+            'data': leadership_data,
+            'timestamp': datetime.now().strftime('%Y年%m月%d日')
+        })
+    except Exception as e:
+        logger.error(f"Error getting leadership data for region {region}: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 
 @app.route('/policy-analysis')
@@ -3043,6 +3068,18 @@ def save_wechat_config():
 
 
 if __name__ == '__main__':
+    # Refresh leadership data on startup
+    print("Refreshing leadership data on startup...")
+    regions_to_refresh = ['chengdu', 'sichuan', 'beijing', 'shanghai', 'chongqing', 'shenzhen', 'wuhan']
+    for region in regions_to_refresh:
+        try:
+            leadership_data = leadership_scraper.get_leadership_data(region)
+            print(f"✓ Refreshed leadership data for {region}")
+        except Exception as e:
+            print(f"✗ Error refreshing {region}: {e}")
+
+    print("Leadership data refresh completed.")
+
     # webbrowser.open('http://127.0.0.1:5000')
     app.run(debug=True)
 @app.route('/home/a')

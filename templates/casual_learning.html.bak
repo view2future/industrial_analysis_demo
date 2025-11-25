@@ -235,7 +235,7 @@
     <div class="sidebar">
         <ul class="sidebar-nav">
             <li class="sidebar-nav-item">
-                <a href="#" class="sidebar-nav-link" data-region="chengdu" title="成都市">
+                <a href="#" class="sidebar-nav-link active" data-region="chengdu" title="成都市">
                     <i class="bi bi-mountain"></i>
                     <span>成都</span>
                 </a>
@@ -524,9 +524,9 @@
                                     <div class="d-flex">
                                         <img id="chengdu-secretary-img" src="" alt="市委书记" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="chengdu-secretary-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市委书记</p>
-                                            <p id="chengdu-secretary-desc" class="text-dark">-</p>
+                                            <h5 id="chengdu-secretary-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市委书记</p>
+                                            <p id="chengdu-secretary-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -534,14 +534,21 @@
                                     <div class="d-flex">
                                         <img id="chengdu-mayor-img" src="" alt="市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="chengdu-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市长</p>
-                                            <p id="chengdu-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="chengdu-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市长</p>
+                                            <p id="chengdu-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div id="chengdu-vice-mayors-container">
-                                    <!-- Vice mayors will be dynamically added here -->
+                                <div class="highlight-box">
+                                    <div class="d-flex">
+                                        <img id="chengdu-vice-mayor-img" src="" alt="副市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
+                                        <div class="flex-grow-1">
+                                            <h5 id="chengdu-vice-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">副市长</p>
+                                            <p id="chengdu-vice-mayor-desc">-</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -777,9 +784,9 @@
                                     <div class="d-flex">
                                         <img id="sichuan-secretary-img" src="" alt="省委书记" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="sichuan-secretary-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">省委书记</p>
-                                            <p id="sichuan-secretary-desc" class="text-dark">-</p>
+                                            <h5 id="sichuan-secretary-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">省委书记</p>
+                                            <p id="sichuan-secretary-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -787,9 +794,9 @@
                                     <div class="d-flex">
                                         <img id="sichuan-governor-img" src="" alt="省长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="sichuan-governor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">省长</p>
-                                            <p id="sichuan-governor-desc" class="text-dark">-</p>
+                                            <h5 id="sichuan-governor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">省长</p>
+                                            <p id="sichuan-governor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -797,9 +804,9 @@
                                     <div class="d-flex">
                                         <img id="sichuan-vice-governor-img" src="" alt="副省长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="sichuan-vice-governor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">副省长</p>
-                                            <p id="sichuan-vice-governor-desc" class="text-dark">-</p>
+                                            <h5 id="sichuan-vice-governor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">副省长</p>
+                                            <p id="sichuan-vice-governor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1021,9 +1028,9 @@
                                     <div class="d-flex">
                                         <img id="chongqing-secretary-img" src="" alt="市委书记" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="chongqing-secretary-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市委书记</p>
-                                            <p id="chongqing-secretary-desc" class="text-dark">-</p>
+                                            <h5 id="chongqing-secretary-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市委书记</p>
+                                            <p id="chongqing-secretary-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1031,9 +1038,9 @@
                                     <div class="d-flex">
                                         <img id="chongqing-mayor-img" src="" alt="市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="chongqing-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市长</p>
-                                            <p id="chongqing-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="chongqing-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市长</p>
+                                            <p id="chongqing-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1041,9 +1048,9 @@
                                     <div class="d-flex">
                                         <img id="chongqing-vice-mayor-img" src="" alt="副市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="chongqing-vice-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">副市长</p>
-                                            <p id="chongqing-vice-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="chongqing-vice-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">副市长</p>
+                                            <p id="chongqing-vice-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1277,9 +1284,9 @@
                                     <div class="d-flex">
                                         <img id="beijing-secretary-img" src="" alt="市委书记" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="beijing-secretary-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市委书记</p>
-                                            <p id="beijing-secretary-desc" class="text-dark">-</p>
+                                            <h5 id="beijing-secretary-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市委书记</p>
+                                            <p id="beijing-secretary-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1287,9 +1294,9 @@
                                     <div class="d-flex">
                                         <img id="beijing-mayor-img" src="" alt="市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="beijing-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市长</p>
-                                            <p id="beijing-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="beijing-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市长</p>
+                                            <p id="beijing-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1297,9 +1304,9 @@
                                     <div class="d-flex">
                                         <img id="beijing-vice-mayor-img" src="" alt="副市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="beijing-vice-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">副市长</p>
-                                            <p id="beijing-vice-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="beijing-vice-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">副市长</p>
+                                            <p id="beijing-vice-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1521,9 +1528,9 @@
                                     <div class="d-flex">
                                         <img id="shanghai-secretary-img" src="" alt="市委书记" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="shanghai-secretary-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市委书记</p>
-                                            <p id="shanghai-secretary-desc" class="text-dark">-</p>
+                                            <h5 id="shanghai-secretary-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市委书记</p>
+                                            <p id="shanghai-secretary-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1531,9 +1538,9 @@
                                     <div class="d-flex">
                                         <img id="shanghai-mayor-img" src="" alt="市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="shanghai-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市长</p>
-                                            <p id="shanghai-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="shanghai-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市长</p>
+                                            <p id="shanghai-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1541,9 +1548,9 @@
                                     <div class="d-flex">
                                         <img id="shanghai-vice-mayor-img" src="" alt="副市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="shanghai-vice-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">副市长</p>
-                                            <p id="shanghai-vice-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="shanghai-vice-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">副市长</p>
+                                            <p id="shanghai-vice-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1765,9 +1772,9 @@
                                     <div class="d-flex">
                                         <img id="shenzhen-secretary-img" src="" alt="市委书记" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="shenzhen-secretary-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市委书记</p>
-                                            <p id="shenzhen-secretary-desc" class="text-dark">-</p>
+                                            <h5 id="shenzhen-secretary-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市委书记</p>
+                                            <p id="shenzhen-secretary-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1775,9 +1782,9 @@
                                     <div class="d-flex">
                                         <img id="shenzhen-mayor-img" src="" alt="市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="shenzhen-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市长</p>
-                                            <p id="shenzhen-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="shenzhen-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市长</p>
+                                            <p id="shenzhen-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1785,9 +1792,9 @@
                                     <div class="d-flex">
                                         <img id="shenzhen-vice-mayor-img" src="" alt="副市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="shenzhen-vice-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">副市长</p>
-                                            <p id="shenzhen-vice-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="shenzhen-vice-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">副市长</p>
+                                            <p id="shenzhen-vice-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2013,9 +2020,9 @@
                                     <div class="d-flex">
                                         <img id="wuhan-secretary-img" src="" alt="市委书记" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="wuhan-secretary-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市委书记</p>
-                                            <p id="wuhan-secretary-desc" class="text-dark">-</p>
+                                            <h5 id="wuhan-secretary-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市委书记</p>
+                                            <p id="wuhan-secretary-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2023,9 +2030,9 @@
                                     <div class="d-flex">
                                         <img id="wuhan-mayor-img" src="" alt="市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="wuhan-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">市长</p>
-                                            <p id="wuhan-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="wuhan-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">市长</p>
+                                            <p id="wuhan-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2033,9 +2040,9 @@
                                     <div class="d-flex">
                                         <img id="wuhan-vice-mayor-img" src="" alt="副市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
                                         <div class="flex-grow-1">
-                                            <h5 id="wuhan-vice-mayor-name" class="mb-1 text-dark">-</h5>
-                                            <p class="text-dark mb-1">副市长</p>
-                                            <p id="wuhan-vice-mayor-desc" class="text-dark">-</p>
+                                            <h5 id="wuhan-vice-mayor-name" class="mb-1">-</h5>
+                                            <p class="text-muted mb-1">副市长</p>
+                                            <p id="wuhan-vice-mayor-desc">-</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2051,22 +2058,19 @@
     <script>
         // Region selection functionality
         document.addEventListener('DOMContentLoaded', function() {
-            const regionButtons = document.querySelectorAll('.sidebar-nav-link');
-            const params = new URLSearchParams(window.location.search);
-            const initialRegion = params.get('region') || (regionButtons[0] && regionButtons[0].dataset.region) || 'chengdu';
-
-            regionButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.region === initialRegion);
-            });
-
+            // Initially show only Chengdu and hide all others
             document.querySelectorAll('.region-card').forEach(card => {
-                card.classList.toggle('active', card.id === `region-${initialRegion}`);
+                card.style.display = 'none';  // Ensure all are hidden initially
             });
+            document.getElementById('region-chengdu').style.display = 'block';  // Show Chengdu
+            document.getElementById('region-chengdu').classList.add('active');  // Add active class
 
-            loadLeadershipData(initialRegion);
+            // Load leadership data for the initially displayed region
+            loadLeadershipData('chengdu');
 
-            const regionButtonsClick = document.querySelectorAll('.sidebar-nav-link');
-            regionButtonsClick.forEach(button => {
+            // Add click listeners to region selector buttons
+            const regionButtons = document.querySelectorAll('.sidebar-nav-link');
+            regionButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const region = this.dataset.region;
@@ -2075,13 +2079,14 @@
                     regionButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
 
-                    // Show selected region and hide others using CSS classes
+                    // Show selected region and hide others
                     document.querySelectorAll('.region-card').forEach(card => {
-                        card.classList.remove('active');
                         if (card.id === `region-${region}`) {
-                            card.classList.add('active');
+                            card.style.display = 'block';
                             // Load leadership data for the selected region
                             loadLeadershipData(region);
+                        } else {
+                            card.style.display = 'none';
                         }
                     });
                 });
@@ -2089,201 +2094,91 @@
         });
 
         // Function to load leadership data for a given region
-        // Function to load leadership data for a given region
         async function loadLeadershipData(region) {
+            // This function will be called to load leadership data from server
+            // For now, using placeholder data until backend implementation is complete
             try {
-                // Show loading state
-                const updateElement = document.getElementById(`${region}-update-time`);
-                if (updateElement) {
-                    updateElement.textContent = '加载中...';
-                }
+                // Get the current date for update timestamp
+                const now = new Date();
+                const updateDate = `${now.getFullYear()}年${(now.getMonth() + 1).toString().padStart(2, '0')}月${now.getDate().toString().padStart(2, '0')}日`;
 
-                // Fetch leadership data from the backend API
-                const response = await fetch(`/api/leadership/${region}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        // Add CSRF token if needed
-                    }
-                });
+                // Set the update time
+                document.getElementById(`${region}-update-time`).textContent = updateDate;
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                // For demonstration purposes, fill with placeholder data
+                // In real implementation, this would come from an API call
+                if (region === 'chengdu') {
+                    document.getElementById('chengdu-secretary-name').textContent = '施小琳';
+                    document.getElementById('chengdu-secretary-desc').textContent = '主持市委全面工作，负责党建、党风廉政建设等工作。';
 
-                const result = await response.json();
+                    document.getElementById('chengdu-mayor-name').textContent = '王凤朝';
+                    document.getElementById('chengdu-mayor-desc').textContent = '主持市政府全面工作，负责审计、市政府人事、市政府决策咨询等工作。';
 
-                if (result.success) {
-                    const data = result.data;
+                    document.getElementById('chengdu-vice-mayor-name').textContent = '鲜荣生';
+                    document.getElementById('chengdu-vice-mayor-desc').textContent = '负责自然资源、规划和自然资源、住房城乡建设、城市管理、林业园林、公园城市建设等工作。';
 
-                    // Update the update time with the server timestamp
-                    document.getElementById(`${region}-update-time`).textContent = result.timestamp;
+                } else if (region === 'sichuan') {
+                    document.getElementById('sichuan-secretary-name').textContent = '王晓晖';
+                    document.getElementById('sichuan-secretary-desc').textContent = '主持省委全面工作，负责党建、党风廉政建设等工作。';
 
-                    // Update leadership information based on region type (city or province)
-                    if (region === 'sichuan' || region === 'beijing' || region === 'shanghai' || region === 'chongqing') {
-                        // Province/central city - has governor instead of mayor
-                        if (data.secretary) {
-                            const nameElement = document.getElementById(`${region}-secretary-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.secretary.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-secretary-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.secretary.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.secretary.photo_url) {
-                                const imgElement = document.getElementById(`${region}-secretary-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.secretary.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
+                    document.getElementById('sichuan-governor-name').textContent = '黄强';
+                    document.getElementById('sichuan-governor-desc').textContent = '主持省政府全面工作，负责审计、省政府人事、省政府决策咨询等工作。';
 
-                        if (data.governor) {
-                            const nameElement = document.getElementById(`${region}-governor-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.governor.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-governor-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.governor.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.governor.photo_url) {
-                                const imgElement = document.getElementById(`${region}-governor-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.governor.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
+                    document.getElementById('sichuan-vice-governor-name').textContent = '李云泽';
+                    document.getElementById('sichuan-vice-governor-desc').textContent = '负责发展改革、财政、金融、应急管理工作。';
 
-                        if (data.vice_governor) {
-                            const nameElement = document.getElementById(`${region}-vice-governor-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.vice_governor.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-vice-governor-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.vice_governor.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.vice_governor.photo_url) {
-                                const imgElement = document.getElementById(`${region}-vice-governor-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.vice_governor.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
-                    } else {
-                        // City - has mayor and potentially multiple vice mayors
-                        if (data.secretary) {
-                            const nameElement = document.getElementById(`${region}-secretary-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.secretary.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-secretary-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.secretary.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.secretary.photo_url) {
-                                const imgElement = document.getElementById(`${region}-secretary-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.secretary.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
+                } else if (region === 'chongqing') {
+                    document.getElementById('chongqing-secretary-name').textContent = '袁家军';
+                    document.getElementById('chongqing-secretary-desc').textContent = '主持市委全面工作，负责党建、党风廉政建设等工作。';
 
-                        if (data.mayor) {
-                            const nameElement = document.getElementById(`${region}-mayor-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.mayor.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-mayor-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.mayor.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.mayor.photo_url) {
-                                const imgElement = document.getElementById(`${region}-mayor-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.mayor.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
+                    document.getElementById('chongqing-mayor-name').textContent = '胡衡华';
+                    document.getElementById('chongqing-mayor-desc').textContent = '主持市政府全面工作，负责审计、市政府人事、市政府决策咨询等工作。';
 
-                        // Handle multiple vice mayors for Chengdu specifically
-                        if (region === 'chengdu' && data.vice_mayors && Array.isArray(data.vice_mayors)) {
-                            const container = document.getElementById('chengdu-vice-mayors-container');
-                            if (container) {
-                                container.innerHTML = '';
-                                data.vice_mayors.forEach((viceMayor, index) => {
-                                    const viceMayorElement = document.createElement('div');
-                                    viceMayorElement.className = 'highlight-box';
-                                    viceMayorElement.innerHTML = `
-                                        <div class="d-flex">
-                                            <img id="chengdu-vice-mayor-img-${index}" src="${viceMayor.photo_url || ''}"
-                                                alt="${viceMayor.title}" class="rounded-circle me-3"
-                                                style="width: 80px; height: 80px; object-fit: cover; display: ${viceMayor.photo_url ? 'block' : 'none'};">
-                                            <div class="flex-grow-1">
-                                                <h5 id="chengdu-vice-mayor-name-${index}" class="mb-1 text-dark">${viceMayor.name}</h5>
-                                                <p class="text-dark mb-1">${viceMayor.title}</p>
-                                                <p id="chengdu-vice-mayor-desc-${index}" class="text-dark">${viceMayor.description}</p>
-                                            </div>
-                                        </div>
-                                    `;
-                                    container.appendChild(viceMayorElement);
-                                });
-                            }
-                        } else if (data.vice_mayor) {
-                            // For other cities with single vice_mayor
-                            const nameElement = document.getElementById(`${region}-vice-mayor-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.vice_mayor.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-vice-mayor-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.vice_mayor.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.vice_mayor.photo_url) {
-                                const imgElement = document.getElementById(`${region}-vice-mayor-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.vice_mayor.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    console.error(`Error from server: ${result.error}`);
-                    // Set default values if API fails
-                    document.getElementById(`${region}-update-time`).textContent = '暂无数据';
+                    document.getElementById('chongqing-vice-mayor-name').textContent = '陈鸣波';
+                    document.getElementById('chongqing-vice-mayor-desc').textContent = '负责发展改革、财政、应急管理等工作。';
+
+                } else if (region === 'beijing') {
+                    document.getElementById('beijing-secretary-name').textContent = '尹力';
+                    document.getElementById('beijing-secretary-desc').textContent = '主持市委全面工作，负责党建、党风廉政建设等工作。';
+
+                    document.getElementById('beijing-mayor-name').textContent = '殷勇';
+                    document.getElementById('beijing-mayor-desc').textContent = '主持市政府全面工作，负责审计、市政府人事、市政府决策咨询等工作。';
+
+                    document.getElementById('beijing-vice-mayor-name').textContent = '夏林茂';
+                    document.getElementById('beijing-vice-mayor-desc').textContent = '负责城市管理、交通、安全生产等工作。';
+
+                } else if (region === 'shanghai') {
+                    document.getElementById('shanghai-secretary-name').textContent = '陈吉宁';
+                    document.getElementById('shanghai-secretary-desc').textContent = '主持市委全面工作，负责党建、党风廉政建设等工作。';
+
+                    document.getElementById('shanghai-mayor-name').textContent = '龚正';
+                    document.getElementById('shanghai-mayor-desc').textContent = '主持市政府全面工作，负责审计、市政府人事、市政府决策咨询等工作。';
+
+                    document.getElementById('shanghai-vice-mayor-name').textContent = '郭芳';
+                    document.getElementById('shanghai-vice-mayor-desc').textContent = '负责民政、人力资源社会保障、文化旅游、退役军人事务等工作。';
+
+                } else if (region === 'shenzhen') {
+                    document.getElementById('shenzhen-secretary-name').textContent = '孟凡利';
+                    document.getElementById('shenzhen-secretary-desc').textContent = '主持市委全面工作，负责党建、党风廉政建设等工作。';
+
+                    document.getElementById('shenzhen-mayor-name').textContent = '覃伟中';
+                    document.getElementById('shenzhen-mayor-desc').textContent = '主持市政府全面工作，负责审计、市政府人事、市政府决策咨询等工作。';
+
+                    document.getElementById('shenzhen-vice-mayor-name').textContent = '黄敏';
+                    document.getElementById('shenzhen-vice-mayor-desc').textContent = '负责发展改革、财政、应急管理工作。';
+
+                } else if (region === 'wuhan') {
+                    document.getElementById('wuhan-secretary-name').textContent = '郭元强';
+                    document.getElementById('wuhan-secretary-desc').textContent = '主持市委全面工作，负责党建、党风廉政建设等工作。';
+
+                    document.getElementById('wuhan-mayor-name').textContent = '程用文';
+                    document.getElementById('wuhan-mayor-desc').textContent = '主持市政府全面工作，负责审计、市政府人事、市政府决策咨询等工作。';
+
+                    document.getElementById('wuhan-vice-mayor-name').textContent = '陈劲超';
+                    document.getElementById('wuhan-vice-mayor-desc').textContent = '负责自然资源、规划、住房保障、城乡建设、城管执法等工作。';
                 }
             } catch (error) {
                 console.error(`Error loading leadership data for ${region}:`, error);
-                // Set default values if error occurs, but don't break the functionality
-                try {
-                    const updateElement = document.getElementById(`${region}-update-time`);
-                    if (updateElement) {
-                        updateElement.textContent = '加载失败';
-                    }
-                } catch (e) {
-                    // If even setting error message fails, just continue
-                    console.error(`Also failed to update error message for ${region}:`, e);
-                }
             }
         }
     </script>
