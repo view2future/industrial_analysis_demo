@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}区域产业分析小工作台{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for icons - deferred for faster page load -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+    <!-- Remix Icon (line icons) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+    
+    <!-- Plotly.js is loaded on-demand in templates that need it (e.g., report pages) -->
+    
+    <!-- Custom styles -->
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #f1f5f9;
+            border-left: 4px solid #3b82f6;
+            transition: all 0.2s ease;
+        }
+        
+        .priority-high { @apply bg-green-100 text-green-800 border-green-300; }
+        .priority-medium { @apply bg-yellow-100 text-yellow-800 border-yellow-300; }
+        .priority-low { @apply bg-blue-100 text-blue-800 border-blue-300; }
+        .priority-none { @apply bg-gray-100 text-gray-500 border-gray-300; }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-modern.css') }}">
+    {% block extra_styles %}{% endblock %}
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Navigation -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <i class="ri-pie-chart-2-line text-2xl mr-3"></i>
+                    <h1 class="text-xl font-bold">区域产业分析小工作台</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('index') }}" class="hover:text-blue-200 transition-colors">
+                        <i class="ri-home-5-line mr-1"></i>首页
+                    </a>
+                    <a href="{{ url_for('upload_file') }}" class="hover:text-blue-200 transition-colors">
+                        <i class="ri-upload-2-line mr-1"></i>上传分析
+                    </a>
+                    <a href="{{ url_for('settings') }}" class="hover:text-blue-200 transition-colors">
+                        <i class="ri-settings-3-line mr-1"></i>设置
+                    </a>
+                    <button id="themeToggle" class="icon-button ml-2" aria-label="切换主题">
+                        <i id="themeIcon" class="fas fa-moon icon-20"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                {% for message in messages %}
+                    <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p>&copy; 2025 区域产业分析小工作台. 专为西南地区AI技术生态分析设计.</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-300">
+                        <i class="fas fa-code mr-1"></i>Open Source Project
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        function showLoading() { document.getElementById('loading')?.classList.remove('hidden'); }
+        function hideLoading() { document.getElementById('loading')?.classList.add('hidden'); }
+        function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+        function scrollToElement(elementId) { document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth' }); }
+
+        (function() {
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const saved = localStorage.getItem('theme');
+            const theme = saved ? saved : (prefersDark ? 'dark' : 'light');
+            document.documentElement.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
+            const icon = document.getElementById('themeIcon');
+            if (icon) icon.className = theme === 'dark' ? 'fas fa-sun icon-20' : 'fas fa-moon icon-20';
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.addEventListener('click', function() {
+                const isDark = document.documentElement.classList.contains('theme-dark');
+                document.documentElement.classList.toggle('theme-dark', !isDark);
+                document.documentElement.classList.toggle('theme-light', isDark);
+                localStorage.setItem('theme', isDark ? 'light' : 'dark');
+                const icon2 = document.getElementById('themeIcon');
+                if (icon2) icon2.className = !isDark ? 'fas fa-sun icon-20' : 'fas fa-moon icon-20';
+            });
+        })();
+    </script>
+    
+    <!-- Floating task manager for background report generation -->
+    <script src="{{ url_for('static', filename='js/floating_task.js') }}"></script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

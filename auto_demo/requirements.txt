@@ -1,0 +1,11 @@
+# Auto Demo System Dependencies
+# Install with: pip install -r auto_demo/requirements.txt
+
+# Playwright for browser automation
+playwright>=1.40.0
+
+# YAML configuration parsing
+PyYAML>=6.0
+
+# After installing, run: playwright install chromium
+# This downloads the Chromium browser binary for automation

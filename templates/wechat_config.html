@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信公众号配置管理 - 区域产业分析小工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">⚙️ 微信公众号配置</a>
+            <div class="ms-auto">
+                <a href="{{ url_for('policy_analysis_page') }}" class="btn btn-outline-light btn-sm">返回政策分析</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="mb-4"><i class="bi bi-gear"></i> 微信公众号配置管理</h2>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-plus-circle"></i> 添加公众号配置</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="addWechatConfigForm">
+                            <div class="mb-3">
+                                <label class="form-label">省份/直辖市</label>
+                                <input type="text" class="form-control" id="provinceInput" placeholder="如：四川省、北京市" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">公众号名称</label>
+                                <input type="text" class="form-control" id="accountNameInput" placeholder="如：四川政策发布" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">关联城市（可选）</label>
+                                <input type="text" class="form-control" id="cityInput" placeholder="如：成都市">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">关联区/县（可选）</label>
+                                <input type="text" class="form-control" id="districtInput" placeholder="如：高新区">
+                            </div>
+                            <button type="submit" class="btn btn-primary">添加配置</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-list"></i> 配置说明</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>当前配置用于从指定的微信公众号获取政策相关信息。</p>
+                        <ul>
+                            <li>定期从配置的公众号获取最新政策文章</li>
+                            <li>支持按地区和行业筛选相关文章</li>
+                            <li>可配置多个公众号以获得更全面的信息</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-journals"></i> 现有配置</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>省份/直辖市</th>
+                                <th>公众号</th>
+                                <th>关联城市</th>
+                                <th>关联区/县</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="configTableBody">
+                            <!-- Configuration will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <button id="saveConfigBtn" class="btn btn-success">保存配置</button>
+                    <button id="loadConfigBtn" class="btn btn-info ms-2">重新加载</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfig = [];
+
+        // Load configuration on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadWechatConfig();
+        });
+
+        // Load WeChat configuration
+        async function loadWechatConfig() {
+            try {
+                const response = await fetch('/api/wechat-config');
+                const data = await response.json();
+                
+                if (data.success !== false) {
+                    currentConfig = data;
+                } else {
+                    // Initialize with empty config if file doesn't exist
+                    currentConfig = [];
+                }
+                
+                renderConfigTable();
+            } catch (error) {
+                console.error('Error loading config:', error);
+                alert('加载配置失败: ' + error.message);
+            }
+        }
+
+        // Save WeChat configuration
+        async function saveWechatConfig() {
+            try {
+                const response = await fetch('/api/wechat-config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentConfig)
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert('配置保存成功！');
+                } else {
+                    alert('配置保存失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                alert('配置保存失败: ' + error.message);
+            }
+        }
+
+        // Render configuration table
+        function renderConfigTable() {
+            const tbody = document.getElementById('configTableBody');
+            
+            if (!currentConfig || currentConfig.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无配置</td></tr>';
+                return;
+            }
+
+            let html = '';
+            currentConfig.forEach((region, regionIndex) => {
+                const accounts = region.accounts || [];
+                const cities = region.cities || [];
+
+                // Render province-level accounts
+                accounts.forEach((account, accountIndex) => {
+                    html += `
+                    <tr>
+                        <td>${region.province}</td>
+                        <td>${account}</td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" 
+                                onclick="removeConfigEntry('${region.province}', '${account}', 'province')">
+                                删除
+                            </button>
+                        </td>
+                    </tr>
+                    `;
+                });
+
+                // Render city-level accounts
+                cities.forEach(cityObj => {
+                    const cityAccounts = cityObj.accounts || [];
+                    cityAccounts.forEach((account, accountIndex) => {
+                        html += `
+                        <tr>
+                            <td>${region.province}</td>
+                            <td>${account}</td>
+                            <td>${cityObj.city}</td>
+                            <td></td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" 
+                                    onclick="removeConfigEntry('${region.province}', '${account}', 'city', '${cityObj.city}')">
+                                    删除
+                                </button>
+                            </td>
+                        </tr>
+                        `;
+                    });
+
+                    // Render district-level accounts
+                    const districts = cityObj.districts || [];
+                    districts.forEach(districtObj => {
+                        const districtAccounts = districtObj.accounts || [];
+                        districtAccounts.forEach((account, accountIndex) => {
+                            html += `
+                            <tr>
+                                <td>${region.province}</td>
+                                <td>${account}</td>
+                                <td>${cityObj.city}</td>
+                                <td>${districtObj.district}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" 
+                                        onclick="removeConfigEntry('${region.province}', '${account}', 'district', '${cityObj.city}', '${districtObj.district}')">
+                                        删除
+                                    </button>
+                                </td>
+                            </tr>
+                            `;
+                        });
+                    });
+                });
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // Remove configuration entry
+        function removeConfigEntry(province, accountName, level, city = null, district = null) {
+            if (!confirm(`确定要删除 ${province} ${city ? city + (district ? ` ${district}` : '') : ''} 的公众号 ${accountName} 吗？`)) {
+                return;
+            }
+
+            // Find and remove the entry from currentConfig
+            switch (level) {
+                case 'province':
+                    // Remove from province level accounts
+                    const provinceIndex = currentConfig.findIndex(p => p.province === province);
+                    if (provinceIndex !== -1) {
+                        const accountIndex = currentConfig[provinceIndex].accounts.indexOf(accountName);
+                        if (accountIndex !== -1) {
+                            currentConfig[provinceIndex].accounts.splice(accountIndex, 1);
+                            // Remove province if no accounts left
+                            if (currentConfig[provinceIndex].accounts.length === 0 && 
+                                (currentConfig[provinceIndex].cities || []).length === 0) {
+                                currentConfig.splice(provinceIndex, 1);
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'city':
+                    // Remove from city level accounts
+                    const pIndex = currentConfig.findIndex(p => p.province === province);
+                    if (pIndex !== -1) {
+                        const cIndex = currentConfig[pIndex].cities.findIndex(c => c.city === city);
+                        if (cIndex !== -1) {
+                            const caIndex = currentConfig[pIndex].cities[cIndex].accounts.indexOf(accountName);
+                            if (caIndex !== -1) {
+                                currentConfig[pIndex].cities[cIndex].accounts.splice(caIndex, 1);
+                                // Remove city if no accounts left
+                                if (currentConfig[pIndex].cities[cIndex].accounts.length === 0 &&
+                                    (currentConfig[pIndex].cities[cIndex].districts || []).length === 0) {
+                                    currentConfig[pIndex].cities.splice(cIndex, 1);
+                                    // Remove province if no cities and accounts left
+                                    if (currentConfig[pIndex].accounts.length === 0 &&
+                                        currentConfig[pIndex].cities.length === 0) {
+                                        currentConfig.splice(pIndex, 1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'district':
+                    // Remove from district level accounts
+                    const prIndex = currentConfig.findIndex(p => p.province === province);
+                    if (prIndex !== -1) {
+                        const ciIndex = currentConfig[prIndex].cities.findIndex(c => c.city === city);
+                        if (ciIndex !== -1) {
+                            const dIndex = currentConfig[prIndex].cities[ciIndex].districts.findIndex(d => d.district === district);
+                            if (dIndex !== -1) {
+                                const daIndex = currentConfig[prIndex].cities[ciIndex].districts[dIndex].accounts.indexOf(accountName);
+                                if (daIndex !== -1) {
+                                    currentConfig[prIndex].cities[ciIndex].districts[dIndex].accounts.splice(daIndex, 1);
+                                    // Remove district if no accounts left
+                                    if (currentConfig[prIndex].cities[ciIndex].districts[dIndex].accounts.length === 0) {
+                                        currentConfig[prIndex].cities[ciIndex].districts.splice(dIndex, 1);
+                                        // Remove city if no districts and accounts left
+                                        if (currentConfig[prIndex].cities[ciIndex].accounts.length === 0 &&
+                                            currentConfig[prIndex].cities[ciIndex].districts.length === 0) {
+                                            currentConfig[prIndex].cities.splice(ciIndex, 1);
+                                            // Remove province if no cities and accounts left
+                                            if (currentConfig[prIndex].accounts.length === 0 &&
+                                                currentConfig[prIndex].cities.length === 0) {
+                                                currentConfig.splice(prIndex, 1);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+            }
+            
+            renderConfigTable();
+        }
+
+        // Add new configuration
+        document.getElementById('addWechatConfigForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const province = document.getElementById('provinceInput').value.trim();
+            const accountName = document.getElementById('accountNameInput').value.trim();
+            const city = document.getElementById('cityInput').value.trim();
+            const district = document.getElementById('districtInput').value.trim();
+            
+            if (!province || !accountName) {
+                alert('请输入省份和公众号名称');
+                return;
+            }
+            
+            // Find or create province entry
+            let provinceEntry = currentConfig.find(p => p.province === province);
+            if (!provinceEntry) {
+                provinceEntry = {
+                    province: province,
+                    accounts: [],
+                    cities: []
+                };
+                currentConfig.push(provinceEntry);
+            }
+            
+            // Add at appropriate level
+            if (!city && !district) {
+                // Add to province level
+                if (!provinceEntry.accounts.includes(accountName)) {
+                    provinceEntry.accounts.push(accountName);
+                }
+            } else if (city && !district) {
+                // Add to city level
+                let cityEntry = provinceEntry.cities.find(c => c.city === city);
+                if (!cityEntry) {
+                    cityEntry = {
+                        city: city,
+                        accounts: [],
+                        districts: []
+                    };
+                    provinceEntry.cities.push(cityEntry);
+                }
+                if (!cityEntry.accounts.includes(accountName)) {
+                    cityEntry.accounts.push(accountName);
+                }
+            } else if (city && district) {
+                // Add to district level
+                let cityEntry = provinceEntry.cities.find(c => c.city === city);
+                if (!cityEntry) {
+                    cityEntry = {
+                        city: city,
+                        accounts: [],
+                        districts: []
+                    };
+                    provinceEntry.cities.push(cityEntry);
+                }
+                
+                let districtEntry = cityEntry.districts.find(d => d.district === district);
+                if (!districtEntry) {
+                    districtEntry = {
+                        district: district,
+                        accounts: []
+                    };
+                    cityEntry.districts.push(districtEntry);
+                }
+                
+                if (!districtEntry.accounts.includes(accountName)) {
+                    districtEntry.accounts.push(accountName);
+                }
+            }
+            
+            // Clear form
+            document.getElementById('addWechatConfigForm').reset();
+            
+            // Update table
+            renderConfigTable();
+        });
+
+        // Event listeners for buttons
+        document.getElementById('saveConfigBtn').addEventListener('click', saveWechatConfig);
+        document.getElementById('loadConfigBtn').addEventListener('click', loadWechatConfig);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试流式报告布局</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .report-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 80px);
+            max-width: 1200px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .content-area {
+            flex: 0 0 70%;
+            overflow-y: auto;
+            padding: 2rem;
+            max-height: 70vh;
+        }
+        
+        .status-panel {
+            flex: 0 0 30%;
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
+            backdrop-filter: blur(20px);
+            border-top: 2px solid rgba(102,126,234,0.2);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+        }
+        
+        .stage-indicator {
+            text-align: center;
+        }
+        
+        .stage-circle {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 8px;
+            border-radius: 50%;
+            background: rgba(200,200,200,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #999;
+            transition: all 0.3s ease;
+        }
+        
+        .stage-indicator.active .stage-circle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 0 15px rgba(102,126,234,0.6);
+            transform: scale(1.1);
+        }
+        
+        .stage-indicator.completed .stage-circle {
+            background: #10b981;
+            color: white;
+        }
+        
+        .stage-label {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .stage-indicator.active .stage-label {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .markdown-content {
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .markdown-content h1 {
+            font-size: 2em;
+            margin: 0.67em 0;
+            color: #2d3748;
+        }
+        
+        .markdown-content h2 {
+            font-size: 1.5em;
+            margin: 0.83em 0;
+            color: #4a5568;
+        }
+        
+        .markdown-content p {
+            margin: 1em 0;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.4em;
+            font-size: 75%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+        }
+        
+        .badge-warning {
+            color: #212529;
+            background-color: #ffc107;
+        }
+        
+        .badge-success {
+            color: #fff;
+            background-color: #28a745;
+        }
+        
+        .btn {
+            display: inline-block;
+            font-weight: 400;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.25rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        .btn-primary {
+            color: #fff;
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        
+        .progress-glow {
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.6);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <!-- 70% Content Area - Streaming Content -->
+        <div class="content-area custom-scrollbar">
+            <div style="max-width: 700px; margin: 0 auto;">
+                <!-- Header -->
+                <div class="glass-card p-6 mb-6">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <h1 style="font-size: 1.875rem; font-weight: 700; color: #2d3748; margin-bottom: 0.5rem;">
+                                武汉 - 汽车产业 产业分析报告
+                            </h1>
+                            <p style="color: #4a5568;">
+                                <i class="fas fa-robot mr-2"></i>AI 智能生成中...
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="badge badge-warning" id="statusBadge">
+                                <i class="fas fa-spinner fa-spin mr-1"></i>生成中
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Streaming Content -->
+                <div class="glass-card p-8 markdown-content" id="streamingContent">
+                    <h1>汽车产业市场分析报告</h1>
+                    <h2>1. 行业概况</h2>
+                    <p>汽车产业是国民经济的重要支柱产业，产业链长、关联度高、就业面广、消费拉动大，在国民经济发展中发挥着重要作用。近年来，随着新能源汽车的快速发展，汽车产业正经历深刻变革。</p>
+                    
+                    <h2>2. 市场规模</h2>
+                    <p>中国汽车市场是全球最大的汽车市场，年产量和销量均超过2000万辆。新能源汽车市场增长迅猛，渗透率不断提升，已成为全球汽车产业转型的重要方向。</p>
+                    
+                    <h2>3. 技术发展趋势</h2>
+                    <p>电动化、智能化、网联化、共享化是汽车产业发展的主要趋势。电池技术、自动驾驶技术、车联网技术等不断取得突破，推动产业向高质量发展。</p>
+                    
+                    <h2>4. 武汉汽车产业现状</h2>
+                    <p>武汉作为中国汽车工业的重要基地，拥有东风汽车等龙头企业，形成了较为完整的产业链。近年来，武汉积极布局新能源汽车和智能网联汽车，产业发展势头良好。</p>
+                    
+                    <h2>5. 竞争格局</h2>
+                    <p>国内汽车市场竞争激烈，传统车企与造车新势力并存。武汉在汽车产业中具有一定的区位优势和产业基础，但仍需进一步提升核心竞争力。</p>
+                    
+                    <h2>6. 发展机遇与挑战</h2>
+                    <p>随着国家"双碳"目标的推进和汽车产业转型升级，武汉汽车产业面临新的发展机遇。同时，也面临着技术变革、市场竞争等挑战。</p>
+                    
+                    <h2>7. 政策环境</h2>
+                    <p>国家和地方政府出台了一系列支持汽车产业发展的政策，包括新能源汽车购置补贴、充电基础设施建设、智能网联汽车测试示范等。</p>
+                    
+                    <h2>8. 投资建议</h2>
+                    <p>建议重点关注新能源汽车、智能网联汽车、关键零部件等细分领域，加强技术创新和产业链协同，提升产业整体竞争力。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 30% Status Panel - Fixed Bottom -->
+        <div class="status-panel">
+            <div style="max-width: 1024px; margin: 0 auto; padding: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <!-- Real-time Statistics -->
+                    <div class="glass-card" style="padding: 1rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <p style="font-size: 0.75rem; color: #718096; margin-bottom: 0.25rem;">实时字数</p>
+                                <p style="font-size: 1.5rem; font-weight: 700; color: #2d3748;" id="wordCount">1247</p>
+                            </div>
+                            <div style="font-size: 1.875rem; color: #3b82f6;">
+                                <i class="fas fa-file-word"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card" style="padding: 1rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <p style="font-size: 0.75rem; color: #718096; margin-bottom: 0.25rem;">生成时长</p>
+                                <p style="font-size: 1.5rem; font-weight: 700; color: #2d3748;" id="timer">02:35</p>
+                            </div>
+                            <div style="font-size: 1.875rem; color: #10b981;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card" style="padding: 1rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <p style="font-size: 0.75rem; color: #718096; margin-bottom: 0.25rem;">LLM 服务</p>
+                                <p style="font-size: 1.125rem; font-weight: 700; color: #2d3748;">KIMI</p>
+                            </div>
+                            <div style="font-size: 1.875rem; color: #8b5cf6;">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #4a5568; margin-bottom: 0.5rem;">
+                        <span id="progressText">内容生成中...</span>
+                        <span id="progressPercent">75%</span>
+                    </div>
+                    <div style="height: 0.75rem; background-color: #e2e8f0; border-radius: 9999px; overflow: hidden;">
+                        <div class="progress-glow" style="height: 100%; background: linear-gradient(to right, #667eea, #764ba2); transition: all 0.3s ease; width: 75%;"></div>
+                    </div>
+                </div>
+
+                <!-- Stage Indicators -->
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+                    <div class="stage-indicator completed" id="stage-1">
+                        <div class="stage-circle">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <p class="stage-label">解析请求</p>
+                    </div>
+                    <div class="stage-indicator completed" id="stage-2">
+                        <div class="stage-circle">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <p class="stage-label">生成大纲</p>
+                    </div>
+                    <div class="stage-indicator active" id="stage-3">
+                        <div class="stage-circle">
+                            <i class="fas fa-pencil-alt"></i>
+                        </div>
+                        <p class="stage-label">生成内容</p>
+                    </div>
+                    <div class="stage-indicator" id="stage-4">
+                        <div class="stage-circle">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <p class="stage-label">分析数据</p>
+                    </div>
+                    <div class="stage-indicator" id="stage-5">
+                        <div class="stage-circle">
+                            <i class="fas fa-flag-checkered"></i>
+                        </div>
+                        <p class="stage-label">完成</p>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div style="display: flex; justify-content: center; gap: 0.75rem;">
+                    <button id="backgroundBtn" style="display: inline-flex; align-items: center; padding: 0.75rem 1.5rem; font-size: 0.875rem; font-weight: 700; background: linear-gradient(to right, #667eea, #764ba2); border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; transform: translateY(0); color: #000000; text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 15px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'">
+                        <i class="fas fa-home mr-2"></i>后台运行
+                    </button>
+                    <button id="stopBtn" style="display: inline-flex; align-items: center; padding: 0.75rem 1.5rem; font-size: 0.875rem; font-weight: 700; background-color: #e53e3e; color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#c53030'; this.style.boxShadow='0 8px 15px rgba(0,0,0,0.2)'" onmouseout="this.style.backgroundColor='#e53e3e'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'">
+                        <i class="fas fa-stop mr-2"></i>停止生成
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

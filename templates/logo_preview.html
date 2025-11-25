@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Logo 预览 - 区域产业分析小工作台{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <h1 class="text-3xl font-bold mb-6">核心功能Logo预览</h1>
+  <p class="text-gray-600 mb-8">以下展示每个Logo在 32/64/128/256 尺寸下的预览，适配浅色与深色主题。</p>
+  {% set logos = [
+    ('AI智能报告', 'img/logos/logo_ai_report.svg'),
+    ('多文档对比', 'img/logos/logo_documents_compare.svg'),
+    ('趋势预测', 'img/logos/logo_trend_forecast.svg'),
+    ('知识图谱', 'img/logos/logo_knowledge_graph.svg'),
+    ('地图看板', 'img/logos/logo_map_3d.svg'),
+    ('产业链图谱', 'img/logos/logo_industry_chain.svg'),
+    ('政策解读', 'img/logos/logo_policy_read.svg'),
+    ('术语词典', 'img/logos/logo_terms_dictionary.svg')
+  ] %}
+  <div class="space-y-10">
+    {% for name, path in logos %}
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">{{ name }}</h2>
+        <div class="grid grid-cols-4 gap-6 items-center">
+          {% for size in [32,64,128,256] %}
+            <div class="text-center">
+              <div class="inline-flex items-center justify-center rounded-xl p-4" style="background: linear-gradient(135deg, rgba(17,24,39,0.04), rgba(17,24,39,0.08));">
+                <img src="{{ url_for('static', filename=path) }}" alt="{{ name }}" width="{{ size }}" height="{{ size }}">
+              </div>
+              <div class="text-xs text-gray-500 mt-2">{{ size }}×{{ size }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

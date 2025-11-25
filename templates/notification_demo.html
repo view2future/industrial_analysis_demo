@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 错误处理和通知系统演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .notification-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        
+        .notification-panel {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            width: 400px;
+            max-height: 600px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 999;
+            overflow: hidden;
+        }
+        
+        .notification-panel.active {
+            display: block;
+        }
+        
+        .notification-header {
+            background: #667eea;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .notification-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .notification-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .notification-item.unread {
+            background-color: #f0f8ff;
+            border-left: 4px solid #667eea;
+        }
+        
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .notification-message {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .notification-time {
+            color: #999;
+            font-size: 0.8em;
+        }
+        
+        .severity-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .severity-info { background-color: #17a2b8; }
+        .severity-warning { background-color: #ffc107; }
+        .severity-error { background-color: #dc3545; }
+        .severity-success { background-color: #28a745; }
+        
+        .api-status-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .api-status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .api-status-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background-color: #28a745; }
+        .status-warning { background-color: #ffc107; }
+        .status-error { background-color: #dc3545; }
+        
+        .api-services {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .service-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .service-card.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .service-card.warning {
+            border-left-color: #ffc107;
+            background: #fffaf0;
+        }
+        
+        .service-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+        
+        .service-status {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .error-summary {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .error-summary h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .demo-controls {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .demo-controls h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .control-group select,
+        .control-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .notification-panel {
+                width: 90%;
+                right: 5%;
+            }
+            
+            .api-services {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification-badge" id="notificationBadge" style="display: none;">
+        <span id="notificationCount">0</span>
+    </div>
+    
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-header">
+            <h3>通知中心</h3>
+            <button onclick="markAllAsRead()" style="background: none; border: none; color: white; cursor: pointer;">全部已读</button>
+        </div>
+        <div class="notification-content" id="notificationContent">
+            <div class="empty-state">
+                <div class="empty-state-icon">🔔</div>
+                <p>暂无通知</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🔔 API 错误处理和通知系统</h1>
+            <p>智能处理 API 配额超限和连接问题，确保系统稳定运行</p>
+        </div>
+        
+        <div class="api-status-panel">
+            <div class="api-status-header">
+                <div class="api-status-title">📊 API 服务状态</div>
+                <div class="status-indicator" id="overallStatus">
+                    <div class="status-dot status-healthy"></div>
+                    <span>系统正常</span>
+                </div>
+            </div>
+            
+            <div class="api-services" id="apiServices">
+                <div class="service-card">
+                    <div class="service-name">🌙 Kimi (月之暗面)</div>
+                    <div class="service-status">状态: 正常</div>
+                </div>
+                <div class="service-card">
+                    <div class="service-name">🎯 Google Gemini</div>
+                    <div class="service-status">状态: 正常</div>
+                </div>
+                <div class="service-card">
+                    <div class="service-name">📦 豆包大模型</div>
+                    <div class="service-status">状态: 正常</div>
+                </div>
+            </div>
+            
+            <div class="error-summary" id="errorSummary" style="display: none;">
+                <h4>⚠️ 最近错误</h4>
+                <div id="errorDetails"></div>
+            </div>
+        </div>
+        
+        <div class="demo-controls">
+            <h2>🧪 演示控制面板</h2>
+            
+            <div class="control-group">
+                <label>模拟错误类型:</label>
+                <select id="errorType">
+                    <option value="quota_exceeded">API 配额超限</option>
+                    <option value="connection_error">连接错误</option>
+                    <option value="service_fallback">服务回退</option>
+                    <option value="report_success">报告生成成功</option>
+                    <option value="report_failure">报告生成失败</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>AI 服务:</label>
+                <select id="serviceName">
+                    <option value="kimi">Kimi (月之暗面)</option>
+                    <option value="gemini">Google Gemini</option>
+                    <option value="doubao">豆包大模型</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>城市:</label>
+                <input type="text" id="cityName" value="成都" placeholder="输入城市名称">
+            </div>
+            
+            <div class="control-group">
+                <label>行业:</label>
+                <input type="text" id="industryName" value="人工智能" placeholder="输入行业名称">
+            </div>
+            
+            <button class="btn" onclick="simulateError()">🚨 模拟错误并发送通知</button>
+            <button class="btn btn-success" onclick="simulateSuccess()">✅ 模拟成功通知</button>
+            <button class="btn btn-danger" onclick="clearNotifications()">🗑️ 清除所有通知</button>
+        </div>
+    </div>
+    
+    <script>
+        // Mock API functions for demonstration
+        let mockNotifications = [];
+        let notificationIdCounter = 1;
+        
+        function showNotificationBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            const countElement = document.getElementById('notificationCount');
+            
+            if (count > 0) {
+                badge.style.display = 'flex';
+                countElement.textContent = count;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        function toggleNotificationPanel() {
+            const panel = document.getElementById('notificationPanel');
+            panel.classList.toggle('active');
+            
+            if (panel.classList.contains('active')) {
+                renderNotifications();
+            }
+        }
+        
+        function renderNotifications() {
+            const content = document.getElementById('notificationContent');
+            
+            if (mockNotifications.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔔</div>
+                        <p>暂无通知</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            content.innerHTML = mockNotifications.map(notification => `
+                <div class="notification-item ${!notification.read ? 'unread' : ''}" 
+                     onclick="markAsRead('${notification.id}')">
+                    <div class="notification-title">
+                        <div class="severity-indicator severity-${notification.severity}"></div>
+                        ${notification.title}
+                    </div>
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time">${formatTime(notification.timestamp)}</div>
+                </div>
+            `).join('');
+        }
+        
+        function formatTime(timestamp) {
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diff = now - time;
+            
+            if (diff < 60000) return '刚刚';
+            if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
+            return Math.floor(diff / 86400000) + ' 天前';
+        }
+        
+        function simulateError() {
+            const errorType = document.getElementById('errorType').value;
+            const serviceName = document.getElementById('serviceName').value;
+            const city = document.getElementById('cityName').value;
+            const industry = document.getElementById('industryName').value;
+            
+            const notification = createMockNotification(errorType, serviceName, city, industry);
+            mockNotifications.unshift(notification);
+            
+            updateNotificationBadge();
+            updateAPIStatus();
+            
+            // Show brief feedback
+            showFeedback(`已模拟 ${getErrorTypeDisplay(errorType)} 错误`, 'success');
+        }
+        
+        function simulateSuccess() {
+            const serviceName = document.getElementById('serviceName').value;
+            const city = document.getElementById('cityName').value;
+            const industry = document.getElementById('industryName').value;
+            
+            const notification = createMockNotification('report_success', serviceName, city, industry);
+            mockNotifications.unshift(notification);
+            
+            updateNotificationBadge();
+            updateAPIStatus();
+            
+            showFeedback('已模拟成功通知', 'success');
+        }
+        
+        function createMockNotification(type, service, city, industry) {
+            const serviceDisplayNames = {
+                'kimi': 'Kimi (月之暗面)',
+                'gemini': 'Google Gemini',
+                'doubao': '豆包大模型'
+            };
+            
+            const serviceDisplay = serviceDisplayNames[service] || service;
+            const timestamp = new Date().toISOString();
+            
+            const templates = {
+                'quota_exceeded': {
+                    type: 'api_quota_exceeded',
+                    severity: 'error',
+                    title: `🚫 ${serviceDisplay} API 配额已用完！`,
+                    message: `您使用的 ${serviceDisplay} 服务的免费配额已经用完。建议切换到其他服务或等待配额重置。`
+                },
+                'connection_error': {
+                    type: 'api_connection_error',
+                    severity: 'warning',
+                    title: `❌ 无法连接到 ${serviceDisplay}`,
+                    message: `连接 ${serviceDisplay} 服务时遇到网络问题，请检查网络连接或稍后重试。`
+                },
+                'service_fallback': {
+                    type: 'api_fallback_success',
+                    severity: 'info',
+                    title: `✅ 已自动切换到 ${serviceDisplay}`,
+                    message: `由于首选服务不可用，系统已自动切换到 ${serviceDisplay} 继续为您生成报告。`
+                },
+                'report_success': {
+                    type: 'report_generation_success',
+                    severity: 'success',
+                    title: `✅ 报告生成成功！`,
+                    message: `您的 ${city} ${industry} 产业分析报告已使用 ${serviceDisplay} 生成完成。`
+                },
+                'report_failure': {
+                    type: 'report_generation_failed',
+                    severity: 'error',
+                    title: `❌ 报告生成失败`,
+                    message: `生成 ${city} ${industry} 产业分析报告时遇到问题，请检查服务状态或稍后重试。`
+                }
+            };
+            
+            const template = templates[type] || templates['connection_error'];
+            
+            return {
+                id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                ...template,
+                timestamp: timestamp,
+                read: false
+            };
+        }
+        
+        function getErrorTypeDisplay(type) {
+            const displays = {
+                'quota_exceeded': '配额超限',
+                'connection_error': '连接错误',
+                'service_fallback': '服务回退',
+                'report_success': '报告成功',
+                'report_failure': '报告失败'
+            };
+            return displays[type] || type;
+        }
+        
+        function updateNotificationBadge() {
+            const unreadCount = mockNotifications.filter(n => !n.read).length;
+            showNotificationBadge(unreadCount);
+        }
+        
+        function updateAPIStatus() {
+            // Simulate API status updates based on recent notifications
+            const recentErrors = mockNotifications.filter(n => 
+                new Date() - new Date(n.timestamp) < 300000 && // Last 5 minutes
+                ['error', 'warning'].includes(n.severity)
+            );
+            
+            const statusIndicator = document.getElementById('overallStatus');
+            const errorSummary = document.getElementById('errorSummary');
+            
+            if (recentErrors.length > 0) {
+                statusIndicator.innerHTML = `
+                    <div class="status-dot status-warning"></div>
+                    <span>有警告</span>
+                `;
+                
+                errorSummary.style.display = 'block';
+                document.getElementById('errorDetails').innerHTML = recentErrors.map(error => 
+                    `<div style="margin-bottom: 10px;">
+                        <strong>${error.title}</strong><br>
+                        <small>${error.message}</small>
+                    </div>`
+                ).join('');
+            } else {
+                statusIndicator.innerHTML = `
+                    <div class="status-dot status-healthy"></div>
+                    <span>系统正常</span>
+                `;
+                errorSummary.style.display = 'none';
+            }
+        }
+        
+        function markAsRead(notificationId) {
+            const notification = mockNotifications.find(n => n.id === notificationId);
+            if (notification && !notification.read) {
+                notification.read = true;
+                updateNotificationBadge();
+                renderNotifications();
+            }
+        }
+        
+        function markAllAsRead() {
+            mockNotifications.forEach(n => n.read = true);
+            updateNotificationBadge();
+            renderNotifications();
+            showFeedback('所有通知已标记为已读', 'success');
+        }
+        
+        function clearNotifications() {
+            mockNotifications = [];
+            updateNotificationBadge();
+            renderNotifications();
+            updateAPIStatus();
+            showFeedback('所有通知已清除', 'success');
+        }
+        
+        function showFeedback(message, type) {
+            // Simple feedback display
+            const feedback = document.createElement('div');
+            feedback.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'success' ? '#28a745' : '#dc3545'};
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 10000;
+                font-weight: bold;
+            `;
+            feedback.textContent = message;
+            document.body.appendChild(feedback);
+            
+            setTimeout(() => {
+                document.body.removeChild(feedback);
+            }, 3000);
+        }
+        
+        // Event listeners
+        document.getElementById('notificationBadge').addEventListener('click', toggleNotificationPanel);
+        
+        // Close notification panel when clicking outside
+        document.addEventListener('click', function(event) {
+            const panel = document.getElementById('notificationPanel');
+            const badge = document.getElementById('notificationBadge');
+            
+            if (!panel.contains(event.target) && !badge.contains(event.target)) {
+                panel.classList.remove('active');
+            }
+        });
+        
+        // Initialize
+        updateNotificationBadge();
+        updateAPIStatus();
+        
+        // Simulate some initial notifications for demo
+        setTimeout(() => {
+            mockNotifications.push(createMockNotification('quota_exceeded', 'kimi', '成都', '人工智能'));
+            mockNotifications.push(createMockNotification('service_fallback', 'gemini', '北京', '汽车产业'));
+            updateNotificationBadge();
+            updateAPIStatus();
+        }, 2000);
+    </script>
+</body>
+</html>

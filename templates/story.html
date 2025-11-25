@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据故事 - 区域产业分析小工作台</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    .story-card {
+      transition: all 0.3s ease;
+      border: 2px solid #e9ecef;
+    }
+    .story-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-color: #667eea;
+    }
+    .story-card.selected {
+      border-color: #667eea;
+      background-color: rgba(102, 126, 234, 0.05);
+    }
+    .report-title {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .truncate {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .story-type-selector {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .story-type-card {
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .story-type-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .story-type-card.active {
+      border-color: #667eea;
+      background-color: rgba(102, 126, 234, 0.05);
+    }
+    .scene-card {
+      border-left: 4px solid #667eea;
+      transition: all 0.3s;
+    }
+    .scene-card:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      border-left-width: 6px;
+    }
+    .narration-box {
+      position: relative;
+      padding: 20px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+    }
+    .narration-box:before {
+      content: '"';
+      position: absolute;
+      top: 10px;
+      left: 15px;
+      font-size: 40px;
+      color: rgba(102, 126, 234, 0.2);
+      font-family: Georgia, serif;
+    }
+    .key-points-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      min-height: 300px;
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{{ url_for('index') }}">🎬 数据故事</a>
+      <div class="ms-auto">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">返回首页</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <div class="row mb-4">
+      <div class="col-12">
+        <h2 class="mb-0">
+          <i class="bi bi-book"></i> 数据故事中心
+        </h2>
+        <p class="text-muted">用叙事的方式，解读产业分析报告背后的数据洞察</p>
+      </div>
+    </div>
+
+    <!-- Report Selection -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">
+          <i class="bi bi-file-earmark-text"></i> 选择分析报告
+        </h5>
+        <p class="text-muted">请选择一个已完成的产业分析报告来生成数据故事</p>
+        
+        {% if reports %}
+        <div class="row">
+          {% for report in reports %}
+          <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card story-card h-100" data-report-id="{{ report.report_id }}">
+              <div class="card-body d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <h6 class="card-title report-title truncate" title="{{ report.title }}">
+                      {{ report.title | truncate(30, true) }}
+                    </h6>
+                    <div class="small text-muted">
+                      {% if report.city and report.industry %}
+                        <span class="badge bg-primary me-1">{{ report.city }}</span>
+                        <span class="badge bg-secondary">{{ report.industry }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="mt-auto">
+                  <div class="small text-muted">
+                    <i class="bi bi-calendar"></i> 
+                    <span class="beijing-time" data-utc="{{ report.created_at.isoformat() }}">
+                      {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </span>
+                  </div>
+                  <div class="mt-2">
+                    <span class="badge bg-{{ 'primary' if report.report_type == 'llm' else 'secondary' }} me-1">
+                      {{ 'AI生成' if report.report_type == 'llm' else '上传分析' }}
+                    </span>
+                    <span class="badge bg-success">已完成</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> 暂无可用报告。请先生成或上传产业分析报告。
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Story Type Selection -->
+    <div id="storyTypeSection" class="story-type-selector mb-4" style="display: none;">
+      <div class="card-body">
+        <h5 class="card-title">
+          <i class="bi bi-layer-group"></i> 选择数据故事视角
+        </h5>
+        <p class="text-muted">从不同角度探索产业数据洞察</p>
+        
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <div class="story-type-card active p-3 rounded h-100" data-story-type="industry_overview">
+              <div class="text-center">
+                <div class="mb-2">
+                  <i class="bi bi-globe text-primary" style="font-size: 2rem;"></i>
+                </div>
+                <h6 class="mb-1">产业概览</h6>
+                <p class="small text-muted mb-0">全面展示产业发展现状</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-3 mb-3">
+            <div class="story-type-card p-3 rounded h-100" data-story-type="market_analysis">
+              <div class="text-center">
+                <div class="mb-2">
+                  <i class="bi bi-graph-up text-success" style="font-size: 2rem;"></i>
+                </div>
+                <h6 class="mb-1">市场规模</h6>
+                <p class="small text-muted mb-0">深入分析市场规模与增长</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-3 mb-3">
+            <div class="story-type-card p-3 rounded h-100" data-story-type="ecosystem_insights">
+              <div class="text-center">
+                <div class="mb-2">
+                  <i class="bi bi-sitemap text-info" style="font-size: 2rem;"></i>
+                </div>
+                <h6 class="mb-1">产业生态</h6>
+                <p class="small text-muted mb-0">解读产业生态构成</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-3 mb-3">
+            <div class="story-type-card p-3 rounded h-100" data-story-type="ai_opportunities">
+              <div class="text-center">
+                <div class="mb-2">
+                  <i class="bi bi-robot text-purple" style="font-size: 2rem;"></i>
+                </div>
+                <h6 class="mb-1">AI机会</h6>
+                <p class="small text-muted mb-0">探索AI融合潜力</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="text-center mt-3">
+          <button id="btnGenerateStory" class="btn btn-primary btn-lg">
+            <i class="bi bi-play-circle"></i> 生成数据故事
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="text-center mb-4" style="display: none;">
+      <div class="card">
+        <div class="card-body">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2 mb-0">正在生成数据故事，请稍候...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Story Display -->
+    <div id="storyContainer" style="display: none;">
+      <div class="card">
+        <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="mb-1" id="storyTitle">数据故事</h4>
+              <p class="mb-0 small" id="storyDescription"></p>
+            </div>
+            <div>
+              <span class="badge bg-light text-dark me-2" id="sceneCounter">0/0 场景</span>
+              <button id="btnRefresh" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-clockwise"></i> 重新生成
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <!-- Story Scenes -->
+          <div id="scenesContainer">
+            <!-- Scenes will be dynamically inserted here -->
+          </div>
+          
+          <!-- Navigation -->
+          <div class="mt-4 text-center">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+              <i class="bi bi-house"></i> 返回首页
+            </a>
+            <a href="#" id="btnViewReport" class="btn btn-primary">
+              <i class="bi bi-file-text"></i> 查看完整报告
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Convert UTC time to Beijing time
+    document.addEventListener('DOMContentLoaded', function() {
+      const timeElements = document.querySelectorAll('.beijing-time');
+      timeElements.forEach(element => {
+        const utcTimeStr = element.dataset.utc;
+        if (utcTimeStr) {
+          try {
+            const utcTime = new Date(utcTimeStr);
+            const beijingTime = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
+            const formattedTime = beijingTime.getFullYear() + '-' + 
+              String(beijingTime.getMonth() + 1).padStart(2, '0') + '-' + 
+              String(beijingTime.getDate()).padStart(2, '0') + ' ' + 
+              String(beijingTime.getHours()).padStart(2, '0') + ':' + 
+              String(beijingTime.getMinutes()).padStart(2, '0');
+            element.textContent = formattedTime;
+          } catch (e) {
+            console.error('Error converting time:', e);
+          }
+        }
+      });
+    });
+
+    // Report selection
+    const reportCards = document.querySelectorAll('.story-card');
+    const storyTypeSection = document.getElementById('storyTypeSection');
+    let selectedReportId = null;
+    let selectedStoryType = 'industry_overview';
+
+    reportCards.forEach(card => {
+      card.addEventListener('click', function() {
+        // Remove selection from all cards
+        reportCards.forEach(c => c.classList.remove('selected'));
+        
+        // Add selection to clicked card
+        this.classList.add('selected');
+        
+        // Store selected report ID
+        selectedReportId = this.dataset.reportId;
+        
+        // Show story type selection
+        storyTypeSection.style.display = 'block';
+      });
+    });
+
+    // Story type selection
+    const storyTypeCards = document.querySelectorAll('.story-type-card');
+    storyTypeCards.forEach(card => {
+      card.addEventListener('click', function() {
+        // Remove active class from all cards
+        storyTypeCards.forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked card
+        this.classList.add('active');
+        
+        // Store selected story type
+        selectedStoryType = this.dataset.storyType;
+      });
+    });
+
+    // Generate story button
+    const btnGenerateStory = document.getElementById('btnGenerateStory');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const storyContainer = document.getElementById('storyContainer');
+    
+    btnGenerateStory.addEventListener('click', async function() {
+      if (!selectedReportId) {
+        alert('请先选择一个报告');
+        return;
+      }
+      
+      // Show loading indicator
+      loadingIndicator.style.display = 'block';
+      storyContainer.style.display = 'none';
+      
+      try {
+        const res = await fetch(`/api/report/${selectedReportId}/story?type=${selectedStoryType}`);
+        const story = await res.json();
+        
+        if (story.error) {
+          throw new Error(story.error);
+        }
+        
+        renderStory(story);
+      } catch (error) {
+        alert('生成数据故事失败: ' + error.message);
+        loadingIndicator.style.display = 'none';
+      }
+    });
+
+    // Refresh button
+    const btnRefresh = document.getElementById('btnRefresh');
+    btnRefresh.addEventListener('click', function() {
+      if (selectedReportId) {
+        btnGenerateStory.click();
+      }
+    });
+
+    // Render story
+    function renderStory(story) {
+      // Hide loading indicator
+      loadingIndicator.style.display = 'none';
+      
+      // Show story container
+      storyContainer.style.display = 'block';
+      
+      // Set story title and description
+      document.getElementById('storyTitle').textContent = story.title || '数据故事';
+      document.getElementById('storyDescription').textContent = story.description || '';
+      
+      // Set scene counter
+      const sceneCount = story.scenes ? story.scenes.length : 0;
+      document.getElementById('sceneCounter').textContent = `0/${sceneCount} 场景`;
+      
+      // Set view report button link
+      document.getElementById('btnViewReport').href = `/report/${selectedReportId}`;
+      
+      // Render scenes
+      const scenesContainer = document.getElementById('scenesContainer');
+      scenesContainer.innerHTML = '';
+      
+      if (story.scenes && story.scenes.length > 0) {
+        story.scenes.forEach((scene, index) => {
+          const sceneCard = document.createElement('div');
+          sceneCard.className = 'scene-card mb-4';
+          sceneCard.innerHTML = `
+            <div class="card-body">
+              <!-- Scene Header -->
+              <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-weight: bold;">
+                  ${index + 1}
+                </div>
+                <div>
+                  <h5 class="mb-0">${scene.title}</h5>
+                  <div class="small text-muted">
+                    <i class="bi bi-clock"></i> ${scene.duration || 0}秒
+                    <i class="bi bi-tag ms-2"></i> ${scene.type || '分析'}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Narration -->
+              ${scene.narration ? `
+              <div class="narration-box mb-4">
+                <p class="mb-0 text-dark pl-4">${scene.narration}</p>
+              </div>
+              ` : ''}
+              
+              <!-- Key Points -->
+              ${scene.key_points && scene.key_points.length > 0 ? `
+              <div class="mb-4">
+                <h6 class="mb-3">
+                  <i class="bi bi-list-check"></i> 关键要点
+                </h6>
+                <div class="key-points-grid">
+                  ${scene.key_points.map(point => `
+                    <div class="bg-light p-3 rounded border-start border-primary">
+                      <div class="d-flex">
+                        <i class="bi bi-check-circle-fill text-primary me-2 mt-1"></i>
+                        <span>${point}</span>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+              ` : ''}
+              
+              <!-- Chart -->
+              ${scene.chart_config ? `
+              <div class="chart-container mb-4">
+                <h6 class="mb-3">
+                  <i class="bi bi-bar-chart"></i> 数据可视化
+                </h6>
+                <div id="chart-${index}" style="width: 100%; height: 300px;"></div>
+              </div>
+              ` : ''}
+              
+              <!-- Insight -->
+              ${scene.insight ? `
+              <div class="alert alert-warning">
+                <div class="d-flex">
+                  <i class="bi bi-lightbulb-fill me-2"></i>
+                  <div>
+                    <strong>核心洞察</strong>
+                    <p class="mb-0">${scene.insight}</p>
+                  </div>
+                </div>
+              </div>
+              ` : ''}
+            </div>
+          `;
+          scenesContainer.appendChild(sceneCard);
+          
+          // Render chart if available
+          if (scene.chart_config) {
+            setTimeout(() => {
+              renderChart(`chart-${index}`, scene.chart_config);
+            }, 100);
+          }
+        });
+        
+        // Update scene counter
+        document.getElementById('sceneCounter').textContent = `${sceneCount}/${sceneCount} 场景`;
+      } else {
+        scenesContainer.innerHTML = `
+          <div class="text-center py-5">
+            <i class="bi bi-book" style="font-size: 3rem; color: #ccc;"></i>
+            <h5 class="mt-3">暂无场景数据</h5>
+            <p class="text-muted">当前故事类型可能不包含场景信息</p>
+          </div>
+        `;
+      }
+    }
+
+    // Render chart
+    function renderChart(chartId, chartConfig) {
+      const chartDom = document.getElementById(chartId);
+      if (!chartDom) return;
+      
+      try {
+        let chartOption = {};
+        
+        if (chartConfig.type === 'bar') {
+          chartOption = {
+            title: { text: chartConfig.title || '数据概览', left: 'center' },
+            tooltip: { trigger: 'axis' },
+            xAxis: chartConfig.data.categories ? { type: 'category', data: chartConfig.data.categories } : { type: 'category' },
+            yAxis: { type: 'value' },
+            series: chartConfig.data.series || [{ type: 'bar', data: [10, 22, 28, 23] }]
+          };
+        } else if (chartConfig.type === 'line') {
+          chartOption = {
+            title: { text: chartConfig.title || '趋势分析', left: 'center' },
+            tooltip: { trigger: 'axis' },
+            xAxis: chartConfig.data.categories ? { type: 'category', data: chartConfig.data.categories } : { type: 'category' },
+            yAxis: { type: 'value' },
+            series: chartConfig.data.series || [{ type: 'line', data: [10, 22, 28, 23] }]
+          };
+        } else if (chartConfig.type === 'pie') {
+          chartOption = {
+            title: { text: chartConfig.title || '构成分析', left: 'center' },
+            tooltip: { trigger: 'item' },
+            series: chartConfig.data.series || [{
+              type: 'pie',
+              data: [
+                { value: 35, name: '部分A' },
+                { value: 30, name: '部分B' },
+                { value: 25, name: '部分C' },
+                { value: 10, name: '其他' }
+              ]
+            }]
+          };
+        } else if (chartConfig.type === 'radar') {
+          chartOption = {
+            title: { text: chartConfig.title || '雷达图分析', left: 'center' },
+            radar: chartConfig.data.indicators ? {
+              indicator: chartConfig.data.indicators
+            } : {
+              indicator: [
+                { name: '维度1', max: 100 },
+                { name: '维度2', max: 100 },
+                { name: '维度3', max: 100 },
+                { name: '维度4', max: 100 },
+                { name: '维度5', max: 100 }
+              ]
+            },
+            series: chartConfig.data.series || [{
+              type: 'radar',
+              data: [{ value: [85, 75, 65, 55, 45], name: '评分' }]
+            }]
+          };
+        } else {
+          // Default bar chart
+          chartOption = {
+            title: { text: chartConfig.title || '数据概览', left: 'center' },
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['A','B','C','D'] },
+            yAxis: { type: 'value' },
+            series: [{ type: 'bar', data: [10, 22, 28, 23] }]
+          };
+        }
+        
+        const chart = echarts.init(chartDom);
+        chart.setOption(chartOption);
+        window.addEventListener('resize', () => chart.resize());
+      } catch (e) {
+        chartDom.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100 text-muted"><i class="bi bi-exclamation-triangle me-2"></i>图表加载失败</div>';
+      }
+    }
+  </script>
+</body>
+</html>

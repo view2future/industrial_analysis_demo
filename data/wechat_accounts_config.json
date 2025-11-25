@@ -1,0 +1,38 @@
+[
+  {
+    "accounts": [
+      "四川科技",
+      "天府发布"
+    ],
+    "cities": [
+      {
+        "accounts": [
+          "成都发布"
+        ],
+        "city": "成都市",
+        "districts": [
+          {
+            "accounts": [
+              "成都高新"
+            ],
+            "district": "高新区"
+          },
+          {
+            "district": "武侯区",
+            "accounts": [
+              "武侯发布"
+            ]
+          }
+        ]
+      }
+    ],
+    "province": "四川省"
+  },
+  {
+    "accounts": [
+      "北京发布"
+    ],
+    "cities": [],
+    "province": "北京市"
+  }
+]

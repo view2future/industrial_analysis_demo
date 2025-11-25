@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schemas.tokens.studio/definition.json",
+  "version": "1.0",
+  "tokens": {
+    "color": {
+      "brand": {
+        "primary": { "value": "#4C6FFF" },
+        "secondary": { "value": "#1F2937" },
+        "purple": { "value": "#7C3AED" },
+        "accentNeon": { "value": "#00E7FF" }
+      },
+      "text": {
+        "strong": { "value": "#0F172A" },
+        "muted": { "value": "#475569" }
+      },
+      "status": {
+        "completedStart": { "value": "#22C55E" },
+        "completedEnd": { "value": "#16A34A" },
+        "processingStart": { "value": "#FDE68A" },
+        "processingEnd": { "value": "#F59E0B" },
+        "pendingStart": { "value": "#94A3B8" },
+        "pendingEnd": { "value": "#64748B" },
+        "failedStart": { "value": "#F87171" },
+        "failedEnd": { "value": "#DC2626" }
+      },
+      "bg": {
+        "soft": { "value": "#F6F8FA" }
+      }
+    },
+    "gradient": {
+      "brand": {
+        "default": {
+          "type": "linear",
+          "rotation": 135,
+          "stops": [
+            { "color": "{color.brand.primary}", "position": 0 },
+            { "color": "{color.brand.purple}", "position": 1 }
+          ]
+        }
+      }
+    },
+    "shadow": {
+      "soft": { "value": "0 10px 30px rgba(17,24,39,0.12)" },
+      "strong": { "value": "0 25px 60px rgba(17,24,39,0.25)" },
+      "neuTop": { "value": "-8px -8px 18px rgba(255,255,255,0.6)" },
+      "neuBottom": { "value": "8px 8px 18px rgba(17,24,39,0.14)" }
+    },
+    "radius": {
+      "md": { "value": "12px" },
+      "lg": { "value": "16px" },
+      "xl": { "value": "22px" }
+    },
+    "space": {
+      "1": { "value": "8px" },
+      "2": { "value": "16px" },
+      "3": { "value": "24px" },
+      "4": { "value": "32px" },
+      "5": { "value": "40px" },
+      "6": { "value": "48px" },
+      "7": { "value": "56px" },
+      "8": { "value": "64px" }
+    },
+    "font": {
+      "family": {
+        "primary": { "value": "Plus Jakarta Sans, Inter, SF Pro Display" }
+      }
+    }
+  }
+}
+

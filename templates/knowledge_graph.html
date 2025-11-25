@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识图谱 - 区域产业分析小工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">🔗 知识图谱</a>
+            <div class="ms-auto">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">返回首页</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-list-ul"></i> 选择报告</h5>
+                        <select class="form-select mb-3" id="reportSelect">
+                            <option value="">-- 选择报告 --</option>
+                            {% for report in reports %}
+                            <option value="{{ report.report_id }}">{{ report.title }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <h6 class="mt-4">图谱类型</h6>
+                        <div class="btn-group-vertical w-100" role="group">
+                            <input type="radio" class="btn-check" name="graphType" id="typeAll" value="all" checked>
+                            <label class="btn btn-outline-primary" for="typeAll">
+                                <i class="bi bi-diagram-3"></i> 完整图谱
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="graphType" id="typeCompany" value="company">
+                            <label class="btn btn-outline-primary" for="typeCompany">
+                                <i class="bi bi-building"></i> 企业关系
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="graphType" id="typeTech" value="technology">
+                            <label class="btn btn-outline-primary" for="typeTech">
+                                <i class="bi bi-cpu"></i> 技术关系
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="graphType" id="typePolicy" value="policy">
+                            <label class="btn btn-outline-primary" for="typePolicy">
+                                <i class="bi bi-file-text"></i> 政策关系
+                            </label>
+                        </div>
+
+                        <button class="btn btn-primary w-100 mt-3" id="btnLoadGraph" disabled>
+                            <i class="bi bi-play-circle"></i> 加载图谱
+                        </button>
+
+                        <div class="mt-4" id="statsPanel" style="display: none;">
+                            <h6>图谱统计</h6>
+                            <table class="table table-sm">
+                                <tr><td>节点数</td><td id="nodeCount">-</td></tr>
+                                <tr><td>关系数</td><td id="edgeCount">-</td></tr>
+                                <tr><td>实体类型</td><td id="typeCount">-</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-diagram-3"></i> 知识图谱可视化</h5>
+                        <div id="graphContainer" style="height: 700px; border: 1px solid #ddd;"></div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3" id="instructions">
+                    <strong><i class="bi bi-info-circle"></i> 使用说明</strong>
+                    <ul class="mb-0">
+                        <li>🖱️ 拖拽节点：重新排列布局</li>
+                        <li>🔍 缩放：鼠标滚轮缩放视图</li>
+                        <li>💡 点击节点：查看实体详情</li>
+                        <li>🔗 悬停连线：查看关系类型</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const reportSelect = document.getElementById('reportSelect');
+        const btnLoadGraph = document.getElementById('btnLoadGraph');
+        let currentChart = null;
+
+        reportSelect.addEventListener('change', function() {
+            btnLoadGraph.disabled = !this.value;
+        });
+
+        btnLoadGraph.addEventListener('click', async function() {
+            const reportId = reportSelect.value;
+            const graphType = document.querySelector('input[name="graphType"]:checked').value;
+            
+            if (!reportId) return;
+
+            try {
+                const url = `/api/report/${reportId}/knowledge-graph${graphType !== 'all' ? '?type=' + graphType : ''}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                renderGraph(data, reportId);
+                updateStats(data);
+                
+            } catch (error) {
+                alert('加载知识图谱失败: ' + error.message);
+            }
+        });
+
+        function renderGraph(data, reportId) {
+            if (!currentChart) {
+                currentChart = echarts.init(document.getElementById('graphContainer'));
+            }
+            
+            if (data.graph_config) {
+                currentChart.setOption(data.graph_config);
+                // 溯源：点击节点查询来源上下文
+                currentChart.off('click');
+                currentChart.on('click', async (params) => {
+                    if (!params.name) return;
+                    try {
+                        const res = await fetch(`/api/report/${reportId}/source?query=` + encodeURIComponent(params.name));
+                        const src = await res.json();
+                        alert('溯源结果\n' + (src.matches || []).join('\n\n'));
+                    } catch (e) {}
+                });
+            } else {
+                alert('图谱数据为空');
+            }
+        }
+
+        function updateStats(data) {
+            document.getElementById('statsPanel').style.display = 'block';
+            document.getElementById('nodeCount').textContent = data.node_count || 0;
+            document.getElementById('edgeCount').textContent = data.edge_count || 0;
+            document.getElementById('typeCount').textContent = data.type_count || 0;
+        }
+    </script>
+</body>
+</html>

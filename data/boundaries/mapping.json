@@ -1,0 +1,36 @@
+{
+  "regions": {
+    "成都市武侯区": {
+      "levels": {
+        "city": "https://geo.datav.aliyun.com/areas_v3/bound/510107.json"
+      },
+      "meta": { "source": "geo.datav.aliyun.com", "crs": "WGS84" }
+    },
+    "成都市锦江区": {
+      "levels": {
+        "city": "https://geo.datav.aliyun.com/areas_v3/bound/510104.json"
+      },
+      "meta": { "source": "geo.datav.aliyun.com", "crs": "WGS84" }
+    },
+    "成都市金牛区": {
+      "levels": {
+        "city": "https://geo.datav.aliyun.com/areas_v3/bound/510106.json"
+      },
+      "meta": { "source": "geo.datav.aliyun.com", "crs": "WGS84" }
+    },
+    "北京市海淀区": {
+      "levels": {
+        "city": "https://geo.datav.aliyun.com/areas_v3/bound/110108.json"
+      },
+      "meta": { "source": "geo.datav.aliyun.com", "crs": "WGS84" }
+    },
+    "西安市碑林区": {
+      "levels": {
+        "city": "https://geo.datav.aliyun.com/areas_v3/bound/610103.json"
+      },
+      "meta": { "source": "geo.datav.aliyun.com", "crs": "WGS84" }
+    },
+    "武汉市汉阳区": null
+  },
+  "version": "1.2"
+}

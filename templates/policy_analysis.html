@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>政策解读助手 - 区域产业分析小工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- jsMind Library for Mindmap Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/jsmind@0.7.0/js/jsmind.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsmind@0.7.0/style/jsmind.css" />
+    <!-- Chart.js for Data Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 15px;
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0d6efd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .timeline-content {
+            flex: 1;
+            padding-left: 15px;
+            border-left: 2px solid #dee2e6;
+            padding-bottom: 15px;
+        }
+
+        .radar-chart-container {
+            position: relative;
+        }
+
+        .region-heatmap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">📋 政策解读助手</a>
+            <div class="ms-auto">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">返回首页</a>
+                <a href="{{ url_for('wechat_config_page') }}" class="btn btn-outline-light btn-sm ms-2">配置管理</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="mb-4"><i class="bi bi-file-earmark-ruled"></i> 政策解读助手</h2>
+
+        <ul class="nav nav-tabs" id="policyTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="search-tab" data-bs-toggle="tab" data-bs-target="#searchPane" type="button" role="tab" aria-controls="searchPane" aria-selected="true">智能检索</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#uploadPane" type="button" role="tab" aria-controls="uploadPane" aria-selected="false">上传解析</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="wechat-tab" data-bs-toggle="tab" data-bs-target="#wechatPane" type="button" role="tab" aria-controls="wechatPane" aria-selected="false">微信公众号</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="policyTabsContent">
+            <div class="tab-pane fade show active" id="searchPane" role="tabpanel" aria-labelledby="search-tab">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">智能检索（区域×产业×时间）</h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">区域（省/市/区）</label>
+                                <input type="text" class="form-control" id="regionInput" placeholder="如：四川省 成都市 高新区" value="四川省">
+                                <small class="text-muted">采用GB/T 2260-2022编码（后台自动匹配）</small>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">产业标签（多级）</label>
+                                <input type="text" class="form-control" id="industryTagsInput" placeholder="如：人工智能,AI芯片" value="人工智能">
+                                <small class="text-muted">参考GB/T 4754-2017分类，支持多标签</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">时间范围</label>
+                                <select class="form-select" id="timeRange">
+                                    <option value="3" selected>近3年</option>
+                                    <option value="1">近1年</option>
+                                    <option value="5">近5年</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label">关键词</label>
+                                <input type="text" class="form-control" id="searchKeyword" placeholder="如：资金补贴、税收优惠">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">政策分类</label>
+                                <select class="form-select" id="searchCategory">
+                                    <option value="">全部</option>
+                                    <option value="产业政策">产业政策</option>
+                                    <option value="扶持政策">扶持政策</option>
+                                    <option value="资金支持">资金支持</option>
+                                    <option value="申报指南">申报指南</option>
+                                    <option value="税收目录">税收目录</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-success" id="searchPoliciesBtn"><i class="bi bi-search"></i> 开始检索</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mb-4" aria-live="polite" aria-busy="false">
+                    <div class="card-body">
+                        <h5 class="card-title">搜索结果</h5>
+                        <div id="policySearchResults" class="list-group"></div>
+                    </div>
+                </div>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">数据源与外部链接</h5>
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-6">
+                                <input type="text" id="linkSearchInput" class="form-control" placeholder="搜索链接或数据源">
+                            </div>
+                            <div class="col-md-3">
+                                <select id="linkTypeFilter" class="form-select">
+                                    <option value="">全部类型</option>
+                                    <option value="政策原文">政策原文</option>
+                                    <option value="申报入口">申报入口</option>
+                                    <option value="解释解读">解释解读</option>
+                                    <option value="部门页面">部门页面</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="linkImportanceFilter" class="form-select">
+                                    <option value="">全部重要性</option>
+                                    <option value="high">高</option>
+                                    <option value="medium">中</option>
+                                    <option value="low">低</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-12 col-lg-6">
+                                <h6 class="mb-2">数据源</h6>
+                                <table class="table table-sm" id="dataSourcesTable">
+                                    <thead><tr><th>来源</th><th>名称</th><th>更新时间</th><th>格式</th><th>真实性</th><th>质量</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-2">外部链接</h6>
+                                    <button class="btn btn-outline-secondary btn-sm" id="checkLinksBtn">检测有效性</button>
+                                </div>
+                                <div id="linksList" class="list-group"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="uploadPane" role="tabpanel" aria-labelledby="upload-tab">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">上传政策文档</h5>
+                        <p class="text-muted">支持PDF、Word、TXT格式的政策文件</p>
+                        <form id="policyForm">
+                            <div class="mb-3">
+                                <label class="form-label">选择文件</label>
+                                <input type="file" class="form-control" id="policyFile" accept=".pdf,.doc,.docx,.txt,.md" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">AI模型选择</label>
+                                <select class="form-select" id="llmSelect">
+                                    <option value="kimi" selected>月之暗面 Kimi (默认)</option>
+                                    <option value="ernie">百度 ERNIE Bot</option>
+                                    <option value="traditional">本地NLP模型 (spaCy)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-play-circle"></i> 开始解析</button>
+                        </form>
+
+                        <div id="loadingPolicy" class="text-center" style="display: none;">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p>正在解读政策文档，请稍候...</p>
+                        </div>
+
+                        <div id="policyResults" style="display: none;">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-file-text"></i> 政策元数据</h5>
+                                    <div id="policyMetadata"></div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-star"></i> 政策要点</h5>
+                                    <div id="keyPoints"></div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="bi bi-journal-bookmark"></i> 政策条款</h5>
+                                            <div id="provisions"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="bi bi-check-circle"></i> 申请要求</h5>
+                                            <div id="requirements"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-bar-chart"></i> 量化数据</h5>
+                                    <div id="quantitativeData"></div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-calendar-event"></i> 政策时间轴</h5>
+                                    <div id="timeline"></div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Analysis Section -->
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-diagram-3"></i> 高级分析</h5>
+                                    <div id="industryRelevance"></div>
+                                    <div id="policyStrength"></div>
+                                    <div id="timelinessRegional"></div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-graph-up"></i> 适用性评分</h5>
+                                    <div class="text-center">
+                                        <h1 class="display-4 text-primary" id="applicabilityScore">-</h1>
+                                        <p class="text-muted">总分100分</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visualization Section will be added dynamically by JavaScript -->
+                            <div id="dynamicVisualizations">
+                                <h5>内容可视化</h5>
+                                <div id="visualizationArea" class="row"></div>
+                            </div>
+
+                            <!-- Mindmap Section -->
+                            <div id="mindmapSection" class="card mb-4" style="display: none;">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-diagram-3"></i> 政策思维导图</h5>
+                                    <div id="mindmapContainer" style="width: 100%; height: 500px; border: 1px solid #ddd; overflow: auto;"></div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-outline-primary btn-sm" id="expandAllMindmap">展开全部</button>
+                                        <button class="btn btn-outline-primary btn-sm" id="collapseAllMindmap">折叠全部</button>
+                                        <button class="btn btn-outline-success btn-sm" id="exportMindmap">导出思维导图</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Section will be added dynamically by JavaScript -->
+
+            </div>
+
+            <div class="tab-pane fade" id="wechatPane" role="tabpanel" aria-labelledby="wechat-tab">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-wechat"></i> 微信公众号政策解读</h5>
+                        <p class="text-muted">从微信公众号获取最新的政策解读文章</p>
+
+                        <!-- WeChat Search Form -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">区域</label>
+                                <input type="text" class="form-control" id="wechatRegion" placeholder="如：四川省、成都市" value="四川省">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">产业</label>
+                                <input type="text" class="form-control" id="wechatIndustry" placeholder="如：人工智能、新能源" value="人工智能">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">公众号名称</label>
+                                <input type="text" class="form-control" id="wechatAccount" placeholder="如：四川政策发布">
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mb-4">
+                            <button class="btn btn-primary" id="fetchWechatArticlesBtn">
+                                <i class="bi bi-search"></i> 获取政策文章
+                            </button>
+                            <button class="btn btn-outline-success" id="searchWechatBtn">
+                                <i class="bi bi-search"></i> 搜索文章
+                            </button>
+                            <button class="btn btn-outline-info" id="fetchAccountArticlesBtn">
+                                <i class="bi bi-journal"></i> 获取公众号文章
+                            </button>
+                        </div>
+
+                        <!-- Loading indicator -->
+                        <div id="wechatLoading" class="text-center" style="display: none;">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p>正在获取微信公众号文章，请稍候...</p>
+                        </div>
+
+                        <!-- Search keywords input for searchWechatBtn -->
+                        <div class="row g-3 mb-4 mt-3" id="wechatSearchKeywordsSection" style="display: none;">
+                            <div class="col-md-12">
+                                <label class="form-label">搜索关键词（用逗号分隔）</label>
+                                <input type="text" class="form-control" id="wechatSearchKeywords" placeholder="资金补贴,税收优惠,人才引进">
+                            </div>
+                        </div>
+
+                        <!-- WeChat articles results -->
+                        <div id="wechatArticlesResults" class="row">
+                            <!-- WeChat articles will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">结果展示</h5>
+                <div id="resultContent" style="min-height:200px"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="policyDetailPanel" aria-labelledby="policyDetailLabel">
+        <div class="offcanvas-header">
+            <h5 id="policyDetailLabel">政策详情</h5>
+            <div class="btn-group me-2" role="group" aria-label="字体大小">
+                <button class="btn btn-outline-secondary btn-sm" id="fontMinus" aria-label="减小字体">A-</button>
+                <button class="btn btn-outline-secondary btn-sm" id="fontDefault" aria-label="默认字体">A</button>
+                <button class="btn btn-outline-secondary btn-sm" id="fontPlus" aria-label="增大字体">A+</button>
+            </div>
+            <button class="btn btn-outline-primary btn-sm" id="printBtn" aria-label="打印">打印</button>
+            <button class="btn btn-outline-success btn-sm ms-2" id="downloadBtn" aria-label="下载">下载</button>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="关闭"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="row g-3">
+                <div class="col-12 col-lg-3">
+                    <nav id="tocNav" class="list-group" aria-label="目录"></nav>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <div id="detailLoading" class="text-center" style="display:none">
+                        <div class="spinner-border text-primary" role="status" aria-live="assertive" aria-busy="true"></div>
+                        <p>正在加载正文...</p>
+                    </div>
+                    <div id="detailError" class="alert alert-warning d-none" role="alert">
+                        正文获取失败
+                        <button class="btn btn-link p-0 ms-2" id="retryBtn">重试</button>
+                        <a href="mailto:support@example.com" class="btn btn-link p-0 ms-2">联系支持</a>
+                    </div>
+                    <div id="detailContent" style="font-size:16px; line-height:1.6"></div>
+                    <div class="d-flex justify-content-between align-items-center mt-3" id="paginationBar" style="display:none">
+                        <button class="btn btn-outline-secondary btn-sm" id="prevPage" aria-label="上一页">上一页</button>
+                        <span id="pageInfo" class="text-muted"></span>
+                        <button class="btn btn-outline-secondary btn-sm" id="nextPage" aria-label="下一页">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 智能检索交互
+        let lastSearchPayload = null;
+        let currentDetail = { meta: {}, pages: [], pageIndex: 0, downloadUrl: '' };
+        document.getElementById('searchPoliciesBtn').addEventListener('click', async function() {
+            const region = document.getElementById('regionInput').value.trim();
+            const tagsStr = document.getElementById('industryTagsInput').value.trim();
+            const years = parseInt(document.getElementById('timeRange').value, 10);
+            if (!region || !tagsStr) { alert('请输入区域与产业标签'); return; }
+            const industry_tags = tagsStr.split(',').map(s => s.trim()).filter(Boolean);
+            const payload = { region, region_code: '${placeholder_region_code}', industry_tags, time_range_years: years };
+            lastSearchPayload = payload;
+            try {
+                document.getElementById('loadingPolicy').style.display = 'block';
+                document.getElementById('policyResults').style.display = 'none';
+                const resp = await fetch('/api/policy/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const json = await resp.json();
+                document.getElementById('loadingPolicy').style.display = 'none';
+                if (!json.success) { alert(json.error || '检索失败'); return; }
+                renderAggregatedPolicies(json.data);
+                renderSearchResults(json.data.policies || []);
+                await loadDataSources();
+                await loadLinks();
+            } catch (e) {
+                document.getElementById('loadingPolicy').style.display = 'none';
+                alert('检索失败: ' + e.message);
+            }
+        });
+
+        function renderAggregatedPolicies(data) {
+            document.getElementById('policyResults').style.display = 'block';
+            const policies = data.policies || [];
+            const timeline = data.timeline || [];
+            // 渲染要点（取政策标题）
+            let keyHtml = '<div class="list-group">';
+            policies.slice(0, 8).forEach((p, i) => {
+                keyHtml += `<div class="list-group-item"><span class="badge bg-primary me-2">${i+1}</span>${p.title} <span class="badge bg-light text-dark ms-2">${p.timeliness||''}</span></div>`
+            });
+            keyHtml += '</div>';
+            document.getElementById('keyPoints').innerHTML = keyHtml || '<p class="text-muted">暂无要点</p>';
+            // 渲染时间轴
+            let tHtml = '<div class="list-group">';
+            timeline.forEach(ev => {
+                tHtml += `<div class="list-group-item"><div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${ev.date}</h6><small>${ev.type}</small></div><p class="mb-1">${ev.title}｜${ev.source||''}</p></div>`
+            });
+            tHtml += '</div>';
+            document.getElementById('timeline').innerHTML = tHtml || '<p class="text-muted">暂无时间轴数据</p>';
+        }
+
+        function showPolicyDetailInResultArea(policy) {
+            // Show policy detail in the main result area instead of offcanvas
+            let detailHtml = '<div class="policy-detail-container">';
+            detailHtml += `<h4>${policy.title}</h4>`;
+            detailHtml += '<div class="policy-meta mb-3">';
+            detailHtml += `<p><strong>发布日期：</strong> ${policy.publish_date || 'N/A'}</p>`;
+            detailHtml += `<p><strong>发布机构：</strong> ${policy.source || policy.issuing_authority || 'N/A'}</p>`;
+
+            // Add source information for WeChat articles
+            if (policy.source_account) {
+                detailHtml += `<p><strong>来源公众号：</strong> ${policy.source_account}</p>`;
+                if (policy.official_link) {
+                    detailHtml += `<p><strong>原文链接：</strong> <a href="${policy.official_link}" target="_blank" rel="noopener noreferrer" data-safe-link="1">${policy.official_link}</a></p>`;
+                }
+            } else if (policy.url) {
+                detailHtml += `<p><strong>原文链接：</strong> <a href="${policy.url}" target="_blank" rel="noopener noreferrer" data-safe-link="1">${policy.url}</a></p>`;
+            }
+
+            detailHtml += '</div>';
+
+            // Add content if available
+            if (policy.content_html) {
+                detailHtml += '<div class="policy-content">';
+                detailHtml += policy.content_html;
+                detailHtml += '</div>';
+            } else if (policy.summary) {
+                detailHtml += '<div class="policy-summary">';
+                detailHtml += `<p>${policy.summary}</p>`;
+                detailHtml += '</div>';
+            } else if (policy.content) {
+                detailHtml += '<div class="policy-content">';
+                detailHtml += `<p>${policy.content}</p>`;
+                detailHtml += '</div>';
+            }
+
+            detailHtml += '</div>';
+
+            document.getElementById('resultContent').innerHTML = detailHtml;
+            bindSafeLinkClicks();
+        }
+
+        function showSafeLinkModal(url) {
+            const modalHtml = `<div class="modal" tabindex="-1" id="safeModal"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">外部链接安全提示</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div><div class="modal-body"><p>即将打开外部链接：</p><p class="text-break">${url}</p><p class="small text-muted">请确认链接来源可信，注意信息安全。</p></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" id="confirmOpen">继续打开</button></div></div></div></div>`;
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = modalHtml;
+            document.body.appendChild(wrapper);
+            const modal = new bootstrap.Modal(wrapper.querySelector('#safeModal'));
+            modal.show();
+            wrapper.querySelector('#confirmOpen').onclick = async () => {
+                try {
+                    await fetch('/api/links/click', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url })
+                    });
+                } catch {}
+                window.open(url, '_blank', 'noopener');
+                modal.hide();
+                document.body.removeChild(wrapper);
+            };
+            wrapper.querySelector('.btn-close').onclick = () => { document.body.removeChild(wrapper); };
+        }
+
+        function renderSearchResults(policies) {
+            const container = document.getElementById('policySearchResults');
+            container.innerHTML = '';
+            if (!policies || policies.length === 0) {
+                container.innerHTML = '<p class="text-muted">暂无搜索结果</p>';
+                return;
+            }
+            const kw = (document.getElementById('searchKeyword').value || '').trim();
+            const cat = document.getElementById('searchCategory').value || '';
+            const filtered = policies.filter(p => {
+                const matchKw = kw ? ((p.title||'').includes(kw) || (p.summary||'').includes(kw)) : true;
+                const matchCat = cat ? ((p.type||'') === cat) : true;
+                return matchKw && matchCat;
+            });
+            filtered.forEach((p, idx) => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item d-flex justify-content-between align-items-start';
+                let metaHtml = `<div class="ms-2 me-auto"><div class="fw-bold">${p.title}</div>`;
+                metaHtml += `<small class="text-muted">发布日期：${p.publish_date||'-'}｜发布机构：${p.source||'-'}`;
+
+                // Add source for WeChat articles
+                if (p.source_account) {
+                    metaHtml += `｜来源：${p.source_account}`;
+                    if (p.official_link) {
+                        metaHtml += ` (<a href="${p.official_link}" target="_blank" rel="noopener noreferrer" data-safe-link="1">原文链接</a>)`;
+                    }
+                } else if (p.url) {
+                    metaHtml += ` (<a href="${p.url}" target="_blank" rel="noopener noreferrer" data-safe-link="1">原文链接</a>)`;
+                }
+
+                metaHtml += `</small></div>`;
+
+                const actionHtml = `<button class="btn btn-outline-primary btn-sm" data-index="${idx}" aria-label="查看详情">查看详情</button>`;
+                item.innerHTML = metaHtml + actionHtml;
+                container.appendChild(item);
+            });
+            container.querySelectorAll('a[role="button"],button[aria-label="查看详情"],a[data-safe-link]').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (el.getAttribute('data-safe-link')) {
+                        e.preventDefault();
+                        const url = el.href;
+                        showSafeLinkModal(url);
+                        return;
+                    }
+
+                    const i = parseInt(el.getAttribute('data-index'), 10);
+                    const policy = filtered[i];
+                    showPolicyDetailInResultArea(policy); // Show in result area instead of offcanvas
+                });
+            });
+        }
+
+        async function openPolicyDetail(policy) {
+            // Use the new function to show in result area instead of offcanvas
+            showPolicyDetailInResultArea(policy);
+        }
+
+        async function loadPolicyContent(policy) {
+            document.getElementById('detailError').classList.add('d-none');
+            document.getElementById('detailLoading').style.display = 'block';
+            document.getElementById('detailContent').innerHTML = '';
+            document.getElementById('paginationBar').style.display = 'none';
+            try {
+                const resp = await fetch('/api/policy/content', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: policy.url, title: policy.title, source: policy.source, publish_date: policy.publish_date })
+                });
+                const data = await resp.json();
+                document.getElementById('detailLoading').style.display = 'none';
+                if (!data.success) { throw new Error(data.error || '获取正文失败'); }
+                currentDetail.meta = data.meta || {};
+                currentDetail.pages = Array.isArray(data.content_pages) ? data.content_pages : [data.content_html || ''];
+                currentDetail.pageIndex = 0;
+                currentDetail.downloadUrl = data.download_url || '';
+                renderDetailPage(0);
+                renderToc(data.headings || []);
+                bindDetailControls();
+                document.getElementById('resultContent').innerHTML = data.content_html || '';
+                bindSafeLinkClicks();
+
+                // Try to generate mindmap from content
+                try {
+                    setTimeout(() => {
+                        if (typeof generateMindmapFromAnalysis === 'function') {
+                            generateMindmapFromAnalysis(data.content_html || '');
+                        }
+                    }, 100);
+                } catch (e) {
+                    console.warn('Could not generate mindmap:', e.message);
+                }
+            } catch (e) {
+                document.getElementById('detailLoading').style.display = 'none';
+                const err = document.getElementById('detailError');
+                err.classList.remove('d-none');
+                document.getElementById('retryBtn').onclick = () => loadPolicyContent(policy);
+            }
+        }
+
+        function renderToc(headings) {
+            const nav = document.getElementById('tocNav');
+            nav.innerHTML = '';
+            if (!headings || headings.length === 0) {
+                nav.innerHTML = '<span class="text-muted">暂无目录</span>';
+                return;
+            }
+            headings.forEach((h, i) => {
+                const a = document.createElement('a');
+                a.className = 'list-group-item list-group-item-action';
+                a.href = '#';
+                a.textContent = h.text;
+                a.setAttribute('data-index', i);
+                a.addEventListener('click', e => { e.preventDefault(); });
+                nav.appendChild(a);
+            });
+        }
+
+        function renderDetailPage(index) {
+            currentDetail.pageIndex = Math.max(0, Math.min(index, currentDetail.pages.length - 1));
+            document.getElementById('detailContent').innerHTML = currentDetail.pages[currentDetail.pageIndex] || '';
+            const bar = document.getElementById('paginationBar');
+            if (currentDetail.pages.length > 1) {
+                bar.style.display = 'flex';
+                document.getElementById('pageInfo').textContent = `${currentDetail.pageIndex + 1} / ${currentDetail.pages.length}`;
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        function bindDetailControls() {
+            document.getElementById('prevPage').onclick = () => renderDetailPage(currentDetail.pageIndex - 1);
+            document.getElementById('nextPage').onclick = () => renderDetailPage(currentDetail.pageIndex + 1);
+            let size = 16;
+            document.getElementById('fontMinus').onclick = () => { size = Math.max(12, size - 1); document.getElementById('detailContent').style.fontSize = size + 'px'; };
+            document.getElementById('fontDefault').onclick = () => { size = 16; document.getElementById('detailContent').style.fontSize = size + 'px'; };
+            document.getElementById('fontPlus').onclick = () => { size = Math.min(24, size + 1); document.getElementById('detailContent').style.fontSize = size + 'px'; };
+            document.getElementById('printBtn').onclick = () => {
+                const w = window.open('', '_blank');
+                w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>打印</title></head><body>' + document.getElementById('detailContent').innerHTML + '</body></html>');
+                w.document.close();
+                w.focus();
+                w.print();
+                w.close();
+            };
+            document.getElementById('downloadBtn').onclick = () => {
+                if (currentDetail.downloadUrl) { window.location.href = currentDetail.downloadUrl; return; }
+                const blob = new Blob([document.getElementById('detailContent').innerHTML], { type: 'text/html;charset=utf-8' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = (currentDetail.meta.title || '政策内容') + '.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+        }
+
+        document.getElementById('policyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('policyFile');
+
+            if (!fileInput.files[0]) {
+                alert('请选择文件');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            const selectedLLM = document.getElementById('llmSelect').value;
+            formData.append('llm_service', selectedLLM);
+
+            document.getElementById('loadingPolicy').style.display = 'block';
+            document.getElementById('policyResults').style.display = 'none';
+            document.getElementById('mindmapSection').style.display = 'none'; // Hide mindmap section initially
+
+            try {
+                const response = await fetch('/api/policy-analysis', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                document.getElementById('loadingPolicy').style.display = 'none';
+                document.getElementById('policyResults').style.display = 'block';
+
+                // Render policy metadata with summary
+                renderPolicyMetadata(data.policy_metadata, data.summary || data.key_points?.[0] || '');
+
+                // Render key points
+                renderKeyPoints(data.key_points);
+
+                // Render provisions
+                renderProvisions(data.provisions);
+
+                // Render requirements
+                renderRequirements(data.requirements);
+
+                // Render quantitative data
+                renderQuantitativeData(data.quantitative_data);
+
+                // Render timeline
+                renderTimeline(data.timeline);
+
+                // Render advanced analysis
+                renderAdvancedAnalysis(data.analysis);
+
+                // Render visualization data
+                renderVisualizations(data.visualization_data);
+
+                // Update applicability score
+                const applicabilityScoreElement = document.getElementById('applicabilityScore');
+                if (applicabilityScoreElement) {
+                    applicabilityScoreElement.textContent = data.applicability_score || '-';
+                }
+
+                // Update full text display
+                document.getElementById('resultContent').innerHTML = (data.full_text || '').replaceAll('\n','<br/>');
+
+                bindSafeLinkClicks();
+
+                // Generate and render mindmap after the main analysis
+                // Using setTimeout to allow main content to load first
+                setTimeout(() => {
+                    // Wait a bit more to ensure jsMind is loaded, and check if it's available
+                    const checkAndGenerateMindmap = () => {
+                        if (typeof jsMind !== 'undefined') {
+                            try {
+                                // Attempt to generate mindmap from the analysis result
+                                generateMindmapFromAnalysis(data);
+                            } catch (error) {
+                                console.error('Mindmap generation failed:', error);
+                                document.getElementById('mindmapSection').style.display = 'none';
+                            }
+                        } else {
+                            // jsMind might still be loading, try again after a short delay
+                            setTimeout(() => {
+                                if (typeof jsMind !== 'undefined') {
+                                    try {
+                                        generateMindmapFromAnalysis(data);
+                                    } catch (error) {
+                                        console.error('Mindmap generation failed:', error);
+                                        document.getElementById('mindmapSection').style.display = 'none';
+                                    }
+                                } else {
+                                    console.warn('jsMind library not available, skipping mindmap generation');
+                                    document.getElementById('mindmapSection').style.display = 'none';
+                                }
+                            }, 500);
+                        }
+                    };
+
+                    // Call immediately and if not ready, try again
+                    checkAndGenerateMindmap();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Policy analysis error:', error);
+                alert('政策解读失败: ' + error.message);
+                document.getElementById('loadingPolicy').style.display = 'none';
+            }
+        });
+
+
+        function renderSemanticAnalysis(analysis) {
+            if (!analysis) {
+                document.getElementById('semanticAnalysis').innerHTML = '<p class="text-muted">语义分析结果加载中...</p>';
+                return;
+            }
+
+            // If it's the new format with detailed semantic analysis
+            if (analysis.semantic_content) {
+                let html = '<div class="list-group">';
+                analysis.semantic_content.forEach((section, index) => {
+                    html += `<div class="list-group-item">
+                        <h6 class="mb-1">${section.title || '分析段落 ' + (index + 1)}</h6>
+                        <p class="mb-1">${section.summary || section.content || ''}</p>
+                        <span class="badge bg-secondary">${section.category || '未分类'}</span>
+                    </div>`;
+                });
+                html += '</div>';
+                document.getElementById('semanticAnalysis').innerHTML = html;
+            } else {
+                // Fallback to the original analysis format
+                let html = '<div class="list-group">';
+                if (analysis.industry_relevance) {
+                    html += `<div class="list-group-item">
+                        <h6 class="mb-1">产业链分析</h6>
+                        <p class="mb-1">上游: ${(analysis.industry_relevance.value_chain?.upstream || []).join(', ') || '无'}</p>
+                        <p class="mb-1">中游: ${(analysis.industry_relevance.value_chain?.midstream || []).join(', ') || '无'}</p>
+                        <p class="mb-1">下游: ${(analysis.industry_relevance.value_chain?.downstream || []).join(', ') || '无'}</p>
+                    </div>`;
+                }
+                if (analysis.policy_strength) {
+                    html += `<div class="list-group-item">
+                        <h6 class="mb-1">政策力度评估</h6>
+                        <p class="mb-1">资金等级: ${analysis.policy_strength.funding_level || '未评估'}</p>
+                        <p class="mb-1">措施多样性: ${analysis.policy_strength.measure_diversity || 0} 项</p>
+                    </div>`;
+                }
+                html += '</div>';
+                document.getElementById('semanticAnalysis').innerHTML = html || '<p class="text-muted">暂无语义分析结果</p>';
+            }
+        }
+
+        function renderContentClassification(classification) {
+            if (!classification || classification.length === 0) {
+                document.getElementById('contentClassification').innerHTML = '<p class="text-muted">内容分类归纳加载中...</p>';
+                return;
+            }
+
+            let html = '<div class="row">';
+            if (Array.isArray(classification)) {
+                // If it's an array of key points
+                classification.slice(0, 6).forEach((point, index) => {
+                    html += `<div class="col-md-6 mb-2">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">要点 ${index + 1}</h6>
+                                <p class="card-text">${point || '内容加载中...'}</p>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            } else if (typeof classification === 'object') {
+                // If it's a structured classification object
+                for (const category in classification) {
+                    const items = Array.isArray(classification[category]) ? classification[category] : [classification[category]];
+                    html += `<div class="col-md-6 mb-2">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">${category}</h6>`;
+                    items.slice(0, 3).forEach(item => {
+                        html += `<p class="card-text">${item || '内容加载中...'}</p>`;
+                    });
+                    html += '</div></div></div>';
+                }
+            }
+            html += '</div>';
+            document.getElementById('contentClassification').innerHTML = html;
+        }
+
+        function renderVisualizations(visualData) {
+            if (!visualData) {
+                document.getElementById('visualizationArea').innerHTML = '<div class="alert alert-info">正在生成内容可视化图表...</div>';
+                return;
+            }
+
+            let html = '';
+
+            // Policy timeline visualization - Enhanced visualization
+            const timelineData = visualData.timeline_chart || {};
+            if (timelineData.dates && timelineData.dates.length > 0 && timelineData.events) {
+                html += `
+                <div class="col-md-12">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">政策时间轴</h6>
+                            <div class="timeline-container" style="max-height: 300px; overflow-y: auto;">
+                                <div class="timeline">
+                `;
+                for (let i = 0; i < timelineData.dates.length; i++) {
+                    const date = timelineData.dates[i] || '待定';
+                    const event = timelineData.events[i] || '事件';
+                    html += `
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <i class="bi bi-calendar-event"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">${date}</h6>
+                            <p class="mb-0">${event}</p>
+                        </div>
+                    </div>
+                    `;
+                }
+                html += `
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // Industry network visualization - Enhanced visualization
+            const networkData = visualData.industry_network || {};
+            if (networkData.nodes && networkData.nodes.length > 0) {
+                html += `
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">产业链关联图</h6>
+                            <div class="industry-network">
+                                <ul class="list-group">
+                `;
+                for (let i = 0; i < Math.min(networkData.nodes.length, 5); i++) {
+                    const node = networkData.nodes[i];
+                    html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>${node.name}</span>
+                        <span class="badge bg-primary rounded-pill">${node.category || '类别'}</span>
+                    </li>
+                    `;
+                }
+                html += `
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // Coverage heatmap - Enhanced visualization
+            const heatmapData = visualData.heatmap_data || {};
+            if (heatmapData.regions && heatmapData.regions.length > 0) {
+                html += `
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">区域覆盖热力图</h6>
+                            <div class="region-heatmap">
+                `;
+                for (let i = 0; i < heatmapData.regions.length; i++) {
+                    const region = heatmapData.regions[i];
+                    const intensity = heatmapData.intensity && heatmapData.intensity[i] ? heatmapData.intensity[i] : 50;
+                    const intensityClass = intensity > 75 ? 'bg-success' : intensity > 50 ? 'bg-warning' : 'bg-info';
+                    html += `
+                    <span class="badge ${intensityClass}" style="margin: 2px; padding: 6px 10px; display: inline-block; min-width: 80px;">
+                        ${region} <span class="badge bg-light text-dark">${intensity}%</span>
+                    </span>
+                    `;
+                }
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // Radar chart visualization - Enhanced visualization
+            const radarData = visualData.radar_chart || {};
+            if (radarData.dimensions && radarData.dimensions.length > 0 && radarData.values) {
+                html += `
+                <div class="col-md-12">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">政策支持力度雷达图</h6>
+                            <div class="radar-chart-container" style="height: 300px;">
+                                <canvas id="policyRadarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+                // Add chart rendering after HTML is inserted
+                setTimeout(() => {
+                    renderRadarChart(radarData.dimensions, radarData.values);
+                }, 100);
+            }
+
+            // If no visualizations are available, show a message
+            if (!html) {
+                html = '<div class="col-12"><div class="alert alert-info">暂无可视化数据</div></div>';
+            }
+
+            document.getElementById('visualizationArea').innerHTML = html;
+        }
+
+        // Function to render radar chart using Chart.js
+        function renderRadarChart(dimensions, values) {
+            const ctx = document.getElementById('policyRadarChart').getContext('2d');
+
+            // Make sure values are numbers and within 0-100 range for proper display
+            const normalizedValues = values.map(v => {
+                const num = parseFloat(v);
+                return isNaN(num) ? 0 : Math.min(Math.max(num, 0), 100);
+            });
+
+            // If we have more than 6 dimensions, limit to 6 for clarity
+            const displayDimensions = dimensions.length > 6 ? dimensions.slice(0, 6) : dimensions;
+            const displayValues = normalizedValues.length > 6 ? normalizedValues.slice(0, 6) : normalizedValues;
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: displayDimensions,
+                    datasets: [{
+                        label: '政策支持力度',
+                        data: displayValues,
+                        backgroundColor: 'rgba(103, 58, 183, 0.2)',
+                        borderColor: 'rgba(103, 58, 183, 1)',
+                        pointBackgroundColor: 'rgba(103, 58, 183, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(103, 58, 183, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 25
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize jsMind for mindmap
+        let jm = null;
+
+        function initMindmap() {
+            // Check if jsMind library is available
+            if (typeof jsMind === 'undefined') {
+                console.error('jsMind library is not loaded');
+                document.getElementById('mindmapSection').style.display = 'none';
+                return null;
+            }
+
+            if (jm) {
+                try {
+                    jm.remove();
+                } catch(e) {
+                    // If remove fails, just set to null
+                    jm = null;
+                }
+            }
+
+            const options = {
+                container: 'mindmapContainer',
+                editable: false,
+                theme: 'primary'
+            };
+
+            try {
+                jm = new jsMind(options);
+                return jm;
+            } catch(e) {
+                console.error('Error initializing jsMind:', e);
+                document.getElementById('mindmapSection').style.display = 'none';
+                return null;
+            }
+        }
+
+        // Function to render mindmap from API data
+        function renderMindmap(mindmapData) {
+            if (!mindmapData) {
+                console.error('No mindmap data provided');
+                return;
+            }
+
+            // Check if jsMind library is available
+            if (typeof jsMind === 'undefined') {
+                console.error('jsMind library is not loaded');
+                document.getElementById('mindmapSection').style.display = 'none';
+                return;
+            }
+
+            const jm = initMindmap();
+
+            // Set the data to the mindmap
+            jm.show(mindmapData); // Pass the mindmap data directly
+
+            // Show the mindmap section
+            document.getElementById('mindmapSection').style.display = 'block';
+        }
+
+        // Function to generate mindmap from analysis result (local generation)
+        function generateMindmapFromAnalysis(data) {
+            try {
+                // Check if jsMind library is available
+                if (typeof jsMind === 'undefined') {
+                    console.error('jsMind library is not loaded');
+                    document.getElementById('mindmapSection').style.display = 'none';
+                    return;
+                }
+
+                // Create mindmap data from the analysis result
+                const mindmapData = createMindmapStructure(data);
+
+                if (mindmapData) {
+                    renderMindmap(mindmapData);  // Pass mindmapData directly, not as {data: mindmapData}
+                } else {
+                    document.getElementById('mindmapSection').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error creating mindmap from analysis:', error);
+                document.getElementById('mindmapSection').style.display = 'none';
+            }
+        }
+
+        // Create mindmap structure from analysis data
+        function createMindmapStructure(data) {
+            try {
+                // Root node
+                const rootNode = {
+                    id: 'root',
+                    topic: data.policy_metadata?.title || '政策分析',
+                    children: []
+                };
+
+                // Add metadata as branches
+                if (data.policy_metadata) {
+                    const metaChildren = [];
+
+                    if (data.policy_metadata.issuing_authority) {
+                        metaChildren.push({id: 'issuing_auth', topic: `发布机构: ${data.policy_metadata.issuing_authority}`});
+                    }
+                    if (data.policy_metadata.publication_date) {
+                        metaChildren.push({id: 'pub_date', topic: `发布日期: ${data.policy_metadata.publication_date}`});
+                    }
+                    if (data.policy_metadata.applicable_regions && data.policy_metadata.applicable_regions.length > 0) {
+                        metaChildren.push({id: 'regions', topic: `适用地区: ${data.policy_metadata.applicable_regions.join(', ')}`});
+                    }
+                    if (data.policy_metadata.key_industries && data.policy_metadata.key_industries.length > 0) {
+                        metaChildren.push({id: 'industries', topic: `重点产业: ${data.policy_metadata.key_industries.join(', ')}`});
+                    }
+
+                    if (metaChildren.length > 0) {
+                        rootNode.children.push({
+                            id: 'metadata',
+                            topic: '基本信息',
+                            children: metaChildren
+                        });
+                    }
+                }
+
+                // Add key provisions
+                if (data.provisions && data.provisions.length > 0) {
+                    const provChildren = data.provisions.slice(0, 5).map((prov, idx) => {
+                        const topic = typeof prov === 'string' ? prov : (prov.description || prov.type || '');
+                        return {id: `prov_${idx}`, topic: topic};
+                    }).filter(child => child.topic && child.topic.trim() !== '');
+
+                    if (provChildren.length > 0) {
+                        rootNode.children.push({
+                            id: 'provisions',
+                            topic: '政策条款',
+                            children: provChildren
+                        });
+                    }
+                }
+
+                // Add key requirements
+                if (data.requirements && data.requirements.length > 0) {
+                    const reqChildren = data.requirements.slice(0, 5).map((req, idx) => {
+                        const topic = typeof req === 'string' ? req : (req.requirement || req.description || '');
+                        return {id: `req_${idx}`, topic: topic};
+                    }).filter(child => child.topic && child.topic.trim() !== '');
+
+                    if (reqChildren.length > 0) {
+                        rootNode.children.push({
+                            id: 'requirements',
+                            topic: '申请要求',
+                            children: reqChildren
+                        });
+                    }
+                }
+
+                // Add quantitative data
+                if (data.quantitative_data) {
+                    const quantChildren = [];
+
+                    if (data.quantitative_data.amounts && Array.isArray(data.quantitative_data.amounts) && data.quantitative_data.amounts.length > 0) {
+                        const amounts = data.quantitative_data.amounts.slice(0, 3).map((amt, idx) => {
+                            const topic = typeof amt === 'object' ? `${amt.amount || ''} ${amt.unit || ''}`.trim() : String(amt);
+                            return {id: `amount_${idx}`, topic: topic || `金额${idx+1}`};
+                        }).filter(child => child.topic && child.topic.trim() !== '');
+                        if (amounts.length > 0) {
+                            quantChildren.push({
+                                id: 'amounts',
+                                topic: `资金支持 (${amounts.length})`,
+                                children: amounts
+                            });
+                        }
+                    }
+
+                    if (data.quantitative_data.thresholds && Array.isArray(data.quantitative_data.thresholds) && data.quantitative_data.thresholds.length > 0) {
+                        const thresholds = data.quantitative_data.thresholds.slice(0, 3).map((thresh, idx) => {
+                            return {id: `thresh_${idx}`, topic: String(thresh) || `门槛${idx+1}`};
+                        }).filter(child => child.topic && child.topic.trim() !== '');
+                        if (thresholds.length > 0) {
+                            quantChildren.push({
+                                id: 'thresholds',
+                                topic: `门槛条件 (${thresholds.length})`,
+                                children: thresholds
+                            });
+                        }
+                    }
+
+                    if (data.quantitative_data.ratios && Array.isArray(data.quantitative_data.ratios) && data.quantitative_data.ratios.length > 0) {
+                        const ratios = data.quantitative_data.ratios.slice(0, 3).map((ratio, idx) => {
+                            return {id: `ratio_${idx}`, topic: String(ratio) || `比例${idx+1}`};
+                        }).filter(child => child.topic && child.topic.trim() !== '');
+                        if (ratios.length > 0) {
+                            quantChildren.push({
+                                id: 'ratios',
+                                topic: `比例数据 (${ratios.length})`,
+                                children: ratios
+                            });
+                        }
+                    }
+
+                    if (quantChildren.length > 0) {
+                        rootNode.children.push({
+                            id: 'quantitative',
+                            topic: '量化数据',
+                            children: quantChildren
+                        });
+                    }
+                }
+
+                // Add timeline items
+                if (data.timeline && data.timeline.length > 0) {
+                    const timelineChildren = data.timeline.slice(0, 5).map((evt, idx) => {
+                        let topic = '';
+                        if (typeof evt === 'string') {
+                            topic = evt;
+                        } else {
+                            const date = evt.date || '';
+                            const content = evt.event || evt.content || `事件${idx+1}`;
+                            topic = date ? `${date}: ${content}` : content;
+                        }
+                        return {id: `timeline_${idx}`, topic: topic};
+                    }).filter(child => child.topic && child.topic.trim() !== '');
+
+                    if (timelineChildren.length > 0) {
+                        rootNode.children.push({
+                            id: 'timeline',
+                            topic: '时间规划',
+                            children: timelineChildren
+                        });
+                    }
+                }
+
+                // Add key points
+                if (data.key_points && data.key_points.length > 0) {
+                    const kpChildren = data.key_points.slice(0, 5).map((kp, idx) => {
+                        const topic = typeof kp === 'string' ? kp : (kp.title || kp.content || `要点${idx+1}`);
+                        return {id: `kp_${idx}`, topic: topic};
+                    }).filter(child => child.topic && child.topic.trim() !== '');
+
+                    if (kpChildren.length > 0) {
+                        rootNode.children.push({
+                            id: 'key_points',
+                            topic: '关键要点',
+                            children: kpChildren
+                        });
+                    }
+                }
+
+                return rootNode.children.length > 0 ? rootNode : null;
+            } catch (error) {
+                console.error('Error creating mindmap structure:', error);
+                return null;
+            }
+        }
+
+        // Function to load and display mindmap (kept for compatibility but won't be called)
+        function loadAndRenderMindmap(formData) {
+            console.warn('loadAndRenderMindmap is deprecated, using local generation instead');
+        }
+
+        // New render functions for the enhanced API response
+        function renderPolicyMetadata(metadata, summary) {
+            if (!metadata) return;
+
+            let html = '';
+
+            // Add summary prominently at the top if available
+            if (summary) {
+                html += `<div class="alert alert-primary">
+                    <h6><strong>📋 政策摘要</strong></h6>
+                    <p class="mb-0">${summary}</p>
+                </div>`;
+            }
+
+            html += '<div class="row"><div class="col-md-6"><table class="table table-sm">';
+            html += `<tr><td><strong>政策标题</strong></td><td>${metadata.title || 'N/A'}</td></tr>`;
+            html += `<tr><td><strong>发文机关</strong></td><td>${metadata.issuing_authority || 'N/A'}</td></tr>`;
+            html += `<tr><td><strong>发布日期</strong></td><td>${metadata.publication_date || 'N/A'}</td></tr>`;
+            html += '</table></div>';
+
+            html += '<div class="col-md-6"><table class="table table-sm">';
+            html += `<tr><td><strong>适用区域</strong></td><td>${(metadata.applicable_regions || []).join(', ') || 'N/A'}</td></tr>`;
+            html += `<tr><td><strong>重点产业</strong></td><td>${(metadata.key_industries || []).join(', ') || 'N/A'}</td></tr>`;
+            html += '</table></div></div>';
+
+            document.getElementById('policyMetadata').innerHTML = html || '<p class="text-muted">暂无元数据</p>';
+        }
+
+        function renderKeyPoints(points) {
+            if (!points || points.length === 0) {
+                document.getElementById('keyPoints').innerHTML = '<p class="text-muted">暂无要点</p>';
+                return;
+            }
+
+            let html = '<div class="list-group">';
+            points.forEach((point, index) => {
+                html += `<div class="list-group-item">
+                    <span class="badge bg-primary me-2">${index + 1}</span>${point}
+                </div>`;
+            });
+            html += '</div>';
+            document.getElementById('keyPoints').innerHTML = html;
+        }
+
+        function renderProvisions(provisions) {
+            const provisionsElement = document.getElementById('provisions');
+            if (!provisionsElement) return; // Element doesn't exist, skip rendering
+
+            if (!provisions || provisions.length === 0) {
+                provisionsElement.innerHTML = '<p class="text-muted">暂无政策条款</p>';
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
+            html += '<thead><tr><th>条款类型</th><th>内容描述</th></tr></thead><tbody>';
+            provisions.forEach(prov => {
+                const description = typeof prov === 'string' ? prov : (prov.description || prov.type || 'N/A');
+                html += `<tr>
+                    <td><strong>${prov.type || '政策条款'}</strong></td>
+                    <td>${description}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            document.getElementById('provisions').innerHTML = html;
+        }
+
+        function renderRequirements(requirements) {
+            const requirementsElement = document.getElementById('requirements');
+            if (!requirementsElement) return; // Element doesn't exist, skip rendering
+
+            if (!requirements || requirements.length === 0) {
+                requirementsElement.innerHTML = '<p class="text-muted">暂无申请要求</p>';
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table class="table table-sm table-striped">';
+            html += '<thead><tr><th>要求类型</th><th>具体内容</th></tr></thead><tbody>';
+            requirements.forEach(req => {
+                const requirement = typeof req === 'string' ? req : (req.requirement || 'N/A');
+                const reqType = typeof req === 'string' ? '要求' : (req.type || '要求');
+
+                html += `<tr>
+                    <td><strong>${reqType}</strong></td>
+                    <td>${requirement}</td>
+                </tr>`;
+            });
+            html += '</tbody></table></div>';
+            document.getElementById('requirements').innerHTML = html;
+        }
+
+        function renderQuantitativeData(quantitativeData) {
+            const quantElement = document.getElementById('quantitativeData');
+            if (!quantElement) return; // Element doesn't exist, skip rendering
+
+            if (!quantitativeData || (!quantitativeData.amounts && !quantitativeData.thresholds && !quantitativeData.ratios && !quantitativeData.quantitative_indicators)) {
+                quantElement.innerHTML = '<p class="text-muted">暂无量化数据</p>';
+                return;
+            }
+
+            let html = '';
+
+            // Special display for dedicated quantitative indicators (these should be highlighted)
+            const quantIndicators = quantitativeData.quantitative_indicators || [];
+            if (quantIndicators.length > 0) {
+                html += '<div class="alert alert-info"><h6><strong>📊 重要量化指标</strong></h6><ul class="mb-0">';
+                quantIndicators.forEach(indicator => {
+                    html += `<li><strong style="color: #d9534f; font-size: 1.1em;">${typeof indicator === 'string' ? indicator : JSON.stringify(indicator)}</strong></li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            // Regular table for other data types
+            const amounts = quantitativeData.amounts || [];
+            const thresholds = quantitativeData.thresholds || [];
+            const ratios = quantitativeData.ratios || [];
+
+            if (amounts.length > 0 || thresholds.length > 0 || ratios.length > 0) {
+                html += '<div class="table-responsive"><table class="table table-sm table-striped">';
+                html += '<thead><tr><th>数据类型</th><th>具体数值</th></tr></thead><tbody>';
+
+                // Add amounts
+                amounts.forEach(amount => {
+                    html += `<tr>
+                        <td><strong style="color: #5bc0de;">资金金额</strong></td>
+                        <td><strong style="color: #d9534f;">${amount}</strong></td>
+                    </tr>`;
+                });
+
+                // Add thresholds
+                thresholds.forEach(threshold => {
+                    html += `<tr>
+                        <td><strong style="color: #5bc0de;">门槛条件</strong></td>
+                        <td><strong style="color: #d9534f;">${threshold}</strong></td>
+                    </tr>`;
+                });
+
+                // Add ratios
+                ratios.forEach(ratio => {
+                    html += `<tr>
+                        <td><strong style="color: #5bc0de;">比例数据</strong></td>
+                        <td><strong style="color: #d9534f;">${ratio}</strong></td>
+                    </tr>`;
+                });
+
+                html += '</tbody></table></div>';
+            }
+
+            if (!html) {
+                html = '<p class="text-muted">暂无量化数据</p>';
+            }
+
+            document.getElementById('quantitativeData').innerHTML = html;
+        }
+
+        function renderTimeline(timeline) {
+            const timelineElement = document.getElementById('timeline');
+            if (!timelineElement) return; // Element doesn't exist, skip rendering
+
+            if (!timeline || timeline.length === 0) {
+                timelineElement.innerHTML = '<p class="text-muted">暂无时间轴数据</p>';
+                return;
+            }
+
+            let html = '<div class="list-group">';
+            timeline.forEach(event => {
+                const date = typeof event === 'string' ? '' : (event.date || 'N/A');
+                const content = typeof event === 'string' ? event : (event.content || event.event || 'N/A');
+                const eventType = typeof event === 'string' ? '事件' : (event.type || '事件');
+
+                html += `<div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${date}</h6>
+                        <small class="text-muted">${eventType}</small>
+                    </div>
+                    <p class="mb-1">${content}</p>
+                </div>`;
+            });
+            html += '</div>';
+            if (timelineElement) {
+                timelineElement.innerHTML = html;
+            }
+        }
+
+        function renderAdvancedAnalysis(analysis) {
+            if (!analysis) return;
+
+            // Industry relevance
+            const valueChain = analysis.industry_relevance?.value_chain || {};
+            let chainHtml = '<div class="card"><div class="card-body"><h6 class="card-title">产业链关系</h6>';
+            chainHtml += '<div class="row">';
+            chainHtml += `<div class="col"><strong>上游:</strong> ${(valueChain.upstream || []).join(', ') || '无'}</div>`;
+            chainHtml += `<div class="col"><strong>中游:</strong> ${(valueChain.midstream || []).join(', ') || '无'}</div>`;
+            chainHtml += `<div class="col"><strong>下游:</strong> ${(valueChain.downstream || []).join(', ') || '无'}</div>`;
+            chainHtml += '</div></div></div>';
+
+            const industryRelevanceElement = document.getElementById('industryRelevance');
+            if (industryRelevanceElement) {
+                industryRelevanceElement.innerHTML = chainHtml;
+            }
+
+            // Policy strength
+            const strength = analysis.policy_strength || {};
+            let strengthHtml = '<div class="card"><div class="card-body"><h6 class="card-title">政策力度评估</h6>';
+            strengthHtml += `<p><strong>资金等级:</strong> ${strength.funding_level || 'N/A'}</p>`;
+            strengthHtml += `<p><strong>措施多样性:</strong> ${strength.measure_diversity || 0} 项</p>`;
+            strengthHtml += `<p><strong>覆盖全面性:</strong> ${strength.support_comprehensiveness || 'N/A'}</p>`;
+            strengthHtml += '</div></div>';
+
+            const policyStrengthElement = document.getElementById('policyStrength');
+            if (policyStrengthElement) {
+                policyStrengthElement.innerHTML = strengthHtml;
+            }
+
+            // Timeliness and regional match
+            let analysisHtml = '<div class="row"><div class="col-md-6">';
+            analysisHtml += `<div class="card"><div class="card-body"><h6 class="card-title">时效性分析</h6>`;
+            analysisHtml += `<p>时效性评分: <strong>${analysis.timeliness_score || 0}</strong>/100</p></div></div>`;
+            analysisHtml += '</div><div class="col-md-6">';
+            analysisHtml += `<div class="card"><div class="card-body"><h6 class="card-title">区域匹配度</h6>`;
+            analysisHtml += `<p>匹配度评分: <strong>${analysis.regional_match_score || 0}</strong>/100</p></div></div>`;
+            analysisHtml += '</div></div>';
+
+            const timelinessRegionalElement = document.getElementById('timelinessRegional');
+            if (timelinessRegionalElement) {
+                timelinessRegionalElement.innerHTML = analysisHtml;
+            }
+        }
+
+        // Mindmap control handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('expandAllMindmap').addEventListener('click', function() {
+                if (jm) {
+                    jm.expand_all();
+                }
+            });
+
+            document.getElementById('collapseAllMindmap').addEventListener('click', function() {
+                if (jm) {
+                    jm.collapse_all();
+                }
+            });
+
+            document.getElementById('exportMindmap').addEventListener('click', function() {
+                if (jm) {
+                    // Simple export as image (in a real implementation, would need to use jsMind's export functionality)
+                    if (confirm("是否导出思维导图为PNG图片?")) {
+                        alert("功能开发中：思维导图导出功能");
+                    }
+                }
+            });
+        });
+
+        let managedLinks = [];
+
+        async function loadDataSources() {
+            try {
+                const resp = await fetch('/api/data-sources');
+                const json = await resp.json();
+                const tbody = document.querySelector('#dataSourcesTable tbody');
+                tbody.innerHTML = '';
+                (json.sources || []).forEach(s => {
+                    const tr = document.createElement('tr');
+                    const q = s.quality || {};
+                    tr.innerHTML = `<td>${s.provider}</td><td><a href="${s.url}" target="_blank" rel="noopener noreferrer" data-safe-link="1">${s.name}</a></td><td>${s.last_update||''}</td><td>${(s.format||[]).join('/')}</td><td>${s.verified ? '<span class="badge bg-success">已验证</span>' : '<span class="badge bg-secondary">待验证</span>'}</td><td>完:${Math.round((q.completeness||0)*100)}% 准:${Math.round((q.accuracy||0)*100)}% 速:${Math.round((q.freshness||0)*100)}%</td>`;
+                    tbody.appendChild(tr);
+                });
+                bindSafeLinkClicks();
+            } catch {}
+        }
+
+        async function loadLinks() {
+            try {
+                const resp = await fetch('/api/links');
+                const json = await resp.json();
+                managedLinks = json.links || [];
+                renderLinks(managedLinks);
+            } catch {}
+        }
+
+        function renderLinks(links) {
+            const q = (document.getElementById('linkSearchInput').value || '').toLowerCase();
+            const type = document.getElementById('linkTypeFilter').value || '';
+            const imp = document.getElementById('linkImportanceFilter').value || '';
+            const list = document.getElementById('linksList');
+            list.innerHTML = '';
+            links.filter(l => {
+                const matchQ = q ? (l.url.toLowerCase().includes(q)) : true;
+                const matchT = type ? (l.type === type) : true;
+                const matchI = imp ? (l.importance === imp) : true;
+                return matchQ && matchT && matchI;
+            }).forEach(l => {
+                const item = document.createElement('div');
+                const https = l.url.startsWith('https://');
+                item.className = 'list-group-item d-flex justify-content-between align-items-start';
+                item.innerHTML = `<div class="ms-2 me-auto"><div class="fw-bold"><a href="${l.url}" target="_blank" rel="noopener noreferrer" data-safe-link="1">${l.url}</a></div><small class="text-muted">类型：${l.type}｜重要性：${l.importance}</small></div><span class="badge ${https ? 'bg-success' : 'bg-warning text-dark'}">${https ? 'HTTPS' : '非HTTPS'}</span>`;
+                list.appendChild(item);
+            });
+            bindSafeLinkClicks();
+        }
+
+        document.getElementById('linkSearchInput').addEventListener('input', () => renderLinks(managedLinks));
+        document.getElementById('linkTypeFilter').addEventListener('change', () => renderLinks(managedLinks));
+        document.getElementById('linkImportanceFilter').addEventListener('change', () => renderLinks(managedLinks));
+
+        document.getElementById('checkLinksBtn').addEventListener('click', async () => {
+            try {
+                const payload = { links: managedLinks };
+                const resp = await fetch('/api/link-check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const json = await resp.json();
+                const map = {};
+                (json.results || []).forEach(r => { map[r.url] = r; });
+                const list = document.getElementById('linksList');
+                [...list.querySelectorAll('div.list-group-item')].forEach(div => {
+                    const a = div.querySelector('a[data-safe-link]');
+                    if (a && map[a.href]) {
+                        const r = map[a.href];
+                        const badge = document.createElement('span');
+                        badge.className = r.reachable ? 'badge bg-success ms-2' : 'badge bg-danger ms-2';
+                        badge.textContent = r.reachable ? '有效' : '无效';
+                        a.parentElement.appendChild(badge);
+                    }
+                });
+            } catch {}
+        });
+
+        function bindSafeLinkClicks() {
+            document.querySelectorAll('a[data-safe-link="1"]').forEach(a => {
+                a.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const url = this.href;
+                    const modalHtml = `<div class="modal" tabindex="-1" id="safeModal"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">外部链接安全提示</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button></div><div class="modal-body"><p>即将打开外部链接：</p><p class="text-break">${url}</p><p class="small text-muted">请确认链接来源可信，注意信息安全。</p></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" id="confirmOpen">继续打开</button></div></div></div></div>`;
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = modalHtml;
+                    document.body.appendChild(wrapper);
+                    const modal = new bootstrap.Modal(wrapper.querySelector('#safeModal'));
+                    modal.show();
+                    wrapper.querySelector('#confirmOpen').onclick = async () => {
+                        try { await fetch('/api/links/click', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) }); } catch {}
+                        window.open(url, '_blank', 'noopener');
+                        modal.hide();
+                        document.body.removeChild(wrapper);
+                    };
+                    wrapper.querySelector('.btn-close').onclick = () => { document.body.removeChild(wrapper); };
+                });
+            });
+        }
+
+        // Set default values for region and industry tags
+        document.addEventListener('DOMContentLoaded', function() {
+            const regionInput = document.getElementById('regionInput');
+            const industryTagsInput = document.getElementById('industryTagsInput');
+
+            if (regionInput.value.trim() === '') {
+                regionInput.value = '四川省';
+            }
+
+            if (industryTagsInput.value.trim() === '') {
+                industryTagsInput.value = '人工智能';
+            }
+        });
+
+        // Tab state management - preserve results when switching tabs
+        let tabStates = {
+            'search-tab': {
+                resultContent: '',
+                policySearchResults: '',
+                dataSourcesTable: '',
+                linksList: ''
+            },
+            'upload-tab': {
+                resultContent: '',
+                semanticAnalysis: '',
+                contentClassification: '',
+                visualizationArea: '',
+                policyResults: 'none' // Store the display state
+            }
+        };
+
+        function saveTabState(tabId) {
+            if (tabId === 'search-tab') {
+                const resultContentElement = document.getElementById('resultContent');
+                const policySearchResultsElement = document.getElementById('policySearchResults');
+                const dataSourcesTbody = document.querySelector('#dataSourcesTable tbody');
+                const linksListElement = document.getElementById('linksList');
+
+                tabStates['search-tab'].resultContent = resultContentElement ? resultContentElement.innerHTML : '';
+                tabStates['search-tab'].policySearchResults = policySearchResultsElement ? policySearchResultsElement.innerHTML : '';
+                tabStates['search-tab'].dataSourcesTable = dataSourcesTbody ? dataSourcesTbody.innerHTML : '';
+                tabStates['search-tab'].linksList = linksListElement ? linksListElement.innerHTML : '';
+            } else if (tabId === 'upload-tab') {
+                const resultContentElement = document.getElementById('resultContent');
+                const semanticAnalysisElement = document.getElementById('semanticAnalysis');
+                const contentClassificationElement = document.getElementById('contentClassification');
+                const visualizationAreaElement = document.getElementById('visualizationArea');
+                const policyResultsElement = document.getElementById('policyResults');
+
+                tabStates['upload-tab'].resultContent = resultContentElement ? resultContentElement.innerHTML : '';
+                tabStates['upload-tab'].semanticAnalysis = semanticAnalysisElement ? semanticAnalysisElement.innerHTML : '';
+                tabStates['upload-tab'].contentClassification = contentClassificationElement ? contentClassificationElement.innerHTML : '';
+                tabStates['upload-tab'].visualizationArea = visualizationAreaElement ? visualizationAreaElement.innerHTML : '';
+                tabStates['upload-tab'].policyResults = policyResultsElement ? policyResultsElement.style.display : 'none';
+            }
+        }
+
+        function restoreTabState(tabId) {
+            if (tabId === 'search-tab') {
+                const resultContentElement = document.getElementById('resultContent');
+                const policySearchResultsElement = document.getElementById('policySearchResults');
+                const dataSourcesTbody = document.querySelector('#dataSourcesTable tbody');
+                const linksListElement = document.getElementById('linksList');
+
+                if (resultContentElement) {
+                    resultContentElement.innerHTML = tabStates['search-tab'].resultContent;
+                }
+                if (policySearchResultsElement) {
+                    policySearchResultsElement.innerHTML = tabStates['search-tab'].policySearchResults;
+                }
+                if (dataSourcesTbody) {
+                    dataSourcesTbody.innerHTML = tabStates['search-tab'].dataSourcesTable;
+                }
+                if (linksListElement) {
+                    linksListElement.innerHTML = tabStates['search-tab'].linksList;
+                }
+            } else if (tabId === 'upload-tab') {
+                const resultContentElement = document.getElementById('resultContent');
+                const semanticAnalysisElement = document.getElementById('semanticAnalysis');
+                const contentClassificationElement = document.getElementById('contentClassification');
+                const visualizationAreaElement = document.getElementById('visualizationArea');
+                const policyResultsElement = document.getElementById('policyResults');
+
+                if (resultContentElement) {
+                    resultContentElement.innerHTML = tabStates['upload-tab'].resultContent;
+                }
+                if (semanticAnalysisElement) {
+                    semanticAnalysisElement.innerHTML = tabStates['upload-tab'].semanticAnalysis;
+                }
+                if (contentClassificationElement) {
+                    contentClassificationElement.innerHTML = tabStates['upload-tab'].contentClassification;
+                }
+                if (visualizationAreaElement) {
+                    visualizationAreaElement.innerHTML = tabStates['upload-tab'].visualizationArea;
+                }
+                if (policyResultsElement) {
+                    policyResultsElement.style.display = tabStates['upload-tab'].policyResults;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabTriggerList = [].slice.call(document.querySelectorAll('button[data-bs-toggle="tab"]'));
+
+            tabTriggerList.forEach(function(tabTrigger) {
+                tabTrigger.addEventListener('hide.bs.tab', function(event) {
+                    // Save the state of the tab being left
+                    saveTabState(event.target.id);
+                });
+
+                tabTrigger.addEventListener('shown.bs.tab', function(event) {
+                    // Restore the state of the tab being shown
+                    restoreTabState(event.target.id);
+                });
+            });
+        });
+
+        // WeChat Public Account functionality
+        document.getElementById('fetchWechatArticlesBtn').addEventListener('click', async function() {
+            const region = document.getElementById('wechatRegion').value.trim();
+            const industry = document.getElementById('wechatIndustry').value.trim();
+
+            if (!region || !industry) {
+                alert('请输入区域和产业名称');
+                return;
+            }
+
+            try {
+                document.getElementById('wechatLoading').style.display = 'block';
+                document.getElementById('wechatArticlesResults').innerHTML = '';
+
+                const response = await fetch('/api/wechat-articles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        region: region,
+                        industry: industry,
+                        limit: 10
+                    })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('wechatLoading').style.display = 'none';
+
+                if (!data.success) {
+                    alert(data.error || '获取微信公众号文章失败');
+                    return;
+                }
+
+                renderWechatArticles(data.articles);
+
+            } catch (error) {
+                document.getElementById('wechatLoading').style.display = 'none';
+                alert('获取微信公众号文章失败: ' + error.message);
+            }
+        });
+
+        document.getElementById('searchWechatBtn').addEventListener('click', function() {
+            // Show the search keywords section
+            document.getElementById('wechatSearchKeywordsSection').style.display = 'block';
+
+            // Set up search functionality
+            document.getElementById('wechatSearchKeywords').onkeydown = async function(event) {
+                if (event.key === 'Enter') {
+                    await performWechatSearch();
+                }
+            };
+        });
+
+        async function performWechatSearch() {
+            const region = document.getElementById('wechatRegion').value.trim();
+            const keywordsText = document.getElementById('wechatSearchKeywords').value.trim();
+
+            if (!keywordsText) {
+                alert('请输入搜索关键词');
+                return;
+            }
+
+            const keywords = keywordsText.split(',').map(k => k.trim()).filter(k => k);
+
+            try {
+                document.getElementById('wechatLoading').style.display = 'block';
+                document.getElementById('wechatArticlesResults').innerHTML = '';
+
+                const response = await fetch('/api/wechat-search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        keywords: keywords,
+                        region: region,
+                        limit: 10
+                    })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('wechatLoading').style.display = 'none';
+
+                if (!data.success) {
+                    alert(data.error || '搜索微信公众号文章失败');
+                    return;
+                }
+
+                renderWechatArticles(data.articles);
+
+            } catch (error) {
+                document.getElementById('wechatLoading').style.display = 'none';
+                alert('搜索微信公众号文章失败: ' + error.message);
+            }
+        }
+
+        document.getElementById('fetchAccountArticlesBtn').addEventListener('click', async function() {
+            const accountName = document.getElementById('wechatAccount').value.trim();
+
+            if (!accountName) {
+                alert('请输入公众号名称');
+                return;
+            }
+
+            try {
+                document.getElementById('wechatLoading').style.display = 'block';
+                document.getElementById('wechatArticlesResults').innerHTML = '';
+
+                const response = await fetch('/api/wechat-account-articles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        account_name: accountName,
+                        limit: 10
+                    })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('wechatLoading').style.display = 'none';
+
+                if (!data.success) {
+                    alert(data.error || '获取公众号文章失败');
+                    return;
+                }
+
+                renderWechatArticles(data.articles);
+
+            } catch (error) {
+                document.getElementById('wechatLoading').style.display = 'none';
+                alert('获取公众号文章失败: ' + error.message);
+            }
+        });
+
+        function renderWechatArticles(articles) {
+            const container = document.getElementById('wechatArticlesResults');
+
+            if (!articles || articles.length === 0) {
+                container.innerHTML = '<div class="col-12"><p class="text-muted">未找到相关微信公众号文章</p></div>';
+                return;
+            }
+
+            let html = '';
+            articles.forEach((article, index) => {
+                html += `
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">${article.title}</h6>
+                            <p class="card-text small text-muted">
+                                <small>
+                                    <strong>公众号:</strong> ${article.source_account}<br>
+                                    <strong>作者:</strong> ${article.author}<br>
+                                    <strong>日期:</strong> ${article.publish_date}<br>
+                                    <strong>相关产业:</strong> ${article.industry_relevance && article.industry_relevance.length > 0 ? article.industry_relevance.join(', ') : '未知'}
+                                </small>
+                            </p>
+                            <p class="card-text">${article.summary.substring(0, 100)}${article.summary.length > 100 ? '...' : ''}</p>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>关键词:</strong> ${article.keywords && article.keywords.length > 0 ? article.keywords.slice(0, 3).join(', ') : '无'}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                    onclick="viewWechatArticle('${article.title}', '${article.content}', '${article.source_account}', '${article.publish_date}', '${article.url}', '${encodeURIComponent(JSON.stringify(article))}')">
+                                    详情
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm"
+                                    onclick="analyzeWechatArticle('${encodeURIComponent(JSON.stringify(article))}')">
+                                    分析
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function viewWechatArticle(title, content, sourceAccount, publishDate, url, articleData) {
+            // Update the main result content area with the article content
+            document.getElementById('resultContent').innerHTML = `
+                <h4>${title}</h4>
+                <small class="text-muted">
+                    <strong>公众号:</strong> ${sourceAccount} |
+                    <strong>发布日期:</strong> ${publishDate} |
+                    <a href="${url}" target="_blank" rel="noopener noreferrer" data-safe-link="1">原文链接</a>
+                </small>
+                <div class="mt-3">${content}</div>
+            `;
+            bindSafeLinkClicks();
+        }
+
+        async function analyzeWechatArticle(articleDataEncoded) {
+            try {
+                const article = JSON.parse(decodeURIComponent(articleDataEncoded));
+
+                document.getElementById('wechatLoading').style.display = 'block';
+
+                const response = await fetch('/api/wechat-analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: article.content,
+                        title: article.title,
+                        source_account: article.source_account,
+                        publish_date: article.publish_date,
+                        author: article.author,
+                        url: article.url
+                    })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('wechatLoading').style.display = 'none';
+
+                if (!data.success) {
+                    alert(data.error || '分析文章失败');
+                    return;
+                }
+
+                // Display analysis results in the main content area
+                const analysis = data.analysis;
+                let analysisHtml = `
+                    <h4>文章分析结果: ${article.title}</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header"><strong>政策要点</strong></div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                `;
+
+                (analysis.policy_analysis.highlights || []).slice(0, 5).forEach(highlight => {
+                    analysisHtml += `<li class="list-group-item">${highlight.content}</li>`;
+                });
+
+                analysisHtml += `
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-header"><strong>补贴信息</strong></div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                `;
+
+                (analysis.policy_analysis.subsidies_and_taxes.subsidies || []).forEach(subsidy => {
+                    analysisHtml += `<li class="list-group-item">${subsidy.description}</li>`;
+                });
+
+                analysisHtml += `
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header"><strong>时间轴</strong></div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                `;
+
+                (analysis.policy_analysis.timeline || []).forEach(event => {
+                    analysisHtml += `<li class="list-group-item"><strong>${event.date}</strong> - ${event.context}</li>`;
+                });
+
+                analysisHtml += `
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-header"><strong>情感分析</strong></div>
+                                <div class="card-body">
+                                    <p><strong>整体倾向:</strong> ${analysis.sentiment.overall}</p>
+                                    <p><strong>正面情绪:</strong> ${(analysis.sentiment.positive * 100).toFixed(1)}%</p>
+                                    <p><strong>负面情绪:</strong> ${(analysis.sentiment.negative * 100).toFixed(1)}%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('resultContent').innerHTML = analysisHtml;
+
+            } catch (error) {
+                document.getElementById('wechatLoading').style.display = 'none';
+                alert('分析文章失败: ' + error.message);
+            }
+        }
+
+        // Add search button click handler
+        document.getElementById('wechatSearchKeywords').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent form submission
+                performWechatSearch();
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

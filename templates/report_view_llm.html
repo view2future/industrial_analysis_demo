@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report_data.city }} {{ report_data.industry }} 产业分析报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Set timezone to Beijing
+        document.addEventListener('DOMContentLoaded', function() {
+            // Convert UTC time to Beijing time
+            const utcTime = new Date("{{ report.created_at.isoformat() }}");
+            const beijingTime = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
+            const formattedTime = beijingTime.getFullYear() + '-' + 
+                String(beijingTime.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(beijingTime.getDate()).padStart(2, '0') + ' ' + 
+                String(beijingTime.getHours()).padStart(2, '0') + ':' + 
+                String(beijingTime.getMinutes()).padStart(2, '0');
+            document.getElementById('beijing-time').textContent = formattedTime;
+        });
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold">
+                    <i class="fas fa-chart-line mr-2"></i>AI驱动产业分析报告
+                </h1>
+                <a href="{{ url_for('index') }}" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-home mr-2"></i>返回首页
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Report Header -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16">
+        <div class="container mx-auto px-6">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-map-marker-alt text-3xl mr-3"></i>
+                <h2 class="text-5xl font-bold">{{ report_data.city }}</h2>
+            </div>
+            <div class="flex items-center mb-6">
+                <i class="fas fa-industry text-2xl mr-3"></i>
+                <h3 class="text-3xl font-semibold">{{ report_data.industry }}产业深度分析</h3>
+            </div>
+            <div class="flex gap-8 text-lg">
+                <span><i class="fas fa-robot mr-2"></i>{{ (report_data.metadata.model if report_data.metadata and report_data.metadata.model) or (report_data.metadata.llm_service|upper if report_data.metadata and report_data.metadata.llm_service) or 'AI' }} 生成</span>
+                <span><i class="fas fa-clock mr-2"></i><span id="beijing-time">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span></span>
+                <span><i class="fas fa-file-word mr-2"></i>{{ report_data.full_content | length }} 字</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Executive Summary -->
+        {% if report_data.summary %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-3xl font-bold gradient-text">
+                    <i class="fas fa-star mr-2"></i>执行摘要
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="showSummary('zh')" id="btn-zh" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">
+                        中文
+                    </button>
+                    <button onclick="showSummary('en')" id="btn-en" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold">
+                        English
+                    </button>
+                </div>
+            </div>
+            <div id="summary-zh" class="summary-content prose max-w-none">
+                <div class="text-lg leading-relaxed text-gray-700 whitespace-pre-wrap">{{ report_data.summary.zh | replace('```','') }}</div>
+            </div>
+            <div id="summary-en" class="summary-content prose max-w-none hidden">
+                <div class="text-lg leading-relaxed text-gray-700 whitespace-pre-wrap">{{ report_data.summary.en | replace('```','') }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- SWOT Analysis -->
+        {% if report_data.swot_analysis and (report_data.swot_analysis.strengths or report_data.swot_analysis.weaknesses or report_data.swot_analysis.opportunities or report_data.swot_analysis.threats) %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-3xl font-bold gradient-text mb-6">
+                <i class="fas fa-diagram-3 mr-2"></i>SWOT 战略分析
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Strengths -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-l-4 border-green-500">
+                    <h4 class="text-xl font-bold text-green-700 mb-4">
+                        <i class="fas fa-arrow-up-circle mr-2"></i>优势 (Strengths)
+                    </h4>
+                    {% if report_data.swot_analysis.strengths %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.swot_analysis.strengths %}
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+
+                <!-- Weaknesses -->
+                <div class="bg-gradient-to-br from-red-50 to-rose-50 p-6 rounded-xl border-l-4 border-red-500">
+                    <h4 class="text-xl font-bold text-red-700 mb-4">
+                        <i class="fas fa-arrow-down-circle mr-2"></i>劣势 (Weaknesses)
+                    </h4>
+                    {% if report_data.swot_analysis.weaknesses %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.swot_analysis.weaknesses %}
+                        <li class="flex items-start">
+                            <i class="fas fa-exclamation-circle text-red-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+
+                <!-- Opportunities -->
+                <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border-l-4 border-blue-500">
+                    <h4 class="text-xl font-bold text-blue-700 mb-4">
+                        <i class="fas fa-lightbulb mr-2"></i>机遇 (Opportunities)
+                    </h4>
+                    {% if report_data.swot_analysis.opportunities %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.swot_analysis.opportunities %}
+                        <li class="flex items-start">
+                            <i class="fas fa-plus-circle text-blue-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+
+                <!-- Threats -->
+                <div class="bg-gradient-to-br from-yellow-50 to-amber-50 p-6 rounded-xl border-l-4 border-yellow-500">
+                    <h4 class="text-xl font-bold text-yellow-700 mb-4">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>威胁 (Threats)
+                    </h4>
+                    {% if report_data.swot_analysis.threats %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.swot_analysis.threats %}
+                        <li class="flex items-start">
+                            <i class="fas fa-shield-alt text-yellow-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Report Sections -->
+        {% if report_data.sections %}
+        <div class="space-y-6">
+            {% set section_icons = {
+                'executive_summary': 'fa-star',
+                'industry_overview': 'fa-industry',
+                'policy_landscape': 'fa-landmark',
+                'ecosystem': 'fa-network-wired',
+                'value_chain': 'fa-link',
+                'ai_integration': 'fa-robot',
+                'conclusion': 'fa-flag-checkered'
+            } %}
+            
+            {% set section_names = {
+                'executive_summary': '执行摘要',
+                'industry_overview': '产业概览',
+                'policy_landscape': '政策环境',
+                'ecosystem': '产业生态',
+                'value_chain': '产业链分析',
+                'ai_integration': 'AI融合潜力',
+                'conclusion': '结论与建议'
+            } %}
+
+            {% for section_key, section_content in report_data.sections.items() %}
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">
+                    <i class="fas {{ section_icons.get(section_key, 'fa-file-alt') }} mr-2 text-indigo-600"></i>
+                    {{ section_names.get(section_key, section_key) }}
+                </h3>
+                <div class="prose max-w-none">
+                    <div class="section-content text-gray-700 leading-relaxed">{{ render_markdown(section_content) | safe }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Full Content (if no sections) -->
+        {% if not report_data.sections and report_data.full_content %}
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-file-text mr-2 text-indigo-600"></i>完整报告
+            </h3>
+            <div class="prose max-w-none">
+                <div class="text-gray-700 leading-relaxed" style="white-space: pre-wrap; word-break: break-word;">{{ render_markdown(report_data.full_content) | safe }}</div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Full Report Content -->
+        {% if report_data.full_content %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mt-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-file-alt mr-2 text-indigo-600"></i>报告全文（共{{ report_data.full_content | length }}字）
+            </h3>
+            <div class="prose max-w-none">
+                <div class="text-gray-700 leading-relaxed" style="white-space: pre-wrap; word-break: break-word;">{{ render_markdown(report_data.full_content) | safe }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Advanced Features -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-magic mr-2 text-indigo-600"></i>高级功能
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <button onclick="viewDataStory()" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition">
+                    <i class="fas fa-book-open mr-2"></i>数据故事
+                </button>
+                <button onclick="toggleProvenance()" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 transition">
+                    <i class="fas fa-search-location mr-2"></i>溯源功能
+                </button>
+            </div>
+            
+            <!-- Provenance Panel (hidden by default) -->
+            <div id="provenance-panel" class="hidden border-t pt-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">
+                    <i class="fas fa-search mr-2 text-blue-600"></i>查找原文来源
+                </h4>
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="provenance-query" placeholder="输入关键词查找原文来源..." 
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button onclick="searchProvenance()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-search mr-2"></i>查找
+                    </button>
+                </div>
+                <div id="provenance-results" class="space-y-2">
+                    <!-- Results will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-download mr-2 text-indigo-600"></i>导出报告
+            </h3>
+            <div class="flex gap-4">
+                <button onclick="window.print()" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                    <i class="fas fa-print mr-2"></i>打印报告
+                </button>
+<a href="{{ url_for('api_export_report', report_id=report.report_id, format='pdf') }}" 
+                   class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition inline-block">
+                    <i class="fas fa-file-pdf mr-2"></i>导出PDF
+                </a>
+<a href="{{ url_for('api_export_report', report_id=report.report_id, format='word') }}" 
+                   class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block">
+                    <i class="fas fa-file-word mr-2"></i>导出Word
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showSummary(lang) {
+            const zhContent = document.getElementById('summary-zh');
+            const enContent = document.getElementById('summary-en');
+            const zhBtn = document.getElementById('btn-zh');
+            const enBtn = document.getElementById('btn-en');
+            
+            if (lang === 'zh') {
+                zhContent.classList.remove('hidden');
+                enContent.classList.add('hidden');
+                zhBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                zhBtn.classList.add('bg-indigo-600', 'text-white');
+                enBtn.classList.remove('bg-indigo-600', 'text-white');
+                enBtn.classList.add('bg-gray-200', 'text-gray-700');
+            } else {
+                zhContent.classList.add('hidden');
+                enContent.classList.remove('hidden');
+                enBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                enBtn.classList.add('bg-indigo-600', 'text-white');
+                zhBtn.classList.remove('bg-indigo-600', 'text-white');
+                zhBtn.classList.add('bg-gray-200', 'text-gray-700');
+            }
+        }
+        
+        function viewDataStory() {
+            window.location.href = '/api/report/{{ report.report_id }}/story-view';
+        }
+        
+        function toggleProvenance() {
+            const panel = document.getElementById('provenance-panel');
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden')) {
+                document.getElementById('provenance-query').focus();
+            }
+        }
+        
+        async function searchProvenance() {
+            const query = document.getElementById('provenance-query').value.trim();
+            if (!query) {
+                alert('请输入查找关键词');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('provenance-results');
+            resultsDiv.innerHTML = '<div class="text-gray-500 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>查找中...</div>';
+            
+            try {
+                const response = await fetch('/api/report/{{ report.report_id }}/source?query=' + encodeURIComponent(query));
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultsDiv.innerHTML = '<div class="text-red-500">错误: ' + data.error + '</div>';
+                    return;
+                }
+                
+                if (data.matches && data.matches.length > 0) {
+                    let html = '<div class="space-y-3">';
+                    data.matches.forEach((match, index) => {
+                        html += `
+                            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                                <div class="flex items-start">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white rounded-full text-xs font-bold mr-3 mt-1">${index + 1}</span>
+                                    <p class="text-gray-700 leading-relaxed flex-1">${match}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="text-gray-500 text-center py-4">未找到匹配的原文内容，请尝试其他关键词</div>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="text-red-500">查找失败，请稍后再试</div>';
+            }
+        }
+        
+        // Allow enter key to trigger search
+        document.addEventListener('DOMContentLoaded', function() {
+            const queryInput = document.getElementById('provenance-query');
+            if (queryInput) {
+                queryInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchProvenance();
+                    }
+                });
+            }
+        });
+    </script>
+    <script>
+        // Enhance readability for 7 section contents: convert bullets and numbered lines
+        document.addEventListener('DOMContentLoaded', function() {
+            const blocks = document.querySelectorAll('.section-content');
+            blocks.forEach(b => {
+                const raw = b.textContent || '';
+                const lines = raw.split(/\n+/).map(l => l.trim()).filter(Boolean);
+                if (!lines.length) return;
+                const ul = document.createElement('ul');
+                ul.className = 'list-disc pl-6 space-y-1';
+                let isList = false;
+                lines.forEach(line => {
+                    if (/^[-•*\d+\.\)（）\d]/.test(line)) {
+                        const li = document.createElement('li');
+                        li.textContent = line.replace(/^[-•*\d+\.\)（）]+\s*/, '');
+                        ul.appendChild(li);
+                        isList = true;
+                    }
+                });
+                if (isList && ul.children.length >= 2) {
+                    b.innerHTML = '';
+                    b.appendChild(ul);
+                } else {
+                    // fallback: split into paragraphs
+                    b.innerHTML = lines.map(p => `<p class="mb-2">${p}</p>`).join('');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

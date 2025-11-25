@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>百度地图 - {{ report.title }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak={{ ak }}"></script>
+  <style>
+    #baidu-map { width: 100%; height: 600px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{{ url_for('index') }}">🗺️ 百度地图</a>
+      <div class="ms-auto">
+        <a href="{{ url_for('view_report', report_id=report.report_id) }}" class="btn btn-outline-light btn-sm">返回报告</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-3">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">{{ report.city }} {{ report.industry }} 企业分布地图</h5>
+        <div id="baidu-map"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const reportId = '{{ report.report_id }}';
+
+    function initMap(center) {
+      const map = new BMap.Map("baidu-map");
+      map.centerAndZoom(center || new BMap.Point(104.0668, 30.5728), 12);
+      map.enableScrollWheelZoom(true);
+
+      fetch(`/api/enterprises/${reportId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) { alert('加载企业数据失败: ' + data.error); return; }
+          const enterprises = data.enterprises || [];
+          if (enterprises.length > 0) {
+            const first = enterprises[0];
+            map.centerAndZoom(new BMap.Point(first.longitude, first.latitude), 12);
+          }
+          enterprises.forEach(ent => {
+            const pt = new BMap.Point(ent.longitude, ent.latitude);
+            const marker = new BMap.Marker(pt);
+            const label = new BMap.Label(ent.name, {offset: new BMap.Size(20,-10)});
+            marker.setLabel(label);
+            marker.addEventListener("click", function(){
+              const infoWindow = new BMap.InfoWindow(
+                `<div>
+                  <h6>${ent.name}</h6>
+                  <p>类型: ${ent.type || ''}</p>
+                  <p>地址: ${ent.address || ''}</p>
+                  <p>员工: ${ent.employees || ''}</p>
+                </div>`
+              );
+              map.openInfoWindow(infoWindow, pt);
+            });
+            map.addOverlay(marker);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          alert('加载企业数据失败');
+        });
+    }
+
+    initMap();
+  </script>
+</body>
+</html>

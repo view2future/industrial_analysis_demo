@@ -1,0 +1,951 @@
+{% extends "base.html" %}
+
+{% block title %}流式报告生成 - 区域产业分析{% endblock %}
+
+{% block extra_css %}
+<style>
+    .streaming-container {
+        background: #ffffff;
+        color: #333333;
+        padding: 20px;
+        border-radius: 8px;
+        min-height: 400px;
+        max-height: 600px;
+        overflow-y: auto;
+        position: relative;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    
+    .streaming-content {
+        line-height: 1.6;
+        font-size: 16px;
+    }
+    
+    .streaming-content h1 {
+        font-size: 2em;
+        font-weight: bold;
+        margin: 0.67em 0;
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 0.3em;
+    }
+    
+    .streaming-content h2 {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin: 0.83em 0;
+        color: #34495e;
+        border-bottom: 1px solid #bdc3c7;
+        padding-bottom: 0.2em;
+    }
+    
+    .streaming-content h3 {
+        font-size: 1.17em;
+        font-weight: bold;
+        margin: 1em 0;
+        color: #7f8c8d;
+    }
+    
+    .streaming-content p {
+        margin: 1em 0;
+        text-align: justify;
+    }
+    
+    .streaming-content ul, .streaming-content ol {
+        margin: 1em 0;
+        padding-left: 2em;
+    }
+    
+    .streaming-content li {
+        margin: 0.5em 0;
+    }
+    
+    .streaming-content strong {
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .streaming-content em {
+        font-style: italic;
+    }
+    
+    .streaming-content code {
+        background-color: #f8f9fa;
+        padding: 0.2em 0.4em;
+        border-radius: 3px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.85em;
+    }
+    
+    .streaming-content pre {
+        background-color: #f8f9fa;
+        padding: 1em;
+        border-radius: 5px;
+        overflow-x: auto;
+        margin: 1em 0;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.85em;
+    }
+    
+    .streaming-content blockquote {
+        border-left: 4px solid #3498db;
+        padding-left: 1em;
+        margin: 1em 0;
+        color: #7f8c8d;
+    }
+    
+    .streaming-content table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1em 0;
+    }
+    
+    .streaming-content th, .streaming-content td {
+        border: 1px solid #ddd;
+        padding: 0.5em;
+        text-align: left;
+    }
+    
+    .streaming-content th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+    
+    .streaming-cursor {
+        display: inline-block;
+        width: 10px;
+        height: 20px;
+        background: #00ff00;
+        animation: blink 1s infinite;
+        margin-left: 2px;
+    }
+    
+    @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+    }
+    
+    .stage-indicator {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 12px;
+        color: #888;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 5px 10px;
+        border-radius: 15px;
+    }
+    
+    .progress-bar {
+        height: 4px;
+        background: #333;
+        border-radius: 2px;
+        overflow: hidden;
+        margin: 10px 0;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #00ff00, #00cc00);
+        width: 0%;
+        transition: width 0.3s ease;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    .controls-panel {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: pulse-status 1.5s infinite;
+    }
+    
+    .status-connecting { background: #ffc107; }
+    .status-streaming { background: #28a745; }
+    .status-complete { background: #17a2b8; }
+    .status-error { background: #dc3545; }
+    
+    @keyframes pulse-status {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.7; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .chunk-counter {
+        position: absolute;
+        bottom: 10px;
+        right: 15px;
+        font-size: 11px;
+        color: #666;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 3px 8px;
+        border-radius: 10px;
+    }
+    
+    .service-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .service-kimi { background: #6f42c1; color: white; }
+    .service-gemini { background: #dc3545; color: white; }
+    .service-doubao { background: #28a745; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="bg-white shadow-lg rounded-lg p-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-robot mr-2 text-blue-600"></i>AI 流式报告生成
+            </h1>
+            <p class="text-gray-600">实时观看AI为您生成专业的产业分析报告</p>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <span id="status-indicator" class="status-indicator status-connecting"></span>
+                        <span id="status-text" class="text-sm font-medium">自动启动中...</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">服务:</span>
+                        <span id="service-badge" class="service-badge service-{{ llm_service|default('kimi') }}">{{ llm_service|default('kimi') }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="start-streaming" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-play mr-2"></i>开始生成
+                    </button>
+                    <button id="retry-streaming" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors hidden">
+                        <i class="fas fa-redo mr-2"></i>重试
+                    </button>
+                    <button id="stop-streaming" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors hidden">
+                        <i class="fas fa-stop mr-2"></i>停止
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Timer -->
+        <div class="mb-4 text-right text-sm text-gray-600">
+            用时：<span id="elapsed-seconds">0</span> 秒
+        </div>
+
+        <!-- Streaming Container -->
+        <div class="streaming-container" id="streaming-container">
+            <div class="stage-indicator" id="stage-indicator">准备就绪</div>
+            <div class="streaming-content" id="streaming-content">
+                <div class="text-center text-gray-500 mt-20">
+                    <i class="fas fa-code text-4xl mb-4"></i>
+                    <p>点击"开始生成"按钮，AI将实时为您生成产业分析报告...</p>
+                </div>
+            </div>
+            <div class="streaming-cursor" id="streaming-cursor" style="display: none;"></div>
+            <div class="chunk-counter" id="chunk-counter">分块: 0</div>
+        </div>
+
+        <!-- Status Log -->
+        <div class="mt-4 bg-white border rounded p-3" id="status-log" style="min-height:120px; max-height:220px; overflow:auto;">
+            <div class="text-gray-500 text-sm">等待开始...</div>
+        </div>
+
+        <!-- Generation Info -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <div class="font-medium text-gray-700">城市</div>
+                <div class="text-gray-900" id="info-city">{{ city|default('上海') }}</div>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <div class="font-medium text-gray-700">行业</div>
+                <div class="text-gray-900" id="info-industry">{{ industry|default('人工智能') }}</div>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <div class="font-medium text-gray-700">生成时间</div>
+                <div class="text-gray-900" id="info-time">--:--:--</div>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <div class="font-medium text-gray-700">字数统计</div>
+                <div class="text-gray-900" id="word-count">0 字</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-6 flex justify-center space-x-4">
+            <button id="save-report" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors hidden">
+                <i class="fas fa-save mr-2"></i>保存报告
+            </button>
+            <button id="copy-content" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors hidden">
+                <i class="fas fa-copy mr-2"></i>复制内容
+            </button>
+            <button id="stop-streaming-bottom" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors hidden">
+                <i class="fas fa-stop mr-2"></i>停止
+            </button>
+            <a href="{{ url_for('generate_report') }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>返回
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+class StreamingReportGenerator {
+    constructor() {
+        this.eventSource = null;
+        this.isStreaming = false;
+        this.chunkCount = 0;
+        this.startTime = null;
+        this.accumulatedContent = '';
+        this.lastStatus = '';
+        this.hasReceivedFirstChunk = false;
+        
+        this.initializeElements();
+        this.bindEvents();
+        this.updateTime();
+    }
+    
+    initializeElements() {
+        this.elements = {
+            container: document.getElementById('streaming-container'),
+            content: document.getElementById('streaming-content'),
+            cursor: document.getElementById('streaming-cursor'),
+            statusIndicator: document.getElementById('status-indicator'),
+            statusText: document.getElementById('status-text'),
+            stageIndicator: document.getElementById('stage-indicator'),
+            chunkCounter: document.getElementById('chunk-counter'),
+            progressFill: document.getElementById('progress-fill'),
+            startButton: document.getElementById('start-streaming'),
+            stopButton: document.getElementById('stop-streaming'),
+            retryButton: document.getElementById('retry-streaming'),
+            saveButton: document.getElementById('save-report'),
+            copyButton: document.getElementById('copy-content'),
+            serviceBadge: document.getElementById('service-badge'),
+            infoCity: document.getElementById('info-city'),
+            infoIndustry: document.getElementById('info-industry'),
+            infoTime: document.getElementById('info-time'),
+            elapsedSeconds: document.getElementById('elapsed-seconds'),
+            statusLog: document.getElementById('status-log')
+        };
+    }
+    
+    bindEvents() {
+        this.elements.startButton.addEventListener('click', () => this.startStreaming());
+        this.elements.stopButton.addEventListener('click', () => this.stopStreaming());
+        this.elements.retryButton.addEventListener('click', () => this.startStreaming());
+        this.elements.saveButton.addEventListener('click', () => this.saveReport());
+        this.elements.copyButton.addEventListener('click', () => this.copyContent());
+        
+        // Bind bottom stop button
+        const bottomStopButton = document.getElementById('stop-streaming-bottom');
+        if (bottomStopButton) {
+            bottomStopButton.addEventListener('click', () => this.stopStreaming());
+        }
+    }
+    
+    updateTime() {
+        if (this.startTime) {
+            const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+            this.elements.infoTime.textContent = `${elapsed}s`;
+            if (this.elements.elapsedSeconds) this.elements.elapsedSeconds.textContent = elapsed;
+        }
+        setTimeout(() => this.updateTime(), 1000);
+    }
+    
+    renderMarkdown(markdown) {
+        if (!markdown) return '';
+        
+        // Simple markdown to HTML converter
+        let html = markdown;
+        
+        // Headers
+        html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+        
+        // Bold and italic
+        html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        html = html.replace(/___(.*?)___/g, '<strong><em>$1</em></strong>');
+        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+        html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+        
+        // Code blocks
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+        
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+        
+        // Images
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%;">');
+        
+        // Blockquotes
+        html = html.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
+        
+        // Horizontal rules
+        html = html.replace(/^---$/gm, '<hr>');
+        
+        // Unordered lists
+        html = html.replace(/^\s*\*\s(.*)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+        
+        // Ordered lists
+        html = html.replace(/^\s*\d+\.\s(.*)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
+        
+        // Paragraphs - wrap lines that aren't already wrapped in HTML tags
+        html = html.replace(/^([^<\n].*)$/gm, '<p>$1</p>');
+        
+        // Clean up empty paragraphs
+        html = html.replace(/<p>\s*<\/p>/g, '');
+        
+        return html;
+    }
+    
+    startStreaming() {
+        if (this.isStreaming) {
+            console.log('⚠️ Streaming already in progress, skipping...');
+            return;
+        }
+        
+        console.log('🚀 Starting streaming process...');
+        console.log('Elements check:', {
+            infoCity: this.elements.infoCity,
+            infoIndustry: this.elements.infoIndustry,
+            serviceBadge: this.elements.serviceBadge
+        });
+        
+        // Validate required data
+        const city = this.elements.infoCity.textContent.trim();
+        const industry = this.elements.infoIndustry.textContent.trim();
+        
+        console.log('📍 City:', city, 'Industry:', industry);
+        console.log('City type:', typeof city, 'length:', city.length);
+        console.log('Industry type:', typeof industry, 'length:', industry.length);
+        
+        // Allow default values as they are valid inputs for the API
+        if (!city || !industry || city === '' || industry === '') {
+            console.error('Missing required data:', { city, industry });
+            this.updateStatus('error', '缺少必要数据: 城市或行业信息缺失');
+            return;
+        }
+        
+        this.isStreaming = true;
+        this.chunkCount = 0;
+        this.startTime = Date.now();
+        this.accumulatedContent = '';
+        this.hasReceivedFirstChunk = false;
+        
+        // Update UI
+        this.elements.startButton.classList.add('hidden');
+        this.elements.stopButton.classList.remove('hidden');
+        this.elements.saveButton.classList.add('hidden');
+        this.elements.copyButton.classList.add('hidden');
+        this.elements.content.innerHTML = '';
+        this.elements.cursor.style.display = 'inline-block';
+        this.updateStatus('streaming', '正在连接AI服务...');
+        
+        // Get form data
+        const llmService = this.elements.serviceBadge.textContent.toLowerCase().trim();
+        
+        console.log('🤖 Using LLM service:', llmService);
+        console.log('Service badge text:', this.elements.serviceBadge.textContent);
+        
+        // Create EventSource for SSE
+        const formData = new FormData();
+        formData.append('city', city);
+        formData.append('industry', industry);
+        formData.append('llm_service', llmService);
+        
+        // Use POST with fetch instead of GET with EventSource
+        this.startStreamingFetch(city, industry, llmService);
+    }
+    
+    async startStreamingFetch(city, industry, llmService) {
+        console.log('🌐 Starting streaming fetch...');
+        
+        try {
+            const url = '/streaming/api/stream/generate-report';
+            const requestData = {
+                city: city,
+                industry: industry,
+                llm_service: llmService,
+                additional_context: ''  // Add this field
+            };
+            
+            console.log('🔗 Making request to:', url);
+            console.log('📦 Request data:', JSON.stringify(requestData, null, 2));
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData),
+                credentials: 'same-origin'  // Include cookies for authentication
+            });
+            
+            console.log('Response received, status:', response.status);
+            
+            // Handle authentication errors specifically
+            if (response.status === 401) {
+                throw new Error('用户未登录或会话已过期，请刷新页面后重新登录');
+            }
+            
+            if (!response.ok) {
+                let errorMessage = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorData.message || errorMessage;
+                } catch (e) {
+                    // Try to get text content if JSON parsing fails
+                    try {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
+                        }
+                    } catch (textError) {
+                        // Ignore text parsing errors
+                    }
+                }
+                throw new Error(errorMessage);
+            }
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            this.updateStatus('streaming', '正在生成报告...');
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value, { stream: true });
+                console.log('Received chunk:', chunk.length, 'characters');
+                this.handleSSEChunk(chunk);
+            }
+            
+            console.log('Streaming completed');
+            
+        } catch (error) {
+            console.error('Streaming error:', error);
+            let errorMessage = error.message;
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                errorMessage = '网络连接失败，请检查网络连接';
+            }
+            this.updateStatus('error', '连接失败: ' + errorMessage);
+            this.addStatus('错误详情: ' + errorMessage);
+            this.stopStreaming();
+        }
+    }
+    
+    handleSSEChunk(chunk) {
+        // Parse SSE data
+        const lines = chunk.split('\n');
+        let jsonString = '';
+        for (const line of lines) {
+            if (line.startsWith('data: ')) {
+                try {
+                    // Handle multi-line JSON data
+                    const dataStr = line.slice(6);
+                    jsonString += dataStr;
+                    
+                    // Try to parse JSON
+                    const data = JSON.parse(jsonString);
+                    this.handleStreamData(data);
+                    
+                    // Reset JSON string if parsing succeeds
+                    jsonString = '';
+                } catch (e) {
+                    // If parsing fails, it might be incomplete JSON, continue accumulating
+                    // Only show warning for clearly malformed data
+                    if (jsonString.length > 10000) { // Prevent infinite accumulation
+                        console.warn('Failed to parse SSE data (truncated):', jsonString.substring(0, 100) + '...');
+                        jsonString = ''; // Reset to prevent memory issues
+                    }
+                }
+            }
+        }
+    }
+    
+    handleStreamData(data) {
+        const eventData = data.data;
+        
+        switch (data.type) {
+            case 'generation_start':
+                this.updateStatus('streaming', '开始生成报告...');
+                this.addStatus('开始生成报告...');
+                this.elements.stageIndicator.textContent = '生成中...';
+                break;
+                
+            case 'report_chunk':
+                this.handleReportChunk(eventData);
+                if (eventData && eventData.msg) this.addStatus(eventData.msg);
+                break;
+                
+            case 'report_complete':
+                this.handleReportComplete(eventData);
+                this.addStatus('报告主体生成完成');
+                break;
+            case 'summary_chunk':
+                this.handleSummaryChunk(eventData);
+                break;
+            case 'summary_complete':
+                this.handleSummaryComplete(eventData);
+                break;
+            case 'swot_chunk':
+                this.handleSWOTChunk(eventData);
+                break;
+            case 'swot_complete':
+                this.handleSWOTComplete(eventData);
+                break;
+                
+            case 'error':
+                this.handleError(eventData);
+                if (eventData && (eventData.error || eventData.raw)) this.addStatus('错误: ' + (eventData.error || eventData.raw));
+                break;
+                
+            case 'test':
+                // Handle test events
+                console.log('Test event:', eventData);
+                break;
+        }
+    }
+
+    addStatus(msg) {
+        if (!msg || msg === this.lastStatus) return;
+        this.lastStatus = msg;
+        const div = document.createElement('div');
+        div.className = 'text-sm text-gray-700';
+        div.textContent = msg;
+        this.elements.statusLog.appendChild(div);
+        this.elements.statusLog.scrollTop = this.elements.statusLog.scrollHeight;
+    }
+    
+    handleReportChunk(chunk) {
+        if (chunk.type === 'chunk') {
+            // Mark that we've received the first chunk
+            if (!this.hasReceivedFirstChunk) {
+                this.hasReceivedFirstChunk = true;
+                console.log('First chunk received!');
+            }
+            
+            // Append new content
+            this.accumulatedContent = chunk.accumulated;
+            this.elements.content.innerHTML = this.renderMarkdown(this.accumulatedContent);
+            
+            // Update word count
+            this.updateWordCount();
+            
+            // Update counters
+            this.chunkCount = chunk.chunk_index;
+            this.elements.chunkCounter.textContent = `分块: ${this.chunkCount}`;
+            
+            // Update progress (rough estimate)
+            const progress = Math.min((this.chunkCount / 50) * 100, 90); // Assume ~50 chunks
+            this.elements.progressFill.style.width = `${progress}%`;
+            
+            // Auto-scroll to bottom
+            this.elements.container.scrollTop = this.elements.container.scrollHeight;
+            
+        } else if (chunk.type === 'complete') {
+            // Final content
+            this.accumulatedContent = chunk.content;
+            this.elements.content.innerHTML = this.renderMarkdown(this.accumulatedContent);
+            this.elements.stageIndicator.textContent = '生成完成';
+            
+            // Update word count
+            this.updateWordCount();
+            
+            // Update final progress
+            this.elements.progressFill.style.width = '100%';
+        }
+    }
+    
+    handleReportComplete(data) {
+        this.updateStatus('streaming', '报告主体生成完成，正在生成摘要...');
+        this.elements.stageIndicator.textContent = '生成摘要';
+        // Don't stop streaming yet as we need to generate summaries
+    }
+    
+    handleSummaryChunk(chunk) {
+        // Append new content to accumulated content
+        this.accumulatedContent += chunk.content;
+        this.elements.content.innerHTML = this.renderMarkdown(this.accumulatedContent);
+        
+        // Update word count
+        this.updateWordCount();
+        
+        // Update stage indicator
+        if (chunk.language === 'zh') {
+            this.elements.stageIndicator.textContent = '生成中文摘要';
+        } else if (chunk.language === 'en') {
+            this.elements.stageIndicator.textContent = '生成英文摘要';
+        }
+        
+        // Auto-scroll to bottom
+        this.elements.container.scrollTop = this.elements.container.scrollHeight;
+    }
+    
+    handleSummaryComplete(chunk) {
+        // Append final content
+        this.accumulatedContent += chunk.content;
+        this.elements.content.textContent = this.accumulatedContent;
+        
+        // Update word count
+        this.updateWordCount();
+        
+        // Update stage indicator
+        if (chunk.language === 'zh') {
+            this.addStatus('中文摘要生成完成');
+        } else if (chunk.language === 'en') {
+            this.addStatus('英文摘要生成完成');
+            // When English summary is complete, we're done
+            this.updateStatus('complete', '报告生成完成！');
+            this.elements.stageIndicator.textContent = '完成';
+            this.elements.cursor.style.display = 'none';
+            this.elements.saveButton.classList.remove('hidden');
+            this.elements.copyButton.classList.remove('hidden');
+            this.elements.stopButton.classList.add('hidden');
+            document.getElementById('stop-streaming-bottom').classList.remove('hidden');
+            this.stopStreaming();
+        }
+    }
+    
+    updateWordCount() {
+        if (this.elements.content && document.getElementById('word-count')) {
+            // Get text content without HTML tags for accurate word count
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = this.elements.content.innerHTML || '';
+            const text = tempDiv.textContent || tempDiv.innerText || '';
+            const wordCount = text.length;
+            document.getElementById('word-count').textContent = `${wordCount} 字`;
+        }
+    }
+    
+    handleSWOTChunk(chunk) {
+        // Append new content to accumulated content
+        this.accumulatedContent += chunk.content;
+        this.elements.content.innerHTML = this.renderMarkdown(this.accumulatedContent);
+        
+        // Update word count
+        this.updateWordCount();
+        
+        // Update stage indicator
+        this.elements.stageIndicator.textContent = '生成SWOT分析';
+        
+        // Auto-scroll to bottom
+        this.elements.container.scrollTop = this.elements.container.scrollHeight;
+    }
+    
+    handleSWOTComplete(chunk) {
+        // Append final content
+        this.accumulatedContent += chunk.content;
+        this.elements.content.textContent = this.accumulatedContent;
+        
+        // Update word count
+        this.updateWordCount();
+        
+        // Add status message
+        this.addStatus('SWOT分析生成完成');
+    }
+    
+    handleError(error) {
+        this.updateStatus('error', '生成失败: ' + error.error);
+        this.elements.content.innerHTML += `\n\n<span style="color: #ff6b6b;">❌ 错误: ${error.error}</span>`;
+        this.elements.cursor.style.display = 'none';
+        this.stopStreaming();
+        
+        // Show retry button
+        this.elements.startButton.classList.add('hidden');
+        this.elements.retryButton.classList.remove('hidden');
+    }
+    
+    stopStreaming() {
+        if (!this.isStreaming) return;
+        
+        this.isStreaming = false;
+        
+        // Update UI
+        this.elements.startButton.classList.remove('hidden');
+        this.elements.stopButton.classList.add('hidden');
+        this.elements.cursor.style.display = 'none';
+        
+        // Hide retry button when manually stopping
+        this.elements.retryButton.classList.add('hidden');
+        
+        if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
+        }
+    }
+    
+    updateStatus(type, message) {
+        const indicator = this.elements.statusIndicator;
+        const text = this.elements.statusText;
+        
+        // Remove all status classes
+        indicator.className = 'status-indicator';
+        
+        // Add new status class and update text
+        switch (type) {
+            case 'connecting':
+                indicator.classList.add('status-connecting');
+                break;
+            case 'streaming':
+                indicator.classList.add('status-streaming');
+                break;
+            case 'complete':
+                indicator.classList.add('status-complete');
+                break;
+            case 'error':
+                indicator.classList.add('status-error');
+                break;
+        }
+        
+        text.textContent = message;
+    }
+    
+    saveReport() {
+        if (!this.accumulatedContent) return;
+        
+        const city = this.elements.infoCity.textContent;
+        const industry = this.elements.infoIndustry.textContent;
+        const filename = `${city}_${industry}_产业分析报告_${new Date().toISOString().slice(0, 10)}.txt`;
+        
+        const blob = new Blob([this.accumulatedContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Show success message
+        alert('报告已保存！');
+    }
+    
+    copyContent() {
+        if (!this.accumulatedContent) return;
+        
+        navigator.clipboard.writeText(this.accumulatedContent).then(() => {
+            // Show temporary success message
+            const originalText = this.elements.copyButton.innerHTML;
+            this.elements.copyButton.innerHTML = '<i class="fas fa-check mr-2"></i>已复制';
+            this.elements.copyButton.classList.remove('bg-gray-600');
+            this.elements.copyButton.classList.add('bg-green-600');
+            
+            setTimeout(() => {
+                this.elements.copyButton.innerHTML = originalText;
+                this.elements.copyButton.classList.remove('bg-green-600');
+                this.elements.copyButton.classList.add('bg-gray-600');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            alert('复制失败，请手动选择文本复制');
+        });
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing streaming generator...');
+    window.streamingGenerator = new StreamingReportGenerator();
+    console.log('Streaming generator initialized');
+    
+    // Add a small delay to ensure everything is properly loaded
+    setTimeout(() => {
+        console.log('Attempting auto-start...');
+        
+        // Ensure all elements are properly initialized
+        if (!window.streamingGenerator.elements || !window.streamingGenerator.elements.infoCity || !window.streamingGenerator.elements.infoIndustry) {
+            console.error('Auto-start failed: elements not properly initialized');
+            console.log('Available elements:', window.streamingGenerator.elements);
+            window.streamingGenerator.updateStatus('error', '自动启动失败：页面元素未正确加载');
+            window.streamingGenerator.elements.startButton.classList.remove('hidden');
+            window.streamingGenerator.elements.retryButton.classList.remove('hidden');
+            return;
+        }
+        
+        const city = window.streamingGenerator.elements.infoCity.textContent.trim();
+        const industry = window.streamingGenerator.elements.infoIndustry.textContent.trim();
+        
+        console.log('Auto-start parameters:', { city, industry });
+        console.log('City length:', city.length, 'Industry length:', industry.length);
+        
+        // Check if city and industry are not empty (allow default values)
+        if (!city || !industry || city.length === 0 || industry.length === 0) {
+            console.error('Auto-start failed: missing city or industry parameters');
+            window.streamingGenerator.updateStatus('error', '自动启动失败：缺少城市或行业参数');
+            window.streamingGenerator.elements.startButton.classList.remove('hidden');
+            window.streamingGenerator.elements.retryButton.classList.remove('hidden');
+            return;
+        }
+        
+        console.log('✅ Starting streaming automatically...');
+        window.streamingGenerator.updateStatus('connecting', '自动启动中...');
+        
+        // Start streaming
+        try {
+            window.streamingGenerator.startStreaming();
+            
+            // Set a timeout to show retry button if streaming doesn't start within 15 seconds
+            setTimeout(() => {
+                if (window.streamingGenerator.isStreaming && !window.streamingGenerator.hasReceivedFirstChunk) {
+                    console.warn('Auto-start timeout: streaming took too long to start');
+                    window.streamingGenerator.updateStatus('error', '自动启动超时：连接AI服务时间过长');
+                    window.streamingGenerator.elements.stopButton.classList.add('hidden');
+                    window.streamingGenerator.elements.retryButton.classList.remove('hidden');
+                }
+            }, 15000);
+        } catch (error) {
+            console.error('Auto-start exception:', error);
+            window.streamingGenerator.updateStatus('error', '自动启动异常: ' + error.message);
+            window.streamingGenerator.elements.startButton.classList.remove('hidden');
+            window.streamingGenerator.elements.retryButton.classList.remove('hidden');
+        }
+    }, 800); // Reduced delay for faster start
+});
+
+// Handle page unload
+window.addEventListener('beforeunload', () => {
+    if (window.streamingGenerator) {
+        window.streamingGenerator.stopStreaming();
+    }
+});
+</script>
+{% endblock %}

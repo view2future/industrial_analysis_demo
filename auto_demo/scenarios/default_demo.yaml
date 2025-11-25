@@ -1,0 +1,131 @@
+# Default Demo Scenario for Regional Industrial Dashboard
+# 默认演示场景 - 区域产业分析小工作台
+
+name: "Default Demo - AI Report Generation"
+description: "Complete walkthrough of AI report generation feature"
+base_url: "http://localhost:5000"
+
+# Demo configuration
+config:
+  scroll_duration: 10  # seconds
+  action_delay: 1.5    # delay between actions (seconds)
+  slow_motion: 50      # slow motion for better visibility (ms)
+
+# Demo steps
+steps:
+  # Step 1: Homepage scroll
+  - action: navigate
+    url: "/"
+    description: "导航到首页"
+    subtitle: "欢迎观看区域产业分析小工作台演示"
+  
+  - action: wait
+    duration: 2
+    description: "等待页面完全加载"
+    subtitle: "页面正在加载中，请稍候..."
+  
+  - action: scroll_smooth
+    direction: "down"
+    duration: 10
+    description: "从上到下平滑滚动展示首页（10秒）"
+    subtitle: "现在为您展示首页的各个功能模块"
+  
+  - action: wait
+    duration: 1
+    description: "停留片刻"
+    subtitle: "这是首页的核心指标展示区域"
+
+  # Step 2: Navigate to AI report generation
+  - action: click
+    selector: "text=生成AI报告"
+    description: "点击'生成AI报告'按钮"
+    subtitle: "点击进入AI报告生成页面"
+    fallback:
+      - selector: "a[href='/generate-report']"
+      - selector: ".btn-primary:has-text('生成')"
+  
+  - action: wait
+    duration: 2
+    description: "等待报告生成页面加载"
+    subtitle: "AI报告生成页面加载完成"
+
+  # Step 3: Fill in the report form
+  - action: fill
+    selector: "#city"
+    value: "成都"
+    description: "填写目标城市: 成都"
+    subtitle: "填写目标城市：成都"
+  
+  - action: fill
+    selector: "#industry"
+    value: "人工智能"
+    description: "填写目标行业: 人工智能"
+    subtitle: "填写目标行业：人工智能"
+  
+  - action: wait
+    duration: 1
+    description: "停留查看表单"
+    subtitle: "表单填写完成，准备生成报告"
+
+  # Step 4: Submit the report generation
+  - action: click
+    selector: "button[type='submit']:has-text('开始生成报告')"
+    description: "点击'开始生成报告'按钮"
+    subtitle: "点击开始生成AI分析报告"
+    fallback:
+      - selector: ".btn-generate"
+      - selector: "button:has-text('生成报告')"
+  
+  - action: wait
+    duration: 3
+    description: "等待跳转到状态页面"
+    subtitle: "报告正在生成中，请稍候..."
+
+  # Step 5: Click background run button (if exists)
+  - action: click
+    selector: "text=后台运行"
+    description: "点击'后台运行'按钮"
+    subtitle: "点击后台运行，继续其他操作"
+    optional: true  # This button may not always be present
+    fallback:
+      - selector: "#backgroundRunBtn"
+      - selector: "button:has-text('后台')"
+  
+  - action: wait
+    duration: 1
+    description: "等待后台运行确认"
+    subtitle: "报告已在后台生成"
+
+  # Step 6: Navigate to V3 roadmap
+  - action: navigate
+    url: "/v3_roadmap"
+    description: "跳转到 V3.0 功能蓝图页面"
+    subtitle: "接下来展示V3.0版本的功能蓝图"
+  
+  - action: wait
+    duration: 2
+    description: "等待页面加载"
+    subtitle: "功能蓝图页面加载完成"
+  
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "向下滚动展示功能蓝图（5秒）"
+    subtitle: "向下滚动查看详细功能规划"
+  
+  - action: scroll_smooth
+    direction: "up"
+    duration: 5
+    description: "向上滚动返回顶部（5秒）"
+    subtitle: "返回页面顶部"
+  
+  - action: wait
+    duration: 2
+    description: "停留在顶部"
+    subtitle: "演示即将结束"
+
+  # End of demo
+  - action: message
+    text: "演示完成！"
+    description: "显示完成消息"
+    subtitle: "感谢观看本次演示！"

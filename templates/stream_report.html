@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+
+{% block title %}生成报告 - {{ city }} {{ industry }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .report-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 80px);
+    }
+    
+    .content-area {
+        flex: 0 0 70%;
+        overflow-y: hidden;
+        padding: 15px;
+        max-height: 70vh;
+        position: relative;
+    }
+    
+    .status-panel {
+        flex: 0 0 30%;
+        position: sticky;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
+        backdrop-filter: blur(20px);
+        border-top: 2px solid rgba(102,126,234,0.2);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        overflow-y: auto;
+    }
+    
+    #streamingContent {
+        max-height: calc(70vh - 180px);
+        overflow-y: auto !important;
+        min-height: 400px;
+        position: relative;
+    }
+    
+    .stage-indicator {
+        text-align: center;
+    }
+    
+    .stage-circle {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 8px;
+        border-radius: 50%;
+        background: rgba(200,200,200,0.3);
+        display: flex;
+        align-items: center;
+        justify-center;
+        font-size: 16px;
+        color: #999;
+        transition: all 0.3s ease;
+    }
+    
+    .stage-indicator.active .stage-circle {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 0 15px rgba(102,126,234,0.6);
+        transform: scale(1.1);
+    }
+    
+    .stage-indicator.completed .stage-circle {
+        background: #10b981;
+        color: white;
+    }
+    
+    .stage-label {
+        font-size: 11px;
+        color: #666;
+    }
+    
+    .stage-indicator.active .stage-label {
+        color: #333;
+        font-weight: 600;
+    }
+    /* Make upper content container full width */
+    .content-area .max-w-5xl { width: 100% !important; max-width: 100% !important; margin: 0 auto; }
+    /* Streaming card and content full width with 15px side padding */
+    .content-area .glass-card { width: calc(100% - 30px); margin: 0 15px; }
+    #streamingContent { width: 100%; max-width: none; word-wrap: break-word; overflow-wrap: anywhere; }
+    /* Ensure light background and strong text contrast */
+    .content-area, .glass-card { color: #0f172a; }
+    .glass-card { background: rgba(255,255,255,0.92) !important; border-color: rgba(148,163,184,0.35) !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <!-- 70% Content Area - Streaming Content -->
+    <div class="content-area custom-scrollbar">
+        <div class="max-w-5xl mx-auto">
+            <!-- Header -->
+            <div class="glass-card p-6 mb-6 animate-fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                            {{ city }} - {{ industry }} 产业分析报告
+                        </h1>
+                        <p class="text-gray-600">
+                            <i class="fas fa-robot mr-2"></i>AI 智能生成中...
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <span class="badge badge-warning" id="statusBadge">
+                            <i class="fas fa-spinner fa-spin mr-1"></i>生成中
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Streaming Content -->
+            <div class="glass-card p-8" style="max-height: calc(70vh - 180px); overflow-y: auto; min-height: 400px;">
+                <div class="markdown-content" id="streamingContent" style="padding: 0 15px; width: 100%;">
+                    <div class="flex items-center justify-center py-12">
+                        <div class="text-center">
+                            <div class="text-6xl text-primary-500 mb-4 animate-pulse">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <p class="text-xl text-gray-600">正在连接 AI 服务...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 30% Status Panel - Fixed Bottom -->
+    <div class="status-panel">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                <!-- Real-time Statistics -->
+                <div class="glass-card p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">实时字数</p>
+                            <p class="text-2xl font-bold text-gray-800" id="wordCount">0</p>
+                        </div>
+                        <div class="text-3xl text-blue-500">
+                            <i class="fas fa-file-word"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">生成时长</p>
+                            <p class="text-2xl font-bold text-gray-800" id="timer">00:00</p>
+                        </div>
+                        <div class="text-3xl text-green-500">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">LLM 服务</p>
+                            <p class="text-lg font-bold text-gray-800">{{ llm_service|upper }}</p>
+                        </div>
+                        <div class="text-3xl text-purple-500">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                    <span id="progressText">准备中...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="progress-glow h-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all duration-300" 
+                         id="progressBar" 
+                         style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Stage Indicators -->
+            <div class="grid grid-cols-5 gap-2 mb-4">
+                <div class="stage-indicator" id="stage-1">
+                    <div class="stage-circle">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <p class="stage-label">解析请求</p>
+                </div>
+                <div class="stage-indicator" id="stage-2">
+                    <div class="stage-circle">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <p class="stage-label">生成大纲</p>
+                </div>
+                <div class="stage-indicator" id="stage-3">
+                    <div class="stage-circle">
+                        <i class="fas fa-pencil-alt"></i>
+                    </div>
+                    <p class="stage-label">生成内容</p>
+                </div>
+                <div class="stage-indicator" id="stage-4">
+                    <div class="stage-circle">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <p class="stage-label">分析数据</p>
+                </div>
+                <div class="stage-indicator" id="stage-5">
+                    <div class="stage-circle">
+                        <i class="fas fa-flag-checkered"></i>
+                    </div>
+                    <p class="stage-label">完成</p>
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="flex justify-center space-x-3">
+                <button id="backgroundBtn" class="inline-flex items-center px-6 py-3 text-sm font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                    <i class="fas fa-home mr-2"></i>后台运行
+                </button>
+                <button id="stopBtn" class="inline-flex items-center px-6 py-3 text-sm font-bold bg-red-500 hover:bg-red-600 rounded-lg shadow-md hover:shadow-lg transition-all duration-300" style="color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                    <i class="fas fa-stop mr-2"></i>停止生成
+                </button>
+                <button id="refreshBtn" class="inline-flex items-center px-6 py-3 text-sm font-bold bg-gray-600 hover:bg-gray-700 rounded-lg shadow-md hover:shadow-lg transition-all duration-300" style="color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                    <i class="fas fa-sync mr-2"></i>刷新生成
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+// Force light theme for this page without persisting
+try {
+  document.documentElement.classList.remove('theme-dark');
+  document.documentElement.classList.add('theme-light');
+} catch(e) {}
+
+const taskId = "{{ task_id }}";
+const city = "{{ city }}";
+const industry = "{{ industry }}";
+const llmService = "{{ llm_service }}";
+
+let startTime = Date.now();
+let timerInterval = null;
+let wordCount = 0;
+let currentStage = 1;
+let userScrollActive = false;
+let lastManualScroll = 0;
+
+// Start timer
+function startTimer() {
+    // Check if we have a stored start time from sessionStorage
+    const storedStartTime = sessionStorage.getItem(`task_${taskId}_startTime`);
+    if (storedStartTime) {
+        startTime = parseInt(storedStartTime);
+    } else {
+        // Store the start time for future reference
+        sessionStorage.setItem(`task_${taskId}_startTime`, startTime.toString());
+    }
+    
+    timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        document.getElementById('timer').textContent = 
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }, 1000);
+}
+
+// Update word count
+function updateWordCount(content) {
+    // Remove HTML tags and count Chinese characters + words
+    const text = content.replace(/<[^>]*>/g, '');
+    const chineseChars = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
+    const englishWords = (text.match(/[a-zA-Z]+/g) || []).length;
+    wordCount = chineseChars + englishWords;
+    document.getElementById('wordCount').textContent = wordCount.toLocaleString();
+}
+
+// Update stage
+function updateStage(stage) {
+    if (stage > currentStage) {
+        // Mark previous stages as completed
+        for (let i = 1; i < stage; i++) {
+            const el = document.getElementById(`stage-${i}`);
+            if (el) {
+                el.classList.remove('active');
+                el.classList.add('completed');
+            }
+        }
+        // Mark current stage as active
+        const currentEl = document.getElementById(`stage-${stage}`);
+        if (currentEl) {
+            currentEl.classList.add('active');
+        }
+        currentStage = stage;
+    }
+}
+
+// Update progress
+function updateProgress(percent, text) {
+    document.getElementById('progressBar').style.width = percent + '%';
+    document.getElementById('progressPercent').textContent = Math.round(percent) + '%';
+    if (text) {
+        document.getElementById('progressText').textContent = text;
+    }
+}
+
+// Start streaming
+async function startStreaming() {
+    console.log('Starting streaming with parameters:', {city, industry, llmService, taskId});
+    startTimer();
+    updateStage(2);
+    updateProgress(10, '正在连接 AI 服务...');
+
+    try {
+        const response = await fetch('/streaming/api/stream/generate-report', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                city: city,
+                industry: industry,
+                llm_service: llmService,
+                additional_context: '',
+                task_id: taskId
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        updateProgress(20, '开始生成报告...');
+        updateStage(3);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        // Use existing content if available, otherwise start fresh
+        const contentDiv = document.getElementById('streamingContent');
+        const scrollContainer = contentDiv.closest('.glass-card');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('scroll', () => {
+                userScrollActive = true;
+                lastManualScroll = Date.now();
+            });
+        }
+        let fullContent = hasExistingContent ? contentDiv.innerHTML : '';
+
+        // Only clear content if we're starting fresh (no existing content)
+        if (!hasExistingContent) {
+            contentDiv.innerHTML = '';
+        }
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // Keep incomplete line in buffer
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        
+                        if (data.type === 'report_chunk') {
+                            const chunk = data.data;
+                            if (chunk.content) {
+                                fullContent += chunk.content;
+                                contentDiv.innerHTML = marked.parse(fullContent);
+                                updateWordCount(fullContent);
+                                writeCache(taskId, {
+                                    source: 'streaming',
+                                    complete: false,
+                                    content_md: fullContent,
+                                    city,
+                                    industry,
+                                    progress: Math.min(90, 20 + (wordCount / 100))
+                                });
+                                
+                                // Cache content to sessionStorage
+                                sessionStorage.setItem(`task_${taskId}_content`, fullContent);
+                                sessionStorage.setItem(`task_${taskId}_wordcount`, wordCount.toLocaleString());
+                                sessionStorage.setItem(`task_${taskId}_time`, document.getElementById('timer').textContent);
+                                // Ensure start time is also stored
+                                if (!sessionStorage.getItem(`task_${taskId}_startTime`)) {
+                                    sessionStorage.setItem(`task_${taskId}_startTime`, startTime.toString());
+                                }
+                                
+                                // Auto-scroll optimization with user-aware behavior and smooth 300ms animation
+                                if (scrollContainer) {
+                                    const nearBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight) < 200;
+                                    const allowAuto = !userScrollActive || nearBottom || (Date.now() - lastManualScroll > 800);
+                                    if (allowAuto) {
+                                        animateScroll(scrollContainer, scrollContainer.scrollHeight, 300);
+                                    }
+                                }
+                            }
+                            
+                            // Update progress based on content length
+                            const progress = Math.min(90, 20 + (wordCount / 100));
+                            updateProgress(progress, '正在生成内容...');
+                        } else if (data.type === 'report_complete') {
+                            updateProgress(100, '报告生成完成！');
+                            updateStage(5);
+                            clearInterval(timerInterval);
+                            
+                            // Extract final report_id from event
+                            const reportId = (data.data && data.data.report_id) ? data.data.report_id : taskId;
+                            try { sessionStorage.setItem(`task_${taskId}_final_report_id`, reportId); } catch(e) {}
+                            writeCache(taskId, {
+                                source: 'cache',
+                                complete: true,
+                                content_md: fullContent,
+                                city,
+                                industry,
+                                report_id: reportId,
+                                progress: 100
+                            });
+                            
+                            // Update UI
+                            const badge = document.getElementById('statusBadge');
+                            badge.className = 'badge badge-success';
+                            badge.innerHTML = '<i class="fas fa-check-circle mr-1"></i>已完成';
+                            
+                            // Show view report button
+                            document.getElementById('backgroundBtn').innerHTML = '<i class="fas fa-eye mr-2"></i>查看报告';
+                            document.getElementById('backgroundBtn').onclick = () => {
+                                window.location.href = `/report/${reportId}`;
+                            };
+                            document.getElementById('stopBtn').style.display = 'none';
+                        } else if (data.type === 'error') {
+                            throw new Error(data.data.error || '生成失败');
+                        }
+                    } catch (e) {
+                        console.error('Parse error:', e);
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Streaming error:', error);
+        document.getElementById('streamingContent').innerHTML = `
+            <div class="text-center py-12">
+                <div class="text-6xl text-red-500 mb-4">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p class="text-xl text-gray-800 font-semibold mb-2">生成失败</p>
+                <p class="text-gray-600">${error.message}</p>
+            </div>
+        `;
+        updateProgress(0, '生成失败');
+        clearInterval(timerInterval);
+        
+        const badge = document.getElementById('statusBadge');
+        badge.className = 'badge badge-error';
+        badge.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>失败';
+    }
+}
+
+// Background button handler
+document.getElementById('backgroundBtn').addEventListener('click', function() {
+    try {
+        if (typeof window.addBackgroundTask === 'function') {
+            window.addBackgroundTask(taskId, city, industry);
+        }
+    } catch (e) { console.error(e); }
+    window.location.href = '/';
+});
+
+// Refresh button handler
+document.getElementById('refreshBtn').addEventListener('click', function() {
+    invalidateCache(taskId);
+    location.reload();
+});
+
+// Stop button handler
+document.getElementById('stopBtn').addEventListener('click', async function() {
+    if (confirm('确定要停止报告生成吗？')) {
+        try {
+            await fetch(`/api/stop-task/${taskId}`, { method: 'POST' });
+        } catch (e) {
+            console.error('Stop task error:', e);
+        }
+        clearInterval(timerInterval);
+        window.history.back();
+    }
+});
+
+// Check if content exists (page returned to)
+let streamingStarted = false;
+let hasExistingContent = false;
+
+// Start streaming or resume display
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired');
+    console.log('Task ID:', taskId);
+    const cache = readCache(taskId);
+    console.log('Cache:', cache);
+    const cachedContent = cache && cache.content_md;
+    const cachedWordCount = cache && cache.wordcount;
+    const cachedTime = sessionStorage.getItem(`task_${taskId}_time`);
+    const cachedStartTime = sessionStorage.getItem(`task_${taskId}_startTime`);
+    
+    if (cachedContent && cachedContent.length > 100) {
+        console.log('Found cached content, resuming generation');
+        // Resume from cached content - continue generation instead of stopping
+        hasExistingContent = true;
+        const contentDiv = document.getElementById('streamingContent');
+        contentDiv.innerHTML = marked.parse(cachedContent);
+        
+        if (cachedWordCount) {
+            document.getElementById('wordCount').textContent = cachedWordCount;
+        }
+        if (cachedTime) {
+            document.getElementById('timer').textContent = cachedTime;
+        }
+        // Restore start time if available
+        if (cachedStartTime) {
+            startTime = parseInt(cachedStartTime);
+        }
+        
+        // Update UI to show we're continuing generation
+        updateProgress(cache && cache.progress ? Number(cache.progress) : 50, cache && cache.complete ? '缓存内容（30分钟内）' : '继续生成报告...');
+        updateStage(3);
+        const badge = document.getElementById('statusBadge');
+        if (cache && cache.complete) {
+            badge.className = 'badge badge-info';
+            badge.innerHTML = '<i class="fas fa-database mr-1"></i>缓存内容';
+        } else {
+            badge.className = 'badge badge-warning';
+            badge.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>继续生成';
+        }
+        
+        console.log('Loaded cached content, continuing generation');
+        
+        if (cache && cache.complete) {
+            streamingStarted = false;
+        } else {
+            streamingStarted = true;
+            setTimeout(startStreaming, 500);
+        }
+    } else {
+        console.log('No cached content found, starting fresh streaming');
+        // Start fresh streaming
+        streamingStarted = true;
+        setTimeout(startStreaming, 500);
+    }
+});
+// Smooth scroll helper
+function animateScroll(el, to, duration) {
+    const start = el.scrollTop;
+    const change = to - start;
+    const startTime = performance.now();
+    function easeInOutQuad(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+    function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        el.scrollTop = start + change * easeInOutQuad(progress);
+        if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+const CACHE_TTL_MS = 30 * 60 * 1000;
+function readCache(taskId) {
+    try {
+        const raw = localStorage.getItem(`report_cache_${taskId}`);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (!obj || !obj.timestamp) return null;
+        if (Date.now() - obj.timestamp > CACHE_TTL_MS) return null;
+        return obj;
+    } catch(e) { return null; }
+}
+function writeCache(taskId, obj) {
+    try {
+        obj = Object.assign({}, obj, { timestamp: Date.now(), cache_version: '1.0' });
+        localStorage.setItem(`report_cache_${taskId}`, JSON.stringify(obj));
+    } catch(e) {}
+}
+function invalidateCache(taskId) {
+    try { localStorage.removeItem(`report_cache_${taskId}`); } catch(e) {}
+}
+</script>
+{% endblock %}

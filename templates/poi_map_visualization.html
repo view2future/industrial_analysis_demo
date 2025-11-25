@@ -1,0 +1,1670 @@
+{% extends "base.html" %}
+
+{% block title %}POI地图看板 - 区域产业分析{% endblock %}
+
+{% block extra_css %}
+<style>
+    .modern-card {
+        background: linear-gradient(145deg, #ffffff, #f0f0f0);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .input-modern {
+        background: white;
+        color: #000000;  /* Changed to pure black */
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+
+    .input-modern:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .input-modern::placeholder {
+        color: #9ca3af; /* Light gray placeholder text */
+    }
+
+    .btn-modern {
+        transition: all 0.3s ease;
+        font-weight: 500;
+        letter-spacing: 0.25px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981, #047857);
+        color: white;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6b7280, #374151);
+        color: white;
+        box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
+    }
+
+    .tab-header {
+        background: linear-gradient(to right, #f8fafc, #e2e8f0);
+    }
+
+    .tab-button.active {
+        background: white;
+        color: #2563eb;
+        border-bottom: 2px solid #2563eb;
+    }
+
+    .progress-bar {
+        background: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        height: 10px;
+    }
+
+    .progress-fill {
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        height: 100%;
+        transition: width 0.4s ease;
+    }
+
+    .visualization-panel {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 16px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .stats-card {
+        background: linear-gradient(135deg, #dbeafe, #ede9fe);
+        border-left: 4px solid #3b82f6;
+    }
+
+    /* Fix text visibility for labels and input texts */
+    label {
+        color: #000000 !important; /* Pure black for all labels */
+    }
+
+    .text-gray-900 {
+        color: #000000 !important; /* Pure black instead of gray-900 */
+    }
+
+    .text-gray-800 {
+        color: #000000 !important; /* Pure black instead of gray-800 */
+    }
+
+    .text-gray-700 {
+        color: #000000 !important; /* Pure black instead of gray-700 */
+    }
+
+    /* Ensure input text is visible */
+    input[type="text"] {
+        color: #000000 !important;
+    }
+
+    /* Ensure checkbox labels are visible */
+    .font-medium.text-gray-700 {
+        color: #000000 !important;
+    }
+
+    /* Ensure export button text is visible */
+    #export-btn, #export-upload-btn {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #047857 !important;
+    }
+    #export-btn:hover, #export-upload-btn:hover {
+        background: #047857 !important;
+        color: #ffffff !important;
+    }
+
+    /* Ensure browse button text is pure black */
+    #browse-btn {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #374151 !important;
+    }
+    #browse-btn:hover {
+        background: #374151 !important;
+        color: #ffffff !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_head %}
+<!-- Google Maps API -->
+<script async defer
+        id="google-maps-script"
+        src="https://maps.googleapis.com/maps/api/js?key={{ google_map_key|default('') }}&libraries=visualization,marker&callback=initGoogleMapLoader">
+</script>
+<!-- Load Google Maps marker clusterer and delegate to global init -->
+<script>
+function initGoogleMapLoader() {
+    if (typeof google !== 'undefined' && google.maps) {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js';
+        script.onload = function() {
+            if (typeof window.initGoogleMap === 'function') {
+                window.initGoogleMap();
+            }
+        };
+        document.head.appendChild(script);
+    }
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<!-- Baidu Maps API fallback, only load if API key exists -->
+{% if baidu_ak %}
+<script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak={{ baidu_ak }}"></script>
+<script type="text/javascript" src="https://api.map.baidu.com/library/Heatmap/2.0/src/Heatmap_min.js"></script>
+<script type="text/javascript" src="https://api.map.baidu.com/library/MarkerClusterer/1.2/src/MarkerClusterer_min.js"></script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-full mx-auto px-4 py-6">
+    <div class="modern-card rounded-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 p-6 text-white">
+            <div class="flex items-center">
+                <i class="fas fa-map-marked-alt text-3xl mr-4"></i>
+                <div>
+                    <h1 class="text-3xl font-bold mb-1">
+                        POI地图看板
+                    </h1>
+                    <p class="text-blue-100 text-lg">基于区域产业的机构位置可视化分析</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex flex-col lg:flex-row lg:min-h-[calc(100vh-200px)]">
+            <!-- Left Panel - Controls -->
+            <div class="w-full lg:w-96 p-6 bg-gray-50/50 backdrop-blur-sm border-r border-gray-200/50">
+                <!-- Tab Navigation -->
+                <div class="mb-6">
+                    <div class="tab-header rounded-lg p-1 flex">
+                        <button class="tab-button w-1/2 text-center py-3 px-4 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 active bg-white shadow-sm transition-colors"
+                                data-tab="search">
+                            <i class="fas fa-search mr-2"></i>标签搜索
+                        </button>
+                        <button class="tab-button w-1/2 text-center py-3 px-4 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                                data-tab="upload">
+                            <i class="fas fa-upload mr-2"></i>清单上传
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Panel -->
+                <div class="tab-content active" id="search-panel">
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                                <i class="fas fa-location-dot mr-2 text-blue-500"></i>
+                                目标区域 <span class="text-red-500">*</span>
+                            </label>
+                            <select id="region-select" class="input-modern w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white text-gray-800">
+                                <option value="成都市武侯区">成都市武侯区</option>
+                                <option value="成都市锦江区">成都市锦江区</option>
+                                <option value="成都市金牛区">成都市金牛区</option>
+                                <option value="北京市海淀区">北京市海淀区</option>
+                                <option value="西安市碑林区">西安市碑林区</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                                <i class="fas fa-tags mr-2 text-green-500"></i>
+                                标签关键词 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="keywords-input"
+                                   class="input-modern w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white text-gray-800"
+                                   placeholder="输入标签，逗号分隔，如：人工智能,高校,科研院所" required>
+                            <p class="text-xs text-gray-500 mt-2 flex items-center">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                支持多标签搜索，最多10个标签
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button id="search-btn" class="btn-modern btn-primary py-3 px-4 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-search mr-2"></i>开始搜索
+                            </button>
+                            <button id="export-btn" class="btn-modern btn-success py-3 px-4 rounded-lg flex items-center justify-center text-black" disabled>
+                                <i class="fas fa-download mr-2"></i>导出
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Panel -->
+                <div class="tab-content hidden" id="upload-panel">
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                                <i class="fas fa-file-import mr-2 text-purple-500"></i>
+                                上传机构清单
+                            </label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/50">
+                                <i class="fas fa-cloud-upload-alt text-5xl text-gray-400 mb-4"></i>
+                                <p class="text-base text-gray-700 mb-1">拖拽文件到此处或点击选择</p>
+                                <p class="text-sm text-gray-500 mb-3">支持格式：JSON, Excel, CSV</p>
+                                <input type="file" id="file-upload" accept=".json,.xlsx,.xls,.csv" class="hidden">
+                                <button id="browse-btn" class="btn-modern btn-secondary py-2 px-5 rounded-lg inline-flex items-center text-black">
+                                    <i class="fas fa-folder-open mr-2"></i>选择文件
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                                <i class="fas fa-sync-alt mr-2 text-yellow-500"></i>
+                                处理进度
+                            </label>
+                            <div class="progress-bar mb-2">
+                                <div id="upload-progress" class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <div id="upload-status" class="text-sm text-gray-600"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button id="process-btn" class="btn-modern btn-primary py-3 px-4 rounded-lg flex items-center justify-center" disabled>
+                                <i class="fas fa-cogs mr-2"></i>开始处理
+                            </button>
+                            <button id="export-upload-btn" class="btn-modern btn-success py-3 px-4 rounded-lg flex items-center justify-center text-black" disabled>
+                                <i class="fas fa-download mr-2"></i>导出
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Summary -->
+                    <div id="results-summary" class="mt-6 bg-white/80 backdrop-blur-sm rounded-xl p-5 border border-gray-200 shadow-sm" style="display: none;">
+                    <h3 class="font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-chart-bar mr-2 text-blue-500"></i>
+                        数据统计
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="stats-card p-3 rounded-lg">
+                            <div class="text-sm text-gray-600">总机构数</div>
+                            <div class="text-2xl font-bold text-blue-600" id="total-count">0</div>
+                        </div>
+                        <div class="stats-card p-3 rounded-lg">
+                            <div class="text-sm text-gray-600">已显示</div>
+                            <div class="text-2xl font-bold text-blue-600" id="display-count">0</div>
+                        </div>
+                    </div>
+                <div id="results-list" class="mt-4 bg-white/80 backdrop-blur-sm rounded-xl p-5 border border-gray-200 shadow-sm" style="display: none;">
+                    <h3 class="font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-list mr-2 text-green-500"></i>
+                        结果清单
+                    </h3>
+                    <div id="results-list-content" class="space-y-2 max-h-64 overflow-y-auto pr-2"></div>
+                </div>
+
+                
+                    
+                </div>
+
+                <!-- Visualization Controls -->
+                <div class="mt-6 visualization-panel">
+                    <h3 class="font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-sliders-h mr-2 text-indigo-500"></i>
+                        可视化控制
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" id="show-markers" class="mr-2 h-4 w-4 text-blue-600 rounded" checked>
+                            <span class="text-sm font-medium text-gray-700">标记</span>
+                        </label>
+                        <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" id="show-heatmap" class="mr-2 h-4 w-4 text-red-600 rounded">
+                            <span class="text-sm font-medium text-gray-700">热力图</span>
+                        </label>
+                        <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" id="show-clusters" class="mr-2 h-4 w-4 text-green-600 rounded" checked>
+                            <span class="text-sm font-medium text-gray-700">聚类</span>
+                        </label>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <!-- Right Panel - Map -->
+            <div class="flex-1 relative">
+                <div id="google-map" class="w-full h-[calc(100vh-200px)] absolute top-0 left-0 z-10" style="display:block; min-height: 500px;"></div>
+                <div id="baidu-map" class="w-full h-[calc(100vh-200px)] absolute top-0 left-0 z-0" style="display:none; min-height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Global variable to track which map is initialized
+let googleMapInitialized = false;
+let currentMapType = 'google'; // Default to Google Maps
+let currentMap = null;
+let currentMarkers = [];
+let currentHeatmap = null;
+let currentClusterer = null;
+
+// Initialize Google Maps after the API loads
+function initGoogleMap() {
+    if (googleMapInitialized) return;
+
+    // Create Google Map instance
+    const mapOptions = {
+        zoom: 8,
+        center: { lat: 30.67, lng: 104.06 }, // Center on Chengdu
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        styles: [
+            {
+                featureType: "all",
+                elementType: "labels",
+                stylers: [{ visibility: "on" }]
+            },
+            {
+                featureType: "water",
+                elementType: "geometry.fill",
+                stylers: [{ color: "#c1d6f0" }]
+            },
+            {
+                featureType: "landscape",
+                elementType: "geometry.fill",
+                stylers: [{ color: "#f2f5f9" }]
+            }
+        ]
+    };
+
+    currentMap = new google.maps.Map(document.getElementById('google-map'), mapOptions);
+    googleMapInitialized = true;
+
+    // Update map type
+    currentMapType = 'google';
+
+    // Initialize the visualizer after Google Maps is ready
+    if (window.PoiMapVisualizer) {
+        const visualizer = new PoiMapVisualizer();
+        visualizer.setGoogleMap(currentMap);
+    }
+}
+
+class PoiMapVisualizer {
+    constructor() {
+        this.poiData = [];
+        this.visualizationType = 'markers'; // Current visualization type: 'markers', 'heatmap', 'clusters'
+        this.currentMap = null;
+        this.markers = [];
+        this.heatmap = null;
+        this.clusterer = null;
+        this.regionBoundaries = [];  // Array to store multiple region boundary visualizations
+        this.mapType = 'google'; // Default to Google Maps
+        this.googleMapReady = false;
+        this.baiduMapReady = false;
+        this.eventsBound = false;
+    }
+
+    initGoogleMap() {
+        // Create Google map instance as primary
+        this.mapType = 'google';
+
+        const mapOptions = {
+            zoom: 8,
+            center: { lat: 30.67, lng: 104.06 }, // Center on Chengdu
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            mapId: '{{ google_map_id|default("") }}',
+            // Add map controls
+            zoomControl: true,
+            mapTypeControl: true,
+            scaleControl: true,
+            streetViewControl: false, // Disable street view for cleaner UI
+            fullscreenControl: true,
+            styles: [
+                {
+                    featureType: "all",
+                    elementType: "labels",
+                    stylers: [{ visibility: "on" }]
+                },
+                {
+                    featureType: "water",
+                    elementType: "geometry.fill",
+                    stylers: [{ color: "#c1d6f0" }]
+                },
+                {
+                    featureType: "landscape",
+                    elementType: "geometry.fill",
+                    stylers: [{ color: "#f2f5f9" }]
+                }
+            ]
+        };
+
+        this.currentMap = new google.maps.Map(document.getElementById('google-map'), mapOptions);
+        this.googleMapReady = true;
+        this.dataLayer = new google.maps.Data({ map: this.currentMap });
+        this.dataLayer.setStyle({ strokeColor: '#ff3b30', strokeWeight: 3, strokeOpacity: 0.95, fillColor: '#ff3b30', fillOpacity: 0.12 });
+
+        // Switch to Google Map view
+        document.getElementById('google-map').style.display = 'block';
+        document.getElementById('baidu-map').style.display = 'none';
+
+        // Bind events after map initialization
+        this.bindEvents();
+    }
+
+    initBaiduMap() {
+        // Create Baidu map instance as fallback
+        this.mapType = 'baidu';
+        this.currentMap = new BMap.Map("baidu-map");
+
+        // Set initial center and zoom (China view)
+        const point = new BMap.Point(104.06, 30.67); // Default to Chengdu
+        this.currentMap.centerAndZoom(point, 8);
+
+        // Add controls
+        this.currentMap.addControl(new BMap.ScaleControl());
+        this.currentMap.addControl(new BMap.OverviewMapControl());
+        this.currentMap.addControl(new BMap.MapTypeControl());
+        this.currentMap.enableScrollWheelZoom(true);
+
+        this.baiduMapReady = true;
+
+        // Switch to Baidu Map view
+        document.getElementById('baidu-map').style.display = 'block';
+        document.getElementById('google-map').style.display = 'none';
+
+        // Bind events after map initialization
+        this.bindEvents();
+    }
+
+    init() {
+        // Prefer Google Maps; if not ready yet, wait briefly before fallback to Baidu
+        if (typeof google !== 'undefined' && google.maps) {
+            this.initGoogleMap();
+        } else {
+            setTimeout(() => {
+                if (typeof google !== 'undefined' && google.maps) {
+                    this.initGoogleMap();
+                } else {
+                    this.initBaiduMap();
+                }
+            }, 1200);
+        }
+    }
+
+    bindEvents() {
+        if (this.eventsBound) return;
+        this.eventsBound = true;
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                // Make sure we get the button element, not a child element
+                let targetButton = e.target;
+                while (targetButton && !targetButton.classList.contains('tab-button')) {
+                    targetButton = targetButton.parentElement;
+                }
+
+                if (targetButton && targetButton.dataset.tab) {
+                    this.switchTab(targetButton.dataset.tab);
+                }
+            });
+        });
+
+        // Search functionality
+        document.getElementById('search-btn').addEventListener('click', () => {
+            this.performSearch();
+        });
+
+        // Add event to show region boundary when user selects region from dropdown
+        const regionSelect = document.getElementById('region-select');
+
+        if (regionSelect) {
+            // Show boundaries when user changes the selection
+            regionSelect.addEventListener('change', () => {
+                this.renderRegionBoundaries();
+            });
+        }
+
+
+        // Export functionality
+        document.getElementById('export-btn').addEventListener('click', () => {
+            this.exportResults();
+        });
+
+        // Upload functionality
+        document.getElementById('browse-btn').addEventListener('click', (e) => {
+            e.preventDefault(); // Prevent any default behavior
+            document.getElementById('file-upload').click();
+        });
+
+        document.getElementById('file-upload').addEventListener('change', (e) => {
+            this.handleFileUpload(e.target.files[0]);
+        });
+
+        // Process uploaded file
+        document.getElementById('process-btn').addEventListener('click', () => {
+            this.processUploadedFile();
+        });
+
+        // Export upload results
+        document.getElementById('export-upload-btn').addEventListener('click', () => {
+            this.exportUploadResults();
+        });
+
+        // Visualization controls
+        document.getElementById('show-markers').addEventListener('change', (e) => {
+            this.toggleVisualization('markers', e.target.checked);
+        });
+
+        document.getElementById('show-heatmap').addEventListener('change', (e) => {
+            this.toggleVisualization('heatmap', e.target.checked);
+        });
+
+        document.getElementById('show-clusters').addEventListener('change', (e) => {
+            this.toggleVisualization('clusters', e.target.checked);
+        });
+
+        // On initialization, show the default region boundary if there's a default value
+        setTimeout(() => {
+            const regionSelect = document.getElementById('region-select');
+            if (regionSelect && regionSelect.value.trim()) {
+                this.renderRegionBoundaries();
+            }
+        }, 500); // Small delay to ensure map is ready
+    }
+
+    switchTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        // Remove active class from all buttons
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active', 'bg-white', 'shadow-sm');
+            button.classList.add('text-gray-600');
+        });
+
+        // Show selected tab content
+        const tabPanel = document.getElementById(`${tabName}-panel`);
+        if (tabPanel) {
+            tabPanel.classList.remove('hidden');
+        }
+
+        // Find and activate the button that triggered the switch
+        const buttonToActivate = Array.from(document.querySelectorAll('.tab-button')).find(
+            btn => btn.dataset.tab === tabName
+        );
+        if (buttonToActivate) {
+            buttonToActivate.classList.add('active', 'bg-white', 'shadow-sm');
+            buttonToActivate.classList.remove('text-gray-600');
+            buttonToActivate.classList.add('text-blue-600');
+        }
+    }
+
+    async performSearch() {
+        const regionSelect = document.getElementById('region-select');
+        const region = regionSelect ? regionSelect.value : '';
+        const keywordsInput = document.getElementById('keywords-input').value.trim();
+
+        if (!region) {
+            alert('请输入目标区域');
+            return;
+        }
+
+        if (!keywordsInput) {
+            alert('请输入搜索标签');
+            return;
+        }
+
+        // Parse keywords
+        const keywords = keywordsInput.split(',').map(k => k.trim()).filter(k => k);
+        if (keywords.length === 0) {
+            alert('请输入有效的标签，用逗号分隔');
+            return;
+        }
+
+        try {
+            document.getElementById('search-btn').disabled = true;
+            document.getElementById('search-btn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>搜索中...';
+
+            // Try to get CSRF token from the page (if present)
+            const csrfTokenInput = document.querySelector('[name=csrf_token]');
+            const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (csrfToken) {
+                headers['X-CSRF-Token'] = csrfToken;
+            }
+
+            const response = await fetch('/api/poi-search', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    region: region,
+                    keywords: keywords
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                if (result.success) {
+                    const regionSelect = document.getElementById('region-select');
+                    const selectedRegion = regionSelect ? regionSelect.value : '';
+                    const boundaryResp = await fetch(`/api/boundaries?region=${encodeURIComponent(selectedRegion)}&level=city`);
+                    const boundaryJson = await boundaryResp.json();
+                    let rawResults = result.data.results || [];
+                    const filteredTypes = ['企业','高校','科研院所'];
+                    const normalized = rawResults.filter(p => filteredTypes.includes(this.normalizeType(p)));
+                    const boundaryGeoJSON = boundaryResp.ok && boundaryJson.success ? boundaryJson.geojson : null;
+                    const inside = boundaryGeoJSON ? normalized.filter(p => this.isPointInsideGeoJSON(p.location && p.location.lng, p.location && p.location.lat, boundaryGeoJSON)) : normalized;
+                    this.poiData = inside;
+                    this.displayResults(this.poiData, result.data.visualization);
+                    this.updateResultsSummary({ total_count: this.poiData.length });
+                    this.renderResultsList(this.poiData);
+
+                    // Enable export button
+                    document.getElementById('export-btn').disabled = false;
+
+                    // Auto-center map on results
+                    if (this.poiData.length > 0) {
+                        this.centerMapOnResults();
+                    } else {
+                        // Show message when no results are found
+                        alert('搜索完成，但未找到相关数据');
+                    }
+
+                    // Display the region boundary on the map
+                    await this.renderRegionBoundaries();
+                } else {
+                    alert('搜索失败: ' + (result.error || '未知错误'));
+                }
+            } else {
+                // Handle HTTP error responses
+                let errorMessage = '搜索失败';
+                if (result && result.error) {
+                    errorMessage = result.error;
+                } else {
+                    try {
+                        errorMessage = await response.text();
+                    } catch(e) {
+                        errorMessage = 'HTTP错误: ' + response.status;
+                    }
+                }
+                alert(errorMessage);
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            alert('搜索过程中出现错误: ' + error.message);
+        } finally {
+            document.getElementById('search-btn').disabled = false;
+            document.getElementById('search-btn').innerHTML = '<i class="fas fa-search mr-2"></i>开始搜索';
+        }
+    }
+
+    async processUploadedFile() {
+        const fileInput = document.getElementById('file-upload');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert('请先选择文件');
+            return;
+        }
+
+        // Show processing status
+        const statusEl = document.getElementById('upload-status');
+        const progressEl = document.getElementById('upload-progress');
+        statusEl.textContent = '正在上传...';
+        document.getElementById('process-btn').disabled = true;
+        document.getElementById('process-btn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>处理中...';
+        // Initialize progress to 10%
+        if (progressEl) progressEl.style.width = '10%';
+        // Simulate incremental progress while等待服务器处理
+        let simulated = 10;
+        let timer = setInterval(() => {
+            simulated = Math.min(simulated + 5, 90);
+            if (progressEl) progressEl.style.width = simulated + '%';
+        }, 500);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/api/poi-upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.poiData = result.data.results;
+                this.displayResults(this.poiData, result.data.visualization);
+                this.updateResultsSummary(result.data);
+
+                // Enable export button
+                document.getElementById('export-upload-btn').disabled = false;
+                const parse = result.data.parse || {};
+                let statusText = `处理完成：有效 ${parse.valid || result.data.total_count} / 总计 ${parse.processed || result.data.total_count}，无效 ${parse.invalid || 0}`;
+                if (parse.invalid && parse.invalid > 0 && parse.invalid_breakdown) {
+                    const br = parse.invalid_breakdown;
+                    const parts = [];
+                    if (br.missing_or_unparsed) parts.push(`缺少/无法解析坐标 ${br.missing_or_unparsed}`);
+                    if (br.out_of_range) parts.push(`坐标超出范围 ${br.out_of_range}`);
+                    statusText += `（原因：${parts.join('，')}）`;
+                }
+                statusEl.textContent = statusText;
+                if (parse.invalid_examples && parse.invalid_examples.length > 0) {
+                    console.warn('无效示例：', parse.invalid_examples);
+                }
+                if (progressEl) progressEl.style.width = '100%';
+
+                // Auto-center map on results
+                if (this.poiData.length > 0) {
+                    this.centerMapOnResults();
+                }
+            } else {
+                alert('文件处理失败: ' + result.error);
+                statusEl.textContent = '处理失败: ' + result.error;
+            }
+        } catch (error) {
+            console.error('File upload error:', error);
+            alert('文件上传处理失败: ' + error.message);
+            statusEl.textContent = '上传失败: ' + error.message;
+            if (progressEl) progressEl.style.width = '0%';
+        } finally {
+            clearInterval(timer);
+            document.getElementById('process-btn').disabled = false;
+            document.getElementById('process-btn').innerHTML = '<i class="fas fa-cogs mr-2"></i>开始处理';
+        }
+    }
+
+    handleFileUpload(file) {
+        if (!file) return;
+
+        // Validate file type
+        const allowedTypes = ['.json', '.xlsx', '.xls', '.csv'];
+        const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+
+        if (!allowedTypes.includes(fileExt)) {
+            alert('不支持的文件格式，请上传JSON、Excel或CSV文件');
+            return;
+        }
+
+        document.getElementById('upload-status').textContent = `已选择: ${file.name}`;
+
+        // Enable process button
+        document.getElementById('process-btn').disabled = false;
+    }
+
+    displayResults(poiData, visualizationData = null) {
+        // Clear existing markers and clusters
+        this.clearMap();
+
+        if (poiData.length === 0) {
+            return;
+        }
+
+        // Add markers for each POI
+        this.addMarkers(poiData);
+
+        // Apply visualization settings from checkboxes
+        const showMarkers = document.getElementById('show-markers').checked;
+        const showHeatmap = document.getElementById('show-heatmap').checked;
+        const showClusters = document.getElementById('show-clusters').checked;
+
+        // Show clusters by default if markers are shown
+        if (showClusters && this.mapType === 'google') {
+            this.showClusters();
+        } else if (showClusters && this.mapType === 'baidu') {
+            this.showBaiduClusters();
+        }
+
+        if (showHeatmap) {
+            this.showHeatmap(visualizationData);
+        }
+    }
+
+    addMarkers(poiData) {
+        // Clear existing markers
+        this.clearMarkers();
+        this.markers = [];
+
+        poiData.forEach(poi => {
+            if (!poi.location || !poi.location.lng || !poi.location.lat) {
+                console.warn(`POI ${poi.name} has no valid coordinates`);
+                return;
+            }
+
+            if (this.mapType === 'google') {
+                // Add Google Maps marker
+                const location = { lat: poi.location.lat, lng: poi.location.lng };
+
+                // Create custom info window content
+                const infoContent = `
+                    <div style="width: 300px;">
+                        <h3 style="font-size: 16px; margin: 0 0 8px 0; color: #1f2937;">${poi.name}</h3>
+                        <p style="margin: 4px 0; line-height: 1.4;"><strong>地址:</strong> ${poi.address}</p>
+                        <p style="margin: 4px 0; line-height: 1.4;"><strong>类型:</strong> ${poi.type}</p>
+                        <p style="margin: 4px 0; line-height: 1.4;"><strong>标签:</strong> ${poi.tag || poi.type}</p>
+                        ${poi.distance ? `<p style="margin: 4px 0; line-height: 1.4;"><strong>距离:</strong> ${poi.distance}米</p>` : ''}
+                        ${poi.tel ? `<p style="margin: 4px 0; line-height: 1.4;"><strong>电话:</strong> ${poi.tel}</p>` : ''}
+                        ${poi.rating ? `<p style="margin: 4px 0; line-height: 1.4;"><strong>评分:</strong> ${poi.rating}</p>` : ''}
+                    </div>
+                `;
+
+                const infoWindow = new google.maps.InfoWindow({
+                    content: infoContent
+                });
+
+                const marker = new google.maps.Marker({
+                    position: location,
+                    map: this.currentMap,
+                    title: poi.name,
+                    icon: this.getGoogleMarkerIcon(poi.type)
+                });
+
+                marker.addListener('click', () => {
+                    infoWindow.open(this.currentMap, marker);
+                });
+
+                this.markers.push(marker);
+            } else {
+                // Add Baidu Maps marker
+                const point = new BMap.Point(poi.location.lng, poi.location.lat);
+
+                // Create custom marker icon based on type
+                let icon = this.getBaiduMarkerIcon(poi.type);
+
+                const marker = new BMap.Marker(point, {icon: icon});
+
+                // Create custom info window
+                const infoWindow = new BMap.InfoWindow(`
+                    <div style="width: 300px;">
+                        <h3 style="font-size: 16px; margin: 0 0 8px 0; color: #1f2937;">${poi.name}</h3>
+                        <p style="margin: 4px 0; line-height: 1.4;"><strong>地址:</strong> ${poi.address}</p>
+                        <p style="margin: 4px 0; line-height: 1.4;"><strong>类型:</strong> ${poi.type}</p>
+                        <p style="margin: 4px 0; line-height: 1.4;"><strong>标签:</strong> ${poi.tag || poi.type}</p>
+                        ${poi.distance ? `<p style="margin: 4px 0; line-height: 1.4;"><strong>距离:</strong> ${poi.distance}米</p>` : ''}
+                        ${poi.tel ? `<p style="margin: 4px 0; line-height: 1.4;"><strong>电话:</strong> ${poi.tel}</p>` : ''}
+                        ${poi.rating ? `<p style="margin: 4px 0; line-height: 1.4;"><strong>评分:</strong> ${poi.rating}</p>` : ''}
+                    </div>
+                `);
+
+                marker.addEventListener('click', () => {
+                    this.currentMap.openInfoWindow(infoWindow, point);
+                });
+
+                this.currentMap.addOverlay(marker);
+                this.markers.push(marker);
+            }
+        });
+    }
+
+    getGoogleMarkerIcon(type) {
+        // Different icons based on POI type for Google Maps
+        // Using default Google Maps icons for now, but could be customized with custom icons
+        const colors = {
+            '高校': '#3b82f6',     // Blue
+            '科研院所': '#8b5cf6',   // Purple
+            '人工智能': '#10b981',   // Green
+            '制造': '#ef4444',      // Red
+            '文旅': '#f59e0b',     // Yellow
+            '医疗': '#ec4899',     // Pink
+            '金融': '#06b6d4',     // Cyan
+            '互联网': '#8b5cf6'     // Purple
+        };
+
+        const color = colors[type] || '#6b7280'; // Gray as default
+
+        // For Google Maps, we could return a custom icon object
+        // For now, returning null to use default icon
+        return null;
+    }
+
+    getBaiduMarkerIcon(type) {
+        // Different icons based on POI type for Baidu Maps
+        const colors = {
+            '高校': '#3b82f6',     // Blue
+            '科研院所': '#8b5cf6',   // Purple
+            '人工智能': '#10b981',   // Green
+            '制造': '#ef4444',      // Red
+            '文旅': '#f59e0b',     // Yellow
+            '医疗': '#ec4899',     // Pink
+            '金融': '#06b6d4',     // Cyan
+            '互联网': '#8b5cf6'     // Purple
+        };
+
+        const color = colors[type] || '#6b7280'; // Gray as default
+
+        // Create custom icon with color based on type
+        return new BMap.Icon("http://api.map.baidu.com/images/marker_red.png",
+            new BMap.Size(20, 34), {
+                // You can customize the anchor and size
+            });
+    }
+
+    showClusters() {
+        // Use Google Maps clustering library
+        if (this.clusterer) {
+            if (typeof this.clusterer.clearMarkers !== 'undefined') {
+                this.clusterer.clearMarkers();
+            } else if (typeof this.clusterer.clearMarkersFromMap !== 'undefined') {
+                this.clusterer.clearMarkersFromMap();
+            }
+        }
+
+        // Check if MarkerClusterer library is loaded before using it
+        const self = this; // Capture 'this' context for use in callback
+        if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+            if (window.markerClusterer && window.markerClusterer.MarkerClusterer) {
+                this.clusterer = new window.markerClusterer.MarkerClusterer({
+                    map: this.currentMap,
+                    markers: this.markers,
+                    options: { gridSize: 50, maxZoom: 15 }
+                });
+            } else if (markerClustererLoaded) {
+                console.error('MarkerClusterer is marked as loaded but not available.');
+                this.markers.forEach(marker => marker.setMap(this.currentMap));
+            } else {
+                loadMarkerClustererLibrary(function() {
+                    if (window.markerClusterer && window.markerClusterer.MarkerClusterer) {
+                        self.clusterer = new window.markerClusterer.MarkerClusterer({
+                            map: self.currentMap,
+                            markers: self.markers,
+                            options: { gridSize: 50, maxZoom: 15 }
+                        });
+                    } else {
+                        console.error('MarkerClusterer library not available after loading attempt.');
+                        self.markers.forEach(marker => marker.setMap(self.currentMap));
+                    }
+                });
+            }
+        } else {
+            console.error('Google Maps not available for clustering.');
+            // If Google Maps isn't available, just show individual markers
+            this.markers.forEach(marker => marker.setMap(this.currentMap));
+        }
+
+        // Update visualization type
+        this.visualizationType = 'clusters';
+    }
+
+    showBaiduClusters() {
+        // Use Baidu Maps clustering
+        if (this.clusterer) {
+            this.clusterer.clearMarkers();
+        }
+
+        // Create new Baidu clusterer
+        this.clusterer = new BMapLib.MarkerClusterer(this.currentMap, {
+            markers: this.markers,
+            gridSize: 50,
+            maxZoom: 15
+        });
+
+        // Update visualization type
+        this.visualizationType = 'clusters';
+    }
+
+    showHeatmap(visualizationData = null) {
+        // Remove any existing heatmap
+        this.removeHeatmap();
+
+        if (this.mapType === 'google') {
+            this.showGoogleHeatmap(visualizationData);
+        } else {
+            this.showBaiduHeatmap(visualizationData);
+        }
+    }
+
+    showGoogleHeatmap(visualizationData = null) {
+        try {
+            if (!google || !google.maps || !google.maps.visualization) {
+                console.warn('Google Visualization library not available.');
+                return;
+            }
+            // Build weighted points from current POI data
+            const points = [];
+            const weightForType = (poi) => {
+                const t = (poi.type || poi.tag || '').toLowerCase();
+                if (t.includes('研究') || t.includes('科研') || t.includes('实验室')) return 1.5;
+                if (t.includes('大学') || t.includes('高校') || t.includes('学院')) return 1.3;
+                return 1.0; // 企业默认权重
+            };
+            const src = (visualizationData && visualizationData.heatmap_data) ? visualizationData.heatmap_data : (this.poiData || []);
+            src.forEach(poi => {
+                const lng = poi.location && poi.location.lng;
+                const lat = poi.location && poi.location.lat;
+                if (typeof lng === 'number' && typeof lat === 'number') {
+                    const loc = new google.maps.LatLng(lat, lng);
+                    const weight = (visualizationData && visualizationData.heatmap_data) ? (poi.count || 1) : weightForType(poi);
+                    points.push({ location: loc, weight });
+                }
+            });
+
+            if (!points.length) return;
+
+            this.heatmap = new google.maps.visualization.HeatmapLayer({
+                data: points,
+                map: this.currentMap,
+                radius: 24,
+                dissipating: true
+            });
+            // Custom gradient (蓝→紫→红，突出热点)
+            this.heatmap.set('gradient', [
+                'rgba(0, 0, 255, 0)',
+                'rgba(0, 128, 255, 1)',
+                'rgba(0, 255, 255, 1)',
+                'rgba(0, 255, 128, 1)',
+                'rgba(255, 255, 0, 1)',
+                'rgba(255, 128, 0, 1)',
+                'rgba(255, 0, 0, 1)'
+            ]);
+        } catch (e) {
+            console.error('Google heatmap error:', e);
+        }
+    }
+
+    showBaiduHeatmap(visualizationData = null) {
+        let heatmapData;
+        if (visualizationData && visualizationData.heatmap_data) {
+            heatmapData = visualizationData.heatmap_data;
+        } else {
+            // Generate heatmap data from poiData if not provided
+            heatmapData = this.poiData.map(poi => {
+                return {
+                    lng: poi.location.lng,
+                    lat: poi.location.lat,
+                    count: 1 // Simple count, could be weighted based on importance
+                };
+            });
+        }
+
+        // Initialize Baidu heatmap
+        this.heatmap = new BMapLib.HeatmapOverlay({
+            "radius": 20,
+            "opacity": 0.6,
+            "gradient": {
+                0.25: "rgb(0,0,255)",
+                0.55: "rgb(0,255,0)",
+                0.85: "rgb(255,255,0)",
+                1.0: "rgb(255,0,0)"
+            }
+        });
+
+        this.currentMap.addOverlay(this.heatmap);
+        this.heatmap.setDataSet({data: heatmapData, max: Math.max(10, heatmapData.length)});
+        this.heatmap.show();
+
+        // Update visualization type
+        this.visualizationType = 'heatmap';
+    }
+
+    removeHeatmap() {
+        if (this.heatmap) {
+            if (this.mapType === 'google') {
+                this.heatmap.setMap(null);
+            } else {
+                this.heatmap.hide();
+                this.currentMap.removeOverlay(this.heatmap);
+            }
+            this.heatmap = null;
+        }
+    }
+
+    clearMarkers() {
+        // Clear markers based on map type
+        if (this.mapType === 'google') {
+            this.markers.forEach(marker => marker.setMap(null));
+        } else {
+            // For Baidu Maps, remove from map
+            this.markers.forEach(marker => this.currentMap.removeOverlay(marker));
+        }
+        this.markers = [];
+    }
+
+    clearMap() {
+        // Clear all overlays
+        this.clearMarkers();
+
+        if (this.clusterer) {
+            if (this.mapType === 'google') {
+                this.clusterer.clearMarkers();
+            } else {
+                this.clusterer.clearMarkers();
+            }
+            this.clusterer = null;
+        }
+
+        this.removeHeatmap();
+    }
+
+    centerMapOnResults() {
+        if (this.poiData.length === 0) return;
+
+        // Filter valid coordinates
+        const validPoints = this.poiData.filter(poi =>
+            poi.location && poi.location.lng && poi.location.lat
+        );
+
+        if (validPoints.length === 0) return;
+
+        if (this.mapType === 'google') {
+            // Google Maps bounds
+            const bounds = new google.maps.LatLngBounds();
+            validPoints.forEach(poi => {
+                bounds.extend(new google.maps.LatLng(poi.location.lat, poi.location.lng));
+            });
+            this.currentMap.fitBounds(bounds);
+        } else {
+            // Baidu Maps bounds
+            const lngs = validPoints.map(poi => poi.location.lng);
+            const lats = validPoints.map(poi => poi.location.lat);
+
+            const minLng = Math.min(...lngs);
+            const maxLng = Math.max(...lngs);
+            const minLat = Math.min(...lats);
+            const maxLat = Math.max(...lats);
+
+            const bounds = new BMap.Bounds(
+                new BMap.Point(minLng, minLat),
+                new BMap.Point(maxLng, maxLat)
+            );
+
+            this.currentMap.setViewport(bounds);
+        }
+    }
+
+    clearRegionBoundaries() {
+        if (this.regionBoundaries && this.regionBoundaries.length > 0) {
+            this.regionBoundaries.forEach(boundary => {
+                if (boundary) {
+                    boundary.setMap(null);
+                }
+            });
+            this.regionBoundaries = [];
+        }
+        // Also clear Data Layer features
+        if (this.dataLayer) {
+            try { this.dataLayer.forEach(f => this.dataLayer.remove(f)); } catch(e) {}
+        }
+    }
+
+    async showRegionBoundary(region) {
+        if (this.mapType !== 'google' || !this.currentMap) {
+            return;
+        }
+
+        try {
+            // Clear existing boundaries before adding new ones
+            this.clearRegionBoundaries();
+
+            // Use the API to get precise boundaries from the mapping.json
+            const response = await fetch(`/api/boundaries?region=${encodeURIComponent(region)}&level=city`);
+            const result = await response.json();
+
+            if (response.ok && result.success && result.geojson) {
+                // Add the GeoJSON boundary to the data layer
+                this.dataLayer.addGeoJson(result.geojson);
+
+                // Apply the boundary style
+                this.applyBoundaryStyle();
+
+                // Fit the map to the boundary
+                const bounds = new google.maps.LatLngBounds();
+                this.dataLayer.forEach(f => {
+                    const geom = f.getGeometry();
+                    geom.forEachLatLng && geom.forEachLatLng(latlng => bounds.extend(latlng));
+                });
+                if (!bounds.isEmpty()) {
+                    this.currentMap.fitBounds(bounds);
+                }
+            } else {
+                console.warn(`Could not load precise boundary for region: ${region}`, result.error);
+                // Fallback: Use Google Geocoding API to get region boundaries
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ address: region }, (geocodeResults, status) => {
+                    if (status === 'OK' && geocodeResults[0]) {
+                        const result = geocodeResults[0];
+                        const geometry = result.geometry;
+
+                        // Use the bounds for boundary visualization
+                        const bounds = geometry.bounds || geometry.viewport;
+
+                        if (bounds) {
+                            // Draw a rectangle representing the region boundary
+                            const boundary = new google.maps.Rectangle({
+                                bounds: bounds,
+                                strokeColor: '#FF0000',
+                                strokeOpacity: 0.7,
+                                strokeWeight: 3,
+                                fillColor: '#FF0000',
+                                fillOpacity: 0.08,
+                                map: this.currentMap,
+                                zIndex: 1000,
+                                clickable: false
+                            });
+
+                            // Add to the boundaries array
+                            this.regionBoundaries.push(boundary);
+                        }
+                    } else {
+                        console.warn(`Could not geocode region: ${region}, status: ${status}`);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error showing region boundary:', error);
+        }
+    }
+
+    async renderRegionBoundaries() {
+        if (this.mapType !== 'google' || !this.currentMap) {
+            return;
+        }
+
+        const regionSelect = document.getElementById('region-select');
+        const selectedRegion = regionSelect ? regionSelect.value.trim() : '';
+
+        if (!selectedRegion) {
+            // If no value, clear all boundaries
+            this.clearRegionBoundaries();
+            return;
+        }
+
+        // With a select element, we only have one selected region
+        // Clear existing boundaries before rendering new ones
+        this.clearRegionBoundaries();
+
+        // Show precise boundary for the selected region
+        await this.showRegionBoundary(selectedRegion);
+    }
+
+    applyBoundaryStyle() {
+        if (!this.dataLayer) return;
+        const elColor = document.getElementById('boundary-color');
+        const elWidth = document.getElementById('boundary-width');
+        const elOpacity = document.getElementById('boundary-opacity');
+        const strokeColor = elColor ? elColor.value : '#ff3b30';
+        const strokeWeight = elWidth ? Number(elWidth.value) : 3;
+        const fillOpacity = elOpacity ? Number(elOpacity.value) : 0.12;
+        this.dataLayer.setStyle({ strokeColor, strokeWeight, strokeOpacity: 0.9, fillColor: strokeColor, fillOpacity });
+    }
+
+    clearGeoJSON() {
+        if (this.dataLayer) {
+            try { this.dataLayer.forEach(f => this.dataLayer.remove(f)); } catch(e) {}
+            this.applyBoundaryStyle();
+        }
+        const status = document.getElementById('boundary-status');
+        if (status) status.textContent = '';
+    }
+
+    async loadGeoJSONUrl(url) {
+        if (this.mapType !== 'google' || !this.currentMap) return;
+        const status = document.getElementById('boundary-status');
+        try {
+            if (status) { status.textContent = '正在加载边界数据...'; }
+            const looksLikeUrl = /^https?:\/\//i.test(url);
+            if (!looksLikeUrl) {
+                // Treat input as region name and geocode to bounds, then synthesize a GeoJSON polygon
+                await this.loadRegionAsGeoJSON(url);
+                if (status) { status.textContent = '边界加载完成（基于名称解析）'; }
+                return;
+            }
+            const resp = await fetch(url, { cache: 'force-cache' });
+            if (!resp.ok) throw new Error('无法加载GeoJSON: ' + resp.status);
+            const geojson = await resp.json();
+            this.clearGeoJSON();
+            this.dataLayer.addGeoJson(geojson);
+            this.applyBoundaryStyle();
+            if (status) { status.textContent = '边界加载完成'; }
+            const bounds = new google.maps.LatLngBounds();
+            this.dataLayer.forEach(f => {
+                const geom = f.getGeometry();
+                geom.forEachLatLng && geom.forEachLatLng(latlng => bounds.extend(latlng));
+            });
+            if (!bounds.isEmpty()) this.currentMap.fitBounds(bounds);
+        } catch (e) {
+            console.error('GeoJSON load error:', e);
+            alert('边界数据加载失败: ' + e.message + '\n提示：可以在输入框中直接输入行政区名称（如：成都市武侯区），系统将自动解析为边界。');
+            if (status) { status.textContent = '加载失败'; }
+        }
+    }
+
+    async loadRegionAsGeoJSON(regionName) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Try to load precise boundaries first using the API
+                const response = await fetch(`/api/boundaries?region=${encodeURIComponent(regionName)}&level=city`);
+                const result = await response.json();
+
+                if (response.ok && result.success && result.geojson) {
+                    // Add the precise GeoJSON boundary to the data layer
+                    this.clearGeoJSON();
+                    this.dataLayer.addGeoJson(result.geojson);
+                    this.applyBoundaryStyle();
+
+                    // Fit the map to the boundary
+                    const bounds = new google.maps.LatLngBounds();
+                    this.dataLayer.forEach(f => {
+                        const geom = f.getGeometry();
+                        geom.forEachLatLng && geom.forEachLatLng(latlng => bounds.extend(latlng));
+                    });
+                    if (!bounds.isEmpty()) {
+                        this.currentMap.fitBounds(bounds);
+                    }
+                    resolve(true);
+                } else {
+                    console.warn(`Could not load precise boundary for region: ${regionName}`, result.error);
+                    // Fallback: Use Google Geocoding API to get region boundaries
+                    const geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({ address: regionName }, (results, status) => {
+                        if (status !== 'OK' || !results || !results[0]) {
+                            reject(new Error('无法解析行政区名称: ' + status));
+                            return;
+                        }
+                        const geom = results[0].geometry;
+                        const bounds = geom.bounds || geom.viewport;
+                        if (!bounds) {
+                            reject(new Error('该区域缺少边界信息'));
+                            return;
+                        }
+                        const sw = bounds.getSouthWest();
+                        const ne = bounds.getNorthEast();
+                        // Construct rectangle polygon from bounds
+                        const coords = [
+                            [sw.lng(), sw.lat()],
+                            [ne.lng(), sw.lat()],
+                            [ne.lng(), ne.lat()],
+                            [sw.lng(), ne.lat()],
+                            [sw.lng(), sw.lat()] // close ring
+                        ];
+                        const feature = {
+                            type: 'Feature',
+                            properties: { name: regionName },
+                            geometry: { type: 'Polygon', coordinates: [coords] }
+                        };
+                        const fc = { type: 'FeatureCollection', features: [feature] };
+                        this.clearGeoJSON();
+                        this.dataLayer.addGeoJson(fc);
+                        this.applyBoundaryStyle();
+                        const mapBounds = new google.maps.LatLngBounds();
+                        coords.forEach(([lng, lat]) => mapBounds.extend(new google.maps.LatLng(lat, lng)));
+                        this.currentMap.fitBounds(mapBounds);
+                        resolve(true);
+                    });
+                }
+            } catch (err) { reject(err); }
+        });
+    }
+
+    toggleVisualization(type, show) {
+        switch (type) {
+            case 'markers':
+                if (show) {
+                    // Show markers (always available)
+                    if (!this.clusterer) {
+                        this.addMarkers(this.poiData);
+                    }
+                } else {
+                    // Remove markers but keep clusters if they exist
+                    if (!document.getElementById('show-clusters').checked) {
+                        this.clearMap();
+                    } else {
+                        // Remove individual markers but keep clusters
+                        this.clearMarkers();
+                    }
+                }
+                break;
+
+            case 'heatmap':
+                if (show) {
+                    this.showHeatmap();
+                } else {
+                    this.removeHeatmap();
+                }
+                break;
+
+            case 'clusters':
+                if (show) {
+                    if (document.getElementById('show-markers').checked) {
+                        if (this.mapType === 'google') {
+                            this.showClusters();
+                        } else {
+                            this.showBaiduClusters();
+                        }
+                    }
+                } else {
+                    // If clusters are disabled, just show individual markers
+                    if (document.getElementById('show-markers').checked) {
+                        this.clearMap();
+                        this.addMarkers(this.poiData);
+                    }
+                }
+                break;
+        }
+    }
+
+    updateResultsSummary(data) {
+        document.getElementById('results-summary').style.display = 'block';
+        document.getElementById('total-count').textContent = data.total_count;
+        document.getElementById('display-count').textContent = this.poiData.length;
+    }
+
+    normalizeType(poi) {
+        const t = (poi.type || poi.tag || '').toLowerCase();
+        if (!t) return '企业';
+        if (t.includes('高校') || t.includes('大学') || t.includes('学院')) return '高校';
+        if (t.includes('研究院') || t.includes('研究所') || t.includes('科研') || t.includes('实验室')) return '科研院所';
+        if (t.includes('公司') || t.includes('集团') || t.includes('企业') || t.includes('有限')) return '企业';
+        return '企业';
+    }
+
+    isPointInsideGeoJSON(lng, lat, gj) {
+        if (typeof lng !== 'number' || typeof lat !== 'number') return false;
+        const pointInRing = (x, y, ring) => {
+            let inside = false;
+            for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+                const xi = ring[i][0], yi = ring[i][1];
+                const xj = ring[j][0], yj = ring[j][1];
+                const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-12) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        };
+        const geomContains = (geom) => {
+            const t = geom.type;
+            const c = geom.coordinates;
+            if (t === 'Polygon') {
+                const outer = c[0];
+                if (!outer) return false;
+                if (!pointInRing(lng, lat, outer)) return false;
+                for (let k = 1; k < c.length; k++) {
+                    if (pointInRing(lng, lat, c[k])) return false;
+                }
+                return true;
+            }
+            if (t === 'MultiPolygon') {
+                for (let p = 0; p < c.length; p++) {
+                    const poly = c[p];
+                    const outer = poly[0];
+                    if (outer && pointInRing(lng, lat, outer)) {
+                        let inHole = false;
+                        for (let k = 1; k < poly.length; k++) {
+                            if (pointInRing(lng, lat, poly[k])) { inHole = true; break; }
+                        }
+                        if (!inHole) return true;
+                    }
+                }
+                return false;
+            }
+            return false;
+        };
+        if (gj.type === 'FeatureCollection') {
+            for (let f of (gj.features || [])) {
+                if (f && f.geometry && geomContains(f.geometry)) return true;
+            }
+            return false;
+        } else if (gj.type === 'Feature') {
+            return gj.geometry ? geomContains(gj.geometry) : false;
+        } else {
+            return geomContains(gj);
+        }
+    }
+
+    renderResultsList(pois) {
+        const listWrap = document.getElementById('results-list');
+        const list = document.getElementById('results-list-content');
+        if (!listWrap || !list) return;
+        listWrap.style.display = 'block';
+        list.innerHTML = '';
+        const makeTag = (txt, cls) => `<span class="inline-block px-2 py-1 text-xs rounded bg-${cls}-100 text-${cls}-700 mr-2">${txt}</span>`;
+        pois.forEach(poi => {
+            const typ = this.normalizeType(poi);
+            const cls = typ === '高校' ? 'blue' : (typ === '科研院所' ? 'purple' : 'green');
+            const div = document.createElement('div');
+            div.className = 'flex items-start justify-between border-b border-gray-100 pb-2';
+            const left = document.createElement('div');
+            left.className = 'flex-1';
+            left.innerHTML = `${makeTag(typ, cls)}<span class="text-sm font-medium">${poi.name || '未知'}</span><div class="text-xs text-gray-600 mt-1">${poi.address || ''}</div>`;
+            const right = document.createElement('div');
+            right.className = 'text-xs text-gray-500';
+            right.textContent = poi.distance ? `${poi.distance}m` : '';
+            div.appendChild(left);
+            div.appendChild(right);
+            list.appendChild(div);
+        });
+    }
+
+
+    exportResults() {
+        if (!this.poiData || this.poiData.length === 0) {
+            alert('没有数据可导出');
+            return;
+        }
+
+        // Create a download link for the POI data as JSON
+        const dataStr = JSON.stringify(this.poiData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+        const exportFileDefaultName = 'poi_search_results.json';
+
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+
+        alert('导出完成！文件已下载到本地');
+    }
+
+    exportUploadResults() {
+        // Same as exportResults for upload data
+        this.exportResults();
+    }
+}
+
+// Global variables to track initialization state
+let visualizer = null;
+let mapsInitialized = false;
+let markerClustererLoaded = false;
+
+// Function to load marker clusterer library
+function loadMarkerClustererLibrary(callback) {
+    if (window.markerClusterer && window.markerClusterer.MarkerClusterer) {
+        markerClustererLoaded = true;
+        if (callback) callback();
+        return;
+    }
+
+    // Check if script is already being loaded
+    if (document.querySelector('script[src*="markerclusterer"]')) {
+        // Wait for the existing script to load
+        const checkLibrary = setInterval(() => {
+            if (window.markerClusterer && window.markerClusterer.MarkerClusterer) {
+                clearInterval(checkLibrary);
+                markerClustererLoaded = true;
+                if (callback) callback();
+            }
+        }, 100);
+        return;
+    }
+
+    // Load the marker clusterer library
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js';
+    script.async = false; // Ensure sequential loading
+    script.onload = function() {
+        markerClustererLoaded = !!(window.markerClusterer && window.markerClusterer.MarkerClusterer);
+        if (callback) callback();
+    };
+    script.onerror = function() {
+        console.error('Failed to load MarkerClusterer library.');
+        if (callback) callback(); // Still call callback to continue execution
+    };
+    document.head.appendChild(script);
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    visualizer = new PoiMapVisualizer();
+    visualizer.init();
+    mapsInitialized = true;
+    setTimeout(() => {
+        const regionSelect = document.getElementById('region-select');
+        if (regionSelect && regionSelect.value) {
+            const ev = new Event('change');
+            regionSelect.dispatchEvent(ev);
+        }
+    }, 500);
+});
+
+// Define initGoogleMap globally for the Google Maps API callback
+window.initGoogleMap = function() {
+    if (typeof google !== 'undefined' && google.maps) {
+        if (visualizer && mapsInitialized) {
+            if (visualizer.mapType !== 'google') {
+                visualizer.initGoogleMap();
+            }
+            const regionSelect = document.getElementById('region-select');
+            if (regionSelect && regionSelect.value) {
+                const ev = new Event('change');
+                setTimeout(() => regionSelect.dispatchEvent(ev), 100);
+            }
+        }
+        // Load MarkerClusterer asynchronously; map is already initialized
+        loadMarkerClustererLibrary(function() { /* no-op; clustering will work when toggled */ });
+    }
+};
+</script>
+{% endblock %}

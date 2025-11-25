@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}{{ data.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .category-card {
+        transition: all 0.3s ease;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .ai-opportunity-card {
+        border-left: 4px solid;
+        transition: all 0.2s ease;
+    }
+    
+    .ai-opportunity-card:hover {
+        transform: translateX(4px);
+    }
+    
+    .chart-container {
+        height: 400px;
+        min-height: 400px;
+    }
+    
+    .sidebar {
+        position: sticky;
+        top: 2rem;
+        max-height: calc(100vh - 4rem);
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ data.title }}</h1>
+                <div class="flex items-center text-gray-600 space-x-4">
+                    <span><i class="fas fa-file-alt mr-1"></i>{{ data.metadata.source_file }}</span>
+                    <span><i class="fas fa-clock mr-1"></i>{{ data.metadata.processed_at[:16] }}</span>
+                    <span><i class="fas fa-chart-bar mr-1"></i>{{ data.summary.categories_analyzed }} 个分析维度</span>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="window.print()" 
+                        class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-print mr-2"></i>打印报告
+                </button>
+                <a href="{{ url_for('index') }}" 
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-home mr-2"></i>返回首页
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow p-4 text-center">
+            <div class="text-2xl font-bold text-blue-600">{{ "{:,}".format(data.summary.word_count) }}</div>
+            <div class="text-sm text-gray-600">总词数</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 text-center">
+            <div class="text-2xl font-bold text-green-600">{{ data.summary.reading_time }}</div>
+            <div class="text-sm text-gray-600">阅读时间(分钟)</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 text-center">
+            <div class="text-2xl font-bold text-purple-600">{{ data.summary.categories_analyzed }}</div>
+            <div class="text-sm text-gray-600">分析类别</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 text-center">
+            <div class="text-2xl font-bold text-orange-600">{{ data.summary.ai_opportunities }}</div>
+            <div class="text-sm text-gray-600">AI机会</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 text-center">
+            <div class="text-2xl font-bold text-red-600">{{ data.summary.high_priority_ai }}</div>
+            <div class="text-sm text-gray-600">高优先级AI</div>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Main Content -->
+        <div class="flex-1">
+            <!-- Key Highlights -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-star text-yellow-500 mr-3"></i>核心要点
+                </h2>
+                <div class="space-y-2">
+                    {% for highlight in data.summary.key_highlights %}
+                    <div class="flex items-center p-3 bg-yellow-50 rounded-lg">
+                        <i class="fas fa-chevron-right text-yellow-500 mr-3"></i>
+                        <span class="text-gray-800">{{ highlight }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Category Distribution Chart -->
+                {% if data.charts.category_distribution and not data.charts.category_distribution.error %}
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">内容分类分布</h3>
+                    <div id="categoryChart" class="chart-container"></div>
+                </div>
+                {% endif %}
+
+                <!-- AI Opportunities Radar -->
+                {% if data.charts.ai_opportunities and not data.charts.ai_opportunities.error %}
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">AI应用潜力分析</h3>
+                    <div id="aiRadarChart" class="chart-container"></div>
+                </div>
+                {% endif %}
+
+                <!-- Keyword Frequency -->
+                {% if data.charts.keyword_frequency and not data.charts.keyword_frequency.error %}
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">关键词频次分析</h3>
+                    <div id="keywordChart" class="chart-container"></div>
+                </div>
+                {% endif %}
+
+                <!-- Statistics Overview -->
+                {% if data.charts.statistics_overview and not data.charts.statistics_overview.error %}
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">文档统计概览</h3>
+                    <div id="statisticsChart" class="chart-container"></div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Categories Analysis -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-layer-group text-blue-500 mr-3"></i>分类分析详情
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for category_name, category_data in data.categories.items() %}
+                    {% if category_data.has_content %}
+                    <div class="category-card border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">{{ category_name }}</h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium priority-{{ category_data.priority_level }}">
+                                {{ category_data.relevance_score }} 分
+                            </span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="text-sm text-gray-600 mb-2">关键要点:</div>
+                            <ul class="space-y-1">
+                                {% for point in category_data.key_points %}
+                                <li class="text-sm text-gray-700">• {{ point }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        <div class="text-xs text-gray-500">
+                            共找到 {{ category_data.content_count }} 个相关内容片段
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- AI Opportunities -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-robot text-purple-500 mr-3"></i>AI应用机会分析
+                </h2>
+                
+                <div class="space-y-6">
+                    {% for ai_area, ai_data in data.ai_opportunities.items() %}
+                    <div class="ai-opportunity-card bg-gray-50 rounded-lg p-6" style="border-left-color: {{ ai_data.color }};">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">{{ ai_area }}</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium priority-{{ ai_data.priority_level }}">
+                                    {{ ai_data.priority_level.upper() }}
+                                </span>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold" style="color: {{ ai_data.color }};">{{ ai_data.potential_score }}%</div>
+                                    <div class="text-xs text-gray-500">潜力评分</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="text-sm font-semibold text-gray-700 mb-2">建议:</div>
+                            <p class="text-sm text-gray-600">{{ ai_data.recommendation }}</p>
+                        </div>
+                        
+                        {% if ai_data.relevant_content %}
+                        <div>
+                            <div class="text-sm font-semibold text-gray-700 mb-2">相关内容:</div>
+                            <div class="space-y-1">
+                                {% for content in ai_data.relevant_content %}
+                                <div class="text-xs text-gray-600 bg-white p-2 rounded border-l-2" style="border-left-color: {{ ai_data.color }};">
+                                    {{ content[:100] }}{% if content|length > 100 %}...{% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:w-80">
+            <div class="sidebar space-y-6">
+                <!-- Key Insights -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>数据洞察
+                    </h3>
+                    
+                    {% for insight in data.key_insights %}
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-2">{{ insight.title }}</h4>
+                        
+                        {% if insight.type == 'top_keywords' %}
+                        <div class="space-y-1">
+                            {% for item in insight.data[:5] %}
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-700">{{ item.term }}</span>
+                                <span class="text-blue-600 font-medium">{{ item.frequency }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% elif insight.type == 'numerical_data' %}
+                        <div class="grid grid-cols-2 gap-2">
+                            {% for item in insight.data %}
+                            <div class="bg-white p-2 rounded-lg border border-blue-200">
+                                {% if item is mapping %}
+                                <div class="text-xs text-gray-600">{{ item.label }}</div>
+                                <div class="text-sm font-bold text-blue-700">{{ item.value }}</div>
+                                {% else %}
+                                <div class="text-sm font-medium text-blue-700">{{ item }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Document Statistics -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">
+                        <i class="fas fa-chart-pie text-blue-500 mr-2"></i>文档统计
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">总字符数</span>
+                            <span class="font-semibold text-gray-800">{{ "{:,}".format(data.statistics.total_characters) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">总词数</span>
+                            <span class="font-semibold text-gray-800">{{ "{:,}".format(data.statistics.total_words) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">文本段数</span>
+                            <span class="font-semibold text-gray-800">{{ data.statistics.total_segments }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">平均段落长度</span>
+                            <span class="font-semibold text-gray-800">{{ data.statistics.avg_segment_length }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">预计阅读时间</span>
+                            <span class="font-semibold text-gray-800">{{ data.statistics.reading_time_minutes }} 分钟</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">
+                        <i class="fas fa-tools text-gray-500 mr-2"></i>快速操作
+                    </h3>
+                    
+                    <div class="space-y-2">
+                        <button onclick="scrollToElement('charts')" 
+                                class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-chart-bar text-blue-500 mr-2"></i>查看图表
+                        </button>
+                        <button onclick="scrollToElement('categories')" 
+                                class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-layer-group text-green-500 mr-2"></i>分类分析
+                        </button>
+                        <button onclick="scrollToElement('ai-opportunities')" 
+                                class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-robot text-purple-500 mr-2"></i>AI机会
+                        </button>
+                        <button onclick="window.print()" 
+                                class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-print text-gray-500 mr-2"></i>打印报告
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Render charts
+    renderCharts();
+    
+    // Add smooth scrolling and animations
+    initializeAnimations();
+});
+
+function renderCharts() {
+    const chartData = {{ data.charts | tojson }};
+    
+    // Category Distribution Chart
+    if (chartData.category_distribution && !chartData.category_distribution.error) {
+        Plotly.newPlot('categoryChart', chartData.category_distribution.data, 
+                      chartData.category_distribution.layout, {responsive: true});
+    }
+    
+    // AI Opportunities Radar Chart
+    if (chartData.ai_opportunities && !chartData.ai_opportunities.error) {
+        Plotly.newPlot('aiRadarChart', chartData.ai_opportunities.data, 
+                      chartData.ai_opportunities.layout, {responsive: true});
+    }
+    
+    // Keyword Frequency Chart
+    if (chartData.keyword_frequency && !chartData.keyword_frequency.error) {
+        Plotly.newPlot('keywordChart', chartData.keyword_frequency.data, 
+                      chartData.keyword_frequency.layout, {responsive: true});
+    }
+    
+    // Statistics Overview Chart
+    if (chartData.statistics_overview && !chartData.statistics_overview.error) {
+        Plotly.newPlot('statisticsChart', chartData.statistics_overview.data, 
+                      chartData.statistics_overview.layout, {responsive: true});
+    }
+}
+
+function initializeAnimations() {
+    // Animate category cards
+    const categoryCards = document.querySelectorAll('.category-card');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+
+    categoryCards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+}
+
+// Make sections scrollable for sidebar navigation
+function scrollToSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// Print functionality
+window.addEventListener('beforeprint', function() {
+    // Hide sidebar for printing
+    const sidebar = document.querySelector('.sidebar').parentElement;
+    sidebar.style.display = 'none';
+    
+    // Expand main content
+    const mainContent = document.querySelector('.flex-1');
+    mainContent.classList.remove('flex-1');
+    mainContent.classList.add('w-full');
+});
+
+window.addEventListener('afterprint', function() {
+    // Restore layout after printing
+    const sidebar = document.querySelector('.sidebar').parentElement;
+    sidebar.style.display = 'block';
+    
+    const mainContent = document.querySelector('.w-full');
+    if (mainContent) {
+        mainContent.classList.remove('w-full');
+        mainContent.classList.add('flex-1');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>区域产业分析小工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+        }
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        .navbar-text {
+            color: rgba(255,255,255,0.9) !important;
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+        }
+        .nav-link:hover {
+            color: white !important;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+        .hero-section h1 {
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .feature-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .report-card {
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s;
+        }
+        .report-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left-width: 6px;
+        }
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        .status-completed {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-processing {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .status-pending {
+            background-color: #6c757d;
+            color: white;
+        }
+        .status-failed {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-modern.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='img/panda_logo.png') }}" alt="Logo" class="custom-logo">
+                区域产业分析小工作台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}"><i class="bi bi-house-door"></i> 首页</a>
+                    </li>
+                    <!-- Core Functions -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('generate_report') }}"><i class="bi bi-magic"></i> 生成报告</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('upload_file') }}"><i class="bi bi-upload"></i> 上传报告</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('poi_map_visualization_page') }}"><i class="bi bi-map"></i> 地图看板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('policy_analysis_page') }}"><i class="bi bi-file-earmark-ruled"></i> 政策解读</a>
+                    </li>
+                    <!-- More Functions Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i> 更多功能
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('comparison_page') }}"><i class="bi bi-bar-chart"></i> 多文档对比</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('industry_chain_page') }}"><i class="bi bi-diagram-2"></i> 产业链图谱</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('casual_learning_page') }}"><i class="bi bi-book"></i> 顺手了解</a></li>
+                            <li><a class="dropdown-item disabled" style="color: #adb5bd;" href="#"><i class="bi bi-film"></i> 数据故事<span class="badge bg-secondary ms-2">开发中</span></a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('reports_list') }}"><i class="bi bi-folder"></i> 我的报告</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('settings') }}"><i class="bi bi-gear"></i> 设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container text-center">
+            <h1>欢迎使用区域产业分析小工作台</h1>
+            <p class="lead">基于AI大模型的智能产业分析平台</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mb-5">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Core Functionality Modules -->
+        <div class="row mb-5">
+            <div class="col-md-6 mb-4">
+                <div class="card feature-card h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <img class="feature-logo" src="{{ url_for('static', filename='img/custom_logos/generate_logo.jpg') }}" alt="生成报告" width="64" height="64">
+                        </div>
+                        <h5 class="card-title">生成报告</h5>
+                        <p class="card-text">使用AI大模型自动生成7大模块的产业分析报告，提供智能化数据洞察</p>
+                        <a href="{{ url_for('generate_report') }}" class="btn btn-light btn-sm">开始生成</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card feature-card h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <img class="feature-logo" src="{{ url_for('static', filename='img/custom_logos/upload_logo.jpg') }}" alt="上传报告" width="64" height="64">
+                        </div>
+                        <h5 class="card-title">上传报告</h5>
+                        <p class="card-text">上传您的文档，系统将自动提取关键信息并生成结构化分析报告</p>
+                        <a href="{{ url_for('upload_file') }}" class="btn btn-light btn-sm">上传报告</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-md-6 mb-4">
+                <div class="card feature-card h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <img class="feature-logo" src="{{ url_for('static', filename='img/custom_logos/location_logo.jpg') }}" alt="地图看板" width="64" height="64">
+                        </div>
+                        <h5 class="card-title">地图看板</h5>
+                        <p class="card-text">通过地图直观展示产业分布，POI数据可视化，地理信息一目了然</p>
+                        <a href="{{ url_for('poi_map_visualization_page') }}" class="btn btn-light btn-sm">查看地图</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card feature-card h-100" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <img class="feature-logo" src="{{ url_for('static', filename='img/custom_logos/policy_logo.jpg') }}" alt="政策解读" width="64" height="64">
+                        </div>
+                        <h5 class="card-title">政策解读</h5>
+                        <p class="card-text">自动提取政策要点、补贴信息、税收优惠，助力产业政策分析决策</p>
+                        <a href="{{ url_for('policy_analysis_page') }}" class="btn btn-light btn-sm">解读政策</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Secondary Features Expandable Panel -->
+        <div class="card mb-5">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer;" id="moreFeaturesHeader" onclick="toggleMoreFeatures()">
+                <h4 class="mb-0"><i class="bi bi-three-dots"></i> 更多功能</h4>
+                <i class="bi bi-chevron-up" id="moreFeaturesIcon"></i>
+            </div>
+            <div class="card-body" id="moreFeaturesPanel" style="display: block;">
+                <div class="row">
+                    <div class="col-md-3 mb-4">
+                        <div class="card feature-card h-100">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <img class="feature-logo" src="{{ url_for('static', filename='img/logos/logo_documents_compare.svg') }}" alt="多文档对比" width="64" height="64">
+                                </div>
+                                <h5 class="card-title">多文档对比</h5>
+                                <p class="card-text">横向对比不同城市或产业，生成综合排名和雷达图</p>
+                                <a href="{{ url_for('comparison_page') }}" class="btn btn-outline-primary btn-sm">开始对比</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="card feature-card h-100">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <img class="feature-logo" src="{{ url_for('static', filename='img/logos/logo_industry_chain.svg') }}" alt="产业链图谱" width="64" height="64">
+                                </div>
+                                <h5 class="card-title">产业链图谱</h5>
+                                <p class="card-text">上中下游识别、完整度评估、薄弱环节分析</p>
+                                <a href="{{ url_for('industry_chain_page') }}" class="btn btn-outline-secondary btn-sm">查看产业链</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="card feature-card h-100">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <img class="feature-logo" src="{{ url_for('static', filename='img/logos/logo_casual_learning.svg') }}" alt="顺手了解" width="64" height="64" onerror="this.src='{{ url_for('static', filename='img/logos/default_icon.svg') }}'">
+                                </div>
+                                <h5 class="card-title">顺手了解</h5>
+                                <p class="card-text">重点城市和区域的产业基本盘情况</p>
+                                <a href="{{ url_for('casual_learning_page') }}" class="btn btn-outline-info btn-sm">开始了解</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="card feature-card h-100">
+                            <div class="card-body text-center opacity-50" style="pointer-events: none;">
+                                <div class="mb-3">
+                                    <img class="feature-logo" src="{{ url_for('static', filename='img/logos/logo_data_story.svg') }}" alt="数据故事" width="64" height="64">
+                                </div>
+                                <h5 class="card-title text-muted">数据故事</h5>
+                                <p class="card-text text-muted">用叙事方式解读数据洞察，支持场景化展示</p>
+                                <a href="#" class="btn btn-outline-secondary btn-sm disabled">功能开发中</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Reports -->
+        <div id="recent-reports">
+            <h3 class="mb-4"><i class="bi bi-clock-history"></i> 最近的报告</h3>
+
+            {% if recent_reports %}
+                <div class="row">
+                    {% for report in recent_reports[:4] %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card report-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            {% set display_city = report.city or (report.title.split('市')[0] + '市' if '市' in report.title else (report.title.split('-')[0] if '-' in report.title else '未知城市')) %}
+                                            {% set display_industry = report.industry or (report.title.split('-')[-1].split('.')[0] if '-' in report.title else (report.title.split('市')[-1].split('.')[0] if '市' in report.title else '未知行业')) %}
+
+                                            <h5 class="card-title">
+                                                {{ display_city }} - {{ display_industry }}
+                                            </h5>
+                                            <p class="text-muted mb-2">
+                                                <i class="bi bi-file-text"></i>
+                                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; max-width: 100%;" title="{{ report.title }}">{{ report.title | truncate(40, true) }}</span>
+                                            </p>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar"></i>
+                                                <span class="beijing-time" data-utc="{{ report.created_at.isoformat() }}">
+                                                    {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                                </span>
+                                            </small>
+                                        </div>
+                                        <span class="badge-status status-{{ report.status }}">
+                                            {% if report.status == 'completed' %}
+                                                <i class="bi bi-check-circle"></i> 已完成
+                                            {% elif report.status == 'processing' %}
+                                                <i class="bi bi-hourglass-split"></i> 处理中
+                                            {% elif report.status == 'pending' %}
+                                                <i class="bi bi-clock"></i> 待处理
+                                            {% else %}
+                                                <i class="bi bi-exclamation-circle"></i> 失败
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="mt-3">
+                                        {% if report.status == 'completed' %}
+                                            <a href="{{ url_for('view_report', report_id=report.report_id) }}" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-eye"></i> 查看报告
+                                            </a>
+                                        {% elif report.status == 'processing' %}
+                                            <button class="btn btn-sm btn-secondary" disabled>
+                                                <i class="bi bi-hourglass-split"></i> 生成中...
+                                            </button>
+                                        {% endif %}
+                                        <span class="badge bg-secondary">
+                                            {{ '智能生成' if report.report_type == 'llm' else '文档上传' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <script>
+                    // Convert UTC time to Beijing time for recent reports
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const timeElements = document.querySelectorAll('.beijing-time');
+                        timeElements.forEach(element => {
+                            const utcTimeStr = element.dataset.utc;
+                            if (utcTimeStr) {
+                                try {
+                                    // Parse UTC time
+                                    const utcTime = new Date(utcTimeStr);
+                                    // Convert to Beijing time (UTC+8)
+                                    const beijingTime = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
+                                    // Format as YYYY-MM-DD HH:MM
+                                    const formattedTime = beijingTime.getFullYear() + '-' + 
+                                        String(beijingTime.getMonth() + 1).padStart(2, '0') + '-' +
+                                        String(beijingTime.getDate()).padStart(2, '0') + ' ' +
+                                        String(beijingTime.getHours()).padStart(2, '0') + ':' +
+                                        String(beijingTime.getMinutes()).padStart(2, '0');
+                                    element.textContent = formattedTime;
+                                } catch (e) {
+                                    console.error('Error converting time:', e);
+                                }
+                            }
+                        });
+                    });
+
+                    // Toggle function for "更多功能" expandable panel
+                    function toggleMoreFeatures() {
+                        const panel = document.getElementById('moreFeaturesPanel');
+                        const icon = document.getElementById('moreFeaturesIcon');
+
+                        if (panel.style.display === 'none') {
+                            panel.style.display = 'block';
+                            icon.classList.remove('bi-chevron-down');
+                            icon.classList.add('bi-chevron-up');
+                        } else {
+                            panel.style.display = 'none';
+                            icon.classList.remove('bi-chevron-up');
+                            icon.classList.add('bi-chevron-down');
+                        }
+                    }
+
+                    // Set initial state for more features panel
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // The panel starts open, so we want the chevron-up icon
+                        const icon = document.getElementById('moreFeaturesIcon');
+                        icon.classList.remove('bi-chevron-down');
+                        icon.classList.add('bi-chevron-up');
+                    });
+                </script>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 您还没有任何报告。点击上方按钮开始生成或上传分析报告。
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- V3.0 Teaser -->
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="card text-center p-5" style="background: linear-gradient(135deg, #6f42c1, #20c997); border: none; color: white;">
+                    <h2 class="display-5 fw-bold">探索 V3.0</h2>
+                    <p class="lead">一个从“数据陈列”到“智能决策”的飞跃</p>
+                    <p>我们正在打造一个以“机会发现”为核心的交互式决策引擎，将分析师的工作流自动化、智能化。</p>
+                    <div class="mt-4">
+                        <a href="/v3_roadmap" class="btn btn-light btn-lg">
+                            <i class="bi bi-gem me-2"></i>预览V3.0功能蓝图
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">© 2025 区域产业分析小工作台 | <a href="{{ url_for('about_page') }}" class="text-muted">关于我们</a> | Powered by AI</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/floating_task.js') }}"></script>
+</body>
+</html>

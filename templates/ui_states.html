@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}组件状态展示{% endblock %}
+{% block content %}
+<section class="py-10">
+  <div class="max-w-7xl mx-auto px-6">
+    <h1 class="text-2xl font-bold mb-6">组件状态展示（默认 / 悬停 / 激活 / 禁用）</h1>
+    <div class="grid grid-cols-2 gap-8">
+      <div>
+        <h3 class="font-semibold mb-3">按钮 · Primary</h3>
+        <div class="flex items-center gap-4">
+          <button class="btn btn-primary">默认</button>
+          <button class="btn btn-primary hover:translate-y-[-2px]">悬停</button>
+          <button class="btn btn-primary active:translate-y-[0]">激活</button>
+          <button class="btn btn-primary" disabled>禁用</button>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-semibold mb-3">输入框 · Glow Focus</h3>
+        <div class="space-x-4">
+          <input class="input-glow p-2" placeholder="默认" />
+          <input class="input-glow p-2 focus" placeholder="聚焦" />
+          <input class="input-glow p-2" placeholder="禁用" disabled />
+        </div>
+      </div>
+      <div>
+        <h3 class="font-semibold mb-3">卡片 · Glass</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="glass-card p-4">默认</div>
+          <div class="glass-card p-4 hover:translate-y-[-6px]">悬停</div>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-semibold mb-3">图标按钮</h3>
+        <div class="flex items-center gap-4">
+          <button class="icon-button"><i class="ri-sparkling-line icon-24"></i></button>
+          <button class="icon-button interactive"><i class="ri-sparkling-line icon-24"></i></button>
+          <button class="icon-button" disabled><i class="ri-sparkling-line icon-24"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的报告 - 区域产业分析小工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">🏭 区域产业分析小工作台</a>
+            <div class="ms-auto">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">返回首页</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-folder"></i> 我的报告</h2>
+            <div>
+                <a href="{{ url_for('generate_report') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> 生成新报告
+                </a>
+                <button class="btn btn-success" id="btnComparison" disabled>
+                    <i class="bi bi-bar-chart"></i> 对比分析
+                </button>
+                <button class="btn btn-info" id="btnTrend" disabled>
+                    <i class="bi bi-graph-up"></i> 趋势分析
+                </button>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if reports_llm or reports_upload %}
+            <div class="table-responsive mb-4">
+                <h5><span class="badge bg-primary">AI生成</span></h5>
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">
+                                <input type="checkbox" id="selectAll">
+                            </th>
+                            <th>报告标题</th>
+                            <th>类型</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in (reports_llm or []) %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="report-checkbox" value="{{ report.report_id }}" data-type="{{ report.report_type }}">
+                            </td>
+                            <td>
+                                <strong>{{ report.title }}</strong>
+                                {% if report.city %}
+                                <br><small class="text-muted">{{ report.city }} - {{ report.industry }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if report.report_type == 'llm' else 'secondary' }}">
+                                    AI生成
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if report.status == 'completed' else 'warning' if report.status == 'processing' else 'danger' }}">
+                                    {{ report.status }}
+                                </span>
+                            </td>
+                            <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if report.status == 'completed' %}
+                                <a href="{{ url_for('view_report', report_id=report.report_id) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> 查看
+                                </a>
+                                {% else %}
+                                <span class="text-muted">处理中...</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-responsive">
+                <h5><span class="badge bg-secondary">上传分析</span></h5>
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50"></th>
+                            <th>报告标题</th>
+                            <th>类型</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in (reports_upload or []) %}
+                        <tr>
+                            <td></td>
+                            <td>
+                                <strong>{{ report.title }}</strong>
+                                {% if report.city %}
+                                <br><small class="text-muted">{{ report.city }} - {{ report.industry }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">上传分析</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">completed</span>
+                            </td>
+                            <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('view_report', report_id=report.report_id) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> 查看
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> 暂无报告，<a href="{{ url_for('generate_report') }}">点击生成</a>第一份报告
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.report-checkbox');
+        const btnComparison = document.getElementById('btnComparison');
+        const btnTrend = document.getElementById('btnTrend');
+
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateButtons();
+        });
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateButtons);
+        });
+
+        function updateButtons() {
+            const selected = Array.from(checkboxes).filter(cb => cb.checked);
+            btnComparison.disabled = selected.length < 2;
+            btnTrend.disabled = selected.length < 3;
+        }
+
+        btnComparison.addEventListener('click', function() {
+            const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            window.location.href = `/comparison?reports=${selected.join(',')}`;
+        });
+
+        btnTrend.addEventListener('click', function() {
+            const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            window.location.href = `/trend-analysis?reports=${selected.join(',')}`;
+        });
+    </script>
+</body>
+</html>

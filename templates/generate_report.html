@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}生成报告 - 区域产业分析{% endblock %}
+
+{% block extra_head %}
+<script>
+// Force light theme for this page without persisting
+try { document.documentElement.classList.remove('theme-dark'); document.documentElement.classList.add('theme-light'); } catch(e) {}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-8">
+    <!-- Page Header -->
+    <div class="glass-card p-10 text-center mb-10 animate-scale-in">
+        <div class="text-6xl text-primary-500 mb-4">
+            <i class="fas fa-robot"></i>
+        </div>
+        <h1 class="text-4xl font-bold text-gray-800 mb-3">AI智能报告生成</h1>
+        <p class="text-xl text-gray-600">支持多种LLM，自动生成专业的区域产业分析报告</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="glass-card p-8 animate-slide-in-up" style="animation-delay: 0.2s; background: rgba(255,255,255,0.96);">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-file-alt mr-2 text-primary-500"></i>填写报告信息
+        </h3>
+        
+        <form method="POST" action="{{ url_for('generate_report') }}" id="generateForm">
+            <!-- City Input -->
+            <div class="mb-6">
+                <label for="city" class="block text-sm font-semibold text-gray-700 mb-2">
+                    目标城市 <span class="text-red-500">*</span>
+                </label>
+                <input type="text" 
+                       class="input-glow w-full px-5 py-3 rounded-lg border border-gray-300 focus:outline-none" 
+                       id="city" 
+                       name="city" 
+                       placeholder="例如：成都、重庆、西安" 
+                       required>
+                <div class="mt-2 p-3 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-lg border-l-4 border-primary-500">
+                    <p class="text-sm text-gray-600">
+                        <strong>示例：</strong>成都、重庆、西安、北京、上海、深圳、杭州、武汉、长沙、郑州
+                    </p>
+                </div>
+            </div>
+
+            <!-- Industry Input -->
+            <div class="mb-6">
+                <label for="industry" class="block text-sm font-semibold text-gray-700 mb-2">
+                    目标行业 <span class="text-red-500">*</span>
+                </label>
+                <input type="text" 
+                       class="input-glow w-full px-5 py-3 rounded-lg border border-gray-300 focus:outline-none" 
+                       id="industry" 
+                       name="industry" 
+                       placeholder="例如：人工智能、汽车产业、生物医药" 
+                       required>
+                <div class="mt-2 p-3 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-lg border-l-4 border-primary-500">
+                    <p class="text-sm text-gray-600">
+                        <strong>示例：</strong>人工智能、汽车产业、生物医药、集成电路、新能源、先进制造、数字经济、文化创意
+                    </p>
+                </div>
+            </div>
+
+            <!-- LLM Service Selector -->
+            <div class="mb-6">
+                <label for="llm_service" class="block text-sm font-semibold text-gray-700 mb-2">
+                    选择大语言模型服务 <span class="text-red-500">*</span>
+                </label>
+                <select class="input-glow w-full px-5 py-3 rounded-lg border border-gray-300 focus:outline-none" 
+                        id="llm_service" 
+                        name="llm_service">
+                    <option value="kimi" selected>Kimi（推荐，已配置）</option>
+                    <option value="gemini">Google Gemini（已配置）</option>
+                    <option value="doubao">豆包大模型（已配置）</option>
+                </select>
+                <p class="mt-2 text-sm text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>默认使用Kimi。请确保已在config.json中配置相应API Key
+                </p>
+            </div>
+
+            <!-- Additional Context -->
+            <div class="mb-6">
+                <label for="additional_context" class="block text-sm font-semibold text-gray-700 mb-2">
+                    补充信息（可选）
+                </label>
+                <textarea class="input-glow w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none" 
+                          id="additional_context" 
+                          name="additional_context" 
+                          rows="5" 
+                          placeholder="例如：请重点分析该行业的技术创新能力、市场规模趋势、政策支持力度等..."></textarea>
+                <p class="mt-2 text-sm text-gray-500">
+                    您可以在这里补充任何特殊要求或关注点，AI将根据您的需求调整报告内容
+                </p>
+            </div>
+
+            <!-- Info Alert -->
+            <div class="glass-card p-5 mb-6 bg-gradient-to-r from-cyan-50 to-blue-50 border-l-4 border-cyan-500">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-2xl text-cyan-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-bold text-gray-800 mb-2">温馨提示：</h4>
+                        <ul class="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                            <li>报告生成需要2-5分钟，您将在专用页面查看实时生成内容</li>
+                            <li>生成过程中可查看实时进度、字数统计和计时器</li>
+                            <li>支持"后台运行"功能，可返回首页继续其他操作</li>
+                            <li>报告将包含：执行摘要、产业概览、政策分析、生态分析、产业链分析、AI融合建议等内容</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex justify-center space-x-4">
+                <button type="submit" class="inline-flex items-center px-10 py-4 text-lg font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                    <i class="fas fa-magic mr-2"></i>开始生成报告
+                </button>
+                <a href="{{ url_for('index') }}" class="inline-flex items-center px-10 py-4 text-lg font-semibold bg-white bg-opacity-70 backdrop-blur-md border-2 border-gray-300 hover:border-gray-400 hover:bg-opacity-80 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 no-underline" style="color: #374151;">
+                    <i class="fas fa-times-circle mr-2"></i>取消
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 animate-slide-in-up" style="animation-delay: 0.4s;">
+        <div class="glass-card glass-hover p-6 text-center">
+            <div class="text-5xl mb-3" style="color: #667eea;">
+                <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <h6 class="text-lg font-semibold mb-1" style="color: #1f2937;">快速生成</h6>
+            <p class="text-sm" style="color: #4b5563;">2-5分钟完成</p>
+        </div>
+        <div class="glass-card glass-hover p-6 text-center">
+            <div class="text-5xl mb-3" style="color: #10b981;">
+                <i class="fas fa-stars"></i>
+            </div>
+            <h6 class="text-lg font-semibold mb-1" style="color: #1f2937;">专业内容</h6>
+            <p class="text-sm" style="color: #4b5563;">7大核心模块</p>
+        </div>
+        <div class="glass-card glass-hover p-6 text-center">
+            <div class="text-5xl mb-3" style="color: #8b5cf6;">
+                <i class="fas fa-language"></i>
+            </div>
+            <h6 class="text-lg font-semibold mb-1" style="color: #1f2937;">双语摘要</h6>
+            <p class="text-sm" style="color: #4b5563;">中英文支持</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

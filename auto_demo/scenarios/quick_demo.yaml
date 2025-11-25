@@ -1,0 +1,71 @@
+# Quick Demo Scenario - 30-second overview
+# 快速演示场景 - 30秒概览
+
+name: "Quick Demo - 30 Second Overview"
+description: "Fast-paced 30-second demonstration of key features"
+base_url: "http://localhost:5000"
+
+config:
+  scroll_duration: 3
+  action_delay: 0.8
+  slow_motion: 30  # Faster for quick demo
+
+steps:
+  # Homepage quick view
+  - action: navigate
+    url: "/"
+    description: "打开首页"
+    subtitle: "欢迎观看30秒快速演示"
+  
+  - action: wait
+    duration: 1
+    description: "展示首页"
+    subtitle: "首页核心指标展示"
+  
+  - action: scroll_smooth
+    direction: "down"
+    duration: 3
+    description: "快速滚动展示首页"
+    subtitle: "滚动展示首页内容"
+  
+  # Navigate to report generation
+  - action: click
+    selector: "text=生成AI报告"
+    fallback:
+      - selector: "a[href='/generate-report']"
+    description: "进入报告生成页面"
+    subtitle: "进入AI报告生成页面"
+  
+  - action: wait
+    duration: 2
+    description: "展示报告生成表单"
+    subtitle: "AI报告生成表单"
+  
+  # Quick form view
+  - action: scroll_smooth
+    direction: "down"
+    duration: 2
+    description: "展示表单字段"
+    subtitle: "填写城市和行业信息"
+  
+  # Navigate to V3 roadmap
+  - action: navigate
+    url: "/v3_roadmap"
+    description: "展示V3.0功能蓝图"
+    subtitle: "查看V3.0功能蓝图"
+  
+  - action: wait
+    duration: 2
+    description: "查看功能蓝图"
+    subtitle: "功能蓝图页面"
+  
+  - action: scroll_smooth
+    direction: "down"
+    duration: 3
+    description: "滚动查看蓝图内容"
+    subtitle: "滚动查看详细规划"
+  
+  - action: message
+    text: "快速演示完成！总时长约30秒"
+    description: "结束"
+    subtitle: "30秒快速演示完成"

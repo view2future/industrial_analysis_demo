@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#e0f7ff"/>
+      <stop offset="60%" stop-color="#9fd5ff"/>
+      <stop offset="100%" stop-color="#7aa8ff"/>
+    </radialGradient>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3A86FF"/>
+      <stop offset="100%" stop-color="#FF6B35"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="rgba(17,24,39,0.25)"/>
+    </filter>
+  </defs>
+  <circle cx="64" cy="64" r="56" fill="url(#bg)"/>
+  <g filter="url(#shadow)" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <rect x="34" y="30" width="60" height="68" rx="10" ry="10" fill="url(#brand)" opacity="0.12"/>
+    <path d="M44 46h40"/>
+    <path d="M44 58h26"/>
+    <path d="M44 70h34"/>
+    <path d="M44 82h20"/>
+    <g>
+      <path d="M70 30v-6c0-4 3-7 7-7h0c4 0 7 3 7 7v6" opacity="0.9"/>
+      <circle cx="77" cy="28" r="3"/>
+    </g>
+  </g>
+</svg>

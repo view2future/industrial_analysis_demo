@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}首页布局 B · 1440px{% endblock %}
+{% block extra_styles %}
+<style>
+  .container-1440 { max-width: 1440px; margin: 0 auto; }
+</style>
+{% endblock %}
+{% block content %}
+<section class="py-10">
+  <div class="container-1440 px-6 grid grid-cols-12 gap-6">
+    <aside class="col-span-3 glass-card p-6">
+      <h3 class="text-lg font-semibold mb-4"><i class="ri-menu-line mr-1"></i>快捷导航</h3>
+      <ul class="space-y-2">
+        <li class="interactive sidebar-item p-3 rounded"><i class="ri-magic-line mr-1"></i>AI智能报告</li>
+        <li class="interactive sidebar-item p-3 rounded"><i class="ri-bar-chart-2-line mr-1"></i>多文档对比</li>
+        <li class="interactive sidebar-item p-3 rounded"><i class="ri-trending-up-line mr-1"></i>趋势预测</li>
+        <li class="interactive sidebar-item p-3 rounded"><i class="ri-share-line mr-1"></i>知识图谱</li>
+      </ul>
+    </aside>
+    <div class="col-span-9 space-y-6">
+      <div class="grid grid-cols-3 gap-6">
+        <div class="glass-card p-6 card-hover"><h4 class="font-semibold">产业概览</h4><div class="skeleton-block h-24 mt-3"></div></div>
+        <div class="glass-card p-6 card-hover"><h4 class="font-semibold">重点企业</h4><div class="skeleton-block h-24 mt-3"></div></div>
+        <div class="glass-card p-6 card-hover"><h4 class="font-semibold">政策环境</h4><div class="skeleton-block h-24 mt-3"></div></div>
+      </div>
+      <div class="grid grid-cols-2 gap-6">
+        <div class="glass-card p-6"><h4 class="font-semibold mb-3">增长趋势</h4><div class="skeleton-block h-64" id="loaderB"></div></div>
+        <div class="glass-card p-6"><h4 class="font-semibold mb-3">地理分布</h4><div class="skeleton-block h-64"></div></div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/effects.js') }}"></script>
+<script>initParticleLoader('loaderB');</script>
+{% endblock %}

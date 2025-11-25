@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}报告生成中 - 区域产业分析{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="bg-white shadow-lg rounded-lg p-8">
+        <!-- 标题 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-robot mr-2 text-blue-600"></i>AI 报告生成中
+            </h1>
+            <p class="text-gray-600">正在使用 <span id="model-name">AI模型</span> 为您生成专业的产业分析报告</p>
+        </div>
+
+        <!-- 生成阶段展示 -->
+        <div class="space-y-4 mb-8">
+            <!-- 阶段1: 初始化 -->
+            <div id="stage-init" class="stage-item p-4 rounded-lg border-2 border-gray-200 bg-gray-50 transition-all">
+                <div class="flex items-center">
+                    <div class="stage-icon mr-4">
+                        <i class="fas fa-circle text-gray-400 text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-700">1. 初始化 LLM API</h3>
+                        <p class="text-sm text-gray-500 stage-message">准备就绪...</p>
+                    </div>
+                    <div class="stage-status">
+                        <span class="text-sm text-gray-400">等待中</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 阶段2: 生成报告主体 -->
+            <div id="stage-generating" class="stage-item p-4 rounded-lg border-2 border-gray-200 bg-gray-50 transition-all">
+                <div class="flex items-center">
+                    <div class="stage-icon mr-4">
+                        <i class="fas fa-circle text-gray-400 text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-700">2. 生成报告主体</h3>
+                        <p class="text-sm text-gray-500 stage-message">等待中...</p>
+                    </div>
+                    <div class="stage-status">
+                        <span class="text-sm text-gray-400">等待中</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 阶段3: 生成摘要 -->
+            <div id="stage-summary" class="stage-item p-4 rounded-lg border-2 border-gray-200 bg-gray-50 transition-all">
+                <div class="flex items-center">
+                    <div class="stage-icon mr-4">
+                        <i class="fas fa-circle text-gray-400 text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-700">3. 生成执行摘要</h3>
+                        <p class="text-sm text-gray-500 stage-message">等待中...</p>
+                    </div>
+                    <div class="stage-status">
+                        <span class="text-sm text-gray-400">等待中</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 阶段4: 生成SWOT -->
+            <div id="stage-swot" class="stage-item p-4 rounded-lg border-2 border-gray-200 bg-gray-50 transition-all">
+                <div class="flex items-center">
+                    <div class="stage-icon mr-4">
+                        <i class="fas fa-circle text-gray-400 text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-700">4. 生成 SWOT 分析</h3>
+                        <p class="text-sm text-gray-500 stage-message">等待中...</p>
+                    </div>
+                    <div class="stage-status">
+                        <span class="text-sm text-gray-400">等待中</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 阶段5: 保存报告 -->
+            <div id="stage-saving" class="stage-item p-4 rounded-lg border-2 border-gray-200 bg-gray-50 transition-all">
+                <div class="flex items-center">
+                    <div class="stage-icon mr-4">
+                        <i class="fas fa-circle text-gray-400 text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-700">5. 保存报告文件</h3>
+                        <p class="text-sm text-gray-500 stage-message">等待中...</p>
+                    </div>
+                    <div class="stage-status">
+                        <span class="text-sm text-gray-400">等待中</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 报告信息 -->
+        <div id="report-info" class="hidden p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg mb-6">
+            <h3 class="font-semibold text-blue-800 mb-2">
+                <i class="fas fa-info-circle mr-2"></i>报告详情
+            </h3>
+            <div class="text-sm text-blue-700 space-y-1">
+                <p><strong>报告ID:</strong> <span id="info-report-id" class="font-mono">-</span></p>
+                <p><strong>存储位置:</strong> <span id="info-file-path" class="font-mono text-xs">-</span></p>
+                <p><strong>文件大小:</strong> <span id="info-file-size">-</span></p>
+                <p><strong>生成时间:</strong> <span id="info-generated-at">-</span></p>
+            </div>
+        </div>
+
+        <!-- 错误提示 -->
+        <div id="error-section" class="hidden mt-6">
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                <p class="text-red-800">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <strong>生成失败:</strong> <span id="error-message"></span>
+                </p>
+                <a href="{{ url_for('generate_report') }}" class="inline-block mt-4 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                    <i class="fas fa-redo mr-2"></i>重新生成
+                </a>
+            </div>
+        </div>
+
+        <!-- 完成提示 -->
+        <div id="success-section" class="hidden mt-6">
+            <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg text-center">
+                <div class="text-green-600 mb-4">
+                    <i class="fas fa-check-circle text-6xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-green-800 mb-2">报告生成完成！</h3>
+                <p class="text-green-700 mb-6">正在为您跳转到报告页面...</p>
+                <div class="flex justify-center items-center space-x-2">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
+                    <span class="text-green-600">自动跳转中...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提示信息 -->
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h3 class="font-semibold mb-2 text-gray-700">
+                <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>温馨提示
+            </h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+                <li><i class="fas fa-check text-green-500 mr-2"></i>报告生成通常需要 20-40 秒</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>使用 <span id="model-name-inline">AI模型</span>，质量有保障</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>生成完成后会自动跳转到报告页面</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>请保持页面打开，不要关闭或刷新</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.stage-item.active {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.stage-item.completed {
+    border-color: #10b981;
+    background-color: #f0fdf4;
+}
+
+.stage-item.error {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.stage-icon .fa-circle {
+    transition: all 0.3s ease;
+}
+
+.stage-item.active .stage-icon .fa-circle {
+    color: #3b82f6;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.stage-item.completed .stage-icon .fa-circle {
+    color: #10b981;
+}
+
+.stage-item.completed .stage-icon i::before {
+    content: "\f058"; /* fa-check-circle */
+}
+
+.stage-item.error .stage-icon .fa-circle {
+    color: #ef4444;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+</style>
+
+<script>
+const taskId = "{{ task_id }}";
+const reportId = "{{ report_id }}";
+let checkInterval;
+
+// 阶段映射 - 包含所有可能的阶段状态
+const stageMap = {
+    'init': 'stage-init',
+    'generating': 'stage-generating',
+    'report_done': 'stage-generating',
+    'summary_zh': 'stage-summary',
+    'summary_en': 'stage-summary',
+    'summary_done': 'stage-summary',
+    'swot': 'stage-swot',
+    'swot_done': 'stage-swot',
+    'saving': 'stage-saving',
+    'saving_done': 'stage-saving',
+    'completed': 'stage-saving'
+};
+
+// 更新阶段状态
+function updateStage(stage, status, message) {
+    const stageId = stageMap[stage];
+    if (!stageId) {
+        console.warn(`无法映射阶段: ${stage}`);
+        return;
+    }
+    
+    const stageElement = document.getElementById(stageId);
+    if (!stageElement) {
+        console.warn(`找不到元素: ${stageId}`);
+        return;
+    }
+    
+    console.log(`  📍 更新阶段: ${stageId} -> ${status}, 消息: ${message}`);
+    
+    // 移除所有状态类
+    stageElement.classList.remove('active', 'completed', 'error');
+    
+    // 添加新状态
+    if (status === 'active') {
+        stageElement.classList.add('active');
+        stageElement.querySelector('.stage-status span').textContent = '进行中...';
+        stageElement.querySelector('.stage-status span').className = 'text-sm text-blue-600 font-semibold';
+    } else if (status === 'completed') {
+        stageElement.classList.add('completed');
+        stageElement.querySelector('.stage-status span').textContent = '✓ 完成';
+        stageElement.querySelector('.stage-status span').className = 'text-sm text-green-600 font-semibold';
+    } else if (status === 'error') {
+        stageElement.classList.add('error');
+        stageElement.querySelector('.stage-status span').textContent = '✗ 失败';
+        stageElement.querySelector('.stage-status span').className = 'text-sm text-red-600 font-semibold';
+    }
+    
+    // 更新消息
+    if (message) {
+        stageElement.querySelector('.stage-message').textContent = message;
+    }
+}
+
+// 标记之前的阶段为完成
+function markPreviousStagesCompleted(currentStage) {
+    // UI 显示的 5 个阶段
+    const uiStages = ['init', 'generating', 'summary', 'swot', 'saving'];
+    
+    // 后端 stage 映射到 UI 阶段的索引
+    const stageToIndex = {
+        'init': 0,
+        'generating': 1,
+        'report_done': 1,
+        'summary_zh': 2,
+        'summary_en': 2,
+        'summary_done': 2,
+        'swot': 3,
+        'swot_done': 3,
+        'saving': 4,
+        'saving_done': 4,
+        'completed': 5
+    };
+    
+    const currentIndex = stageToIndex[currentStage];
+    if (currentIndex === undefined) {
+        console.warn(`未知阶段: ${currentStage}`);
+        return;
+    }
+    
+    // 标记所有之前的 UI 阶段为完成
+    for (let i = 0; i < Math.min(currentIndex, uiStages.length); i++) {
+        const stageElement = document.getElementById(`stage-${uiStages[i]}`);
+        if (stageElement && !stageElement.classList.contains('completed')) {
+            stageElement.classList.remove('active');
+            stageElement.classList.add('completed');
+            const statusSpan = stageElement.querySelector('.stage-status span');
+            if (statusSpan) {
+                statusSpan.textContent = '✓ 完成';
+                statusSpan.className = 'text-sm text-green-600 font-semibold';
+            }
+            console.log(`  ✓ 标记 ${uiStages[i]} 为完成`);
+        }
+    }
+}
+
+// 更新模型名称显示
+function setModelName(name) {
+    try {
+        if (!name) return;
+        const el1 = document.getElementById('model-name');
+        const el2 = document.getElementById('model-name-inline');
+        if (el1) el1.textContent = name;
+        if (el2) el2.textContent = name;
+    } catch (e) { console.warn('设置模型名称失败', e); }
+}
+
+// 检查任务状态
+function checkTaskStatus() {
+    fetch(`/task/${taskId}/status?report_id=${reportId}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('📊 Task status:', data);
+            
+            // 同步模型名称显示（如果后端提供）
+            const modelFromServer = data.model || (data.result && data.result.model);
+            if (modelFromServer) setModelName(modelFromServer);
+
+            if (data.state === 'PROGRESS') {
+                const stage = data.stage || 'init';
+                const message = data.message || data.status;
+                
+                console.log(`  🔹 当前阶段: ${stage}`);
+                console.log(`  🔹 消息: ${message}`);
+                
+                // 标记之前的阶段为完成
+                markPreviousStagesCompleted(stage);
+                
+                // 更新当前阶段为进行中
+                updateStage(stage, 'active', message);
+            } 
+            else if (data.state === 'SUCCESS') {
+                console.log('✅ 任务成功完成');
+                clearInterval(checkInterval);
+                
+                // 标记所有阶段完成
+                const allStages = ['init', 'generating', 'summary', 'swot', 'saving'];
+                allStages.forEach(stageName => {
+                    const stageElement = document.getElementById(`stage-${stageName}`);
+                    if (stageElement) {
+                        stageElement.classList.remove('active');
+                        stageElement.classList.add('completed');
+                        stageElement.querySelector('.stage-status span').textContent = '✓ 完成';
+                        stageElement.querySelector('.stage-status span').className = 'text-sm text-green-600 font-semibold';
+                    }
+                });
+                
+                // 显示报告信息
+                const result = data.result || {};
+                console.log('  📄 报告结果:', result);
+                
+                if (result.report_id) {
+                    document.getElementById('report-info').classList.remove('hidden');
+                    document.getElementById('info-report-id').textContent = result.report_id;
+                    document.getElementById('info-file-path').textContent = result.file_path || '-';
+                    document.getElementById('info-file-size').textContent = result.file_size || '-';
+                    document.getElementById('info-generated-at').textContent = result.generated_at ? 
+                        new Date(result.generated_at).toLocaleString('zh-CN') : '-';
+                }
+                
+                // 显示成功提示
+                document.getElementById('success-section').classList.remove('hidden');
+                
+                // 3秒后跳转
+                const actualReportId = result.report_id || reportId;
+                console.log(`  🔗 将跳转到: /report/${actualReportId}`);
+                
+                setTimeout(() => {
+                    console.log('🚀 正在跳转...');
+                    window.location.href = `/report/${actualReportId}`;
+                }, 3000);
+            } 
+            else if (data.state === 'FAILURE' || data.state === 'ERROR') {
+                console.log('❌ 任务失败:', data.status);
+                clearInterval(checkInterval);
+                
+                // 标记当前阶段为失败
+                if (data.stage) {
+                    updateStage(data.stage, 'error', data.message || data.status);
+                }
+                
+                // 显示错误信息
+                document.getElementById('error-section').classList.remove('hidden');
+                const errorMessage = data.error || data.status || '未知错误';
+                document.getElementById('error-message').textContent = errorMessage;
+            }
+        })
+        .catch(error => {
+            console.error('❌ 检查状态时出错:', error);
+        });
+}
+
+// 开始检查任务状态
+console.log('🚀 开始监控任务状态');
+console.log(`  Task ID: ${taskId}`);
+console.log(`  Report ID: ${reportId}`);
+
+checkTaskStatus();
+checkInterval = setInterval(checkTaskStatus, 2000);
+
+// 超时处理
+setTimeout(() => {
+    if (checkInterval) {
+        console.log('⏱️ 任务超时');
+        clearInterval(checkInterval);
+        document.getElementById('error-section').classList.remove('hidden');
+        document.getElementById('error-message').textContent = '任务超时（超过30分钟），请检查系统日志';
+    }
+}, 30 * 60 * 1000);
+</script>
+{% endblock %}

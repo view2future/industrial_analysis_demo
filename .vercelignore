@@ -1,0 +1,20 @@
+# 排除 Python 编译文件
+__pycache__/
+
+# 排除本地虚拟环境 (如果您不使用 Vercel 的 Build 步骤安装依赖)
+venv/
+
+# 排除本地测试和文档
+tests/
+docs/
+
+# 排除 git 文件
+.git/
+
+# 确保 Vercel 不会把 node_modules 算进 Python Function 包里
+node_modules/
+
+#不上传demo_output
+demo_output/
+
+

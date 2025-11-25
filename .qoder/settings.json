@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "ask": [
+      "Read(!/Users/wangyu94/regional-industrial-dashboard/**)",
+      "Edit(!/Users/wangyu94/regional-industrial-dashboard/**)"
+    ],
+    "allow": [
+      "Read(/Users/wangyu94/regional-industrial-dashboard/**)",
+      "Edit(/Users/wangyu94/regional-industrial-dashboard/**)"
+    ]
+  },
+  "memoryImport": {},
+  "monitoring": {}
+}

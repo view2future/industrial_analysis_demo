@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}首页布局 C · 1440px{% endblock %}
+{% block extra_styles %}
+<style>
+  .container-1440 { max-width: 1440px; margin: 0 auto; }
+</style>
+{% endblock %}
+{% block content %}
+<section class="py-10 surface-gradient-bg">
+  <div class="container-1440 px-6">
+    <div class="grid grid-cols-12 gap-6">
+      <div class="col-span-8 glass-card p-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xl font-semibold">市场规模</h3>
+          <i class="ri-donut-chart-line"></i>
+        </div>
+        <div class="skeleton-block h-72" id="loaderC"></div>
+      </div>
+      <div class="col-span-4 space-y-6">
+        <div class="glass-card p-6 card-hover">
+          <h4 class="font-semibold">AI机会</h4>
+          <div class="skeleton-block h-24 mt-3"></div>
+        </div>
+        <div class="glass-card p-6 card-hover">
+          <h4 class="font-semibold">风险监测</h4>
+          <div class="skeleton-block h-24 mt-3"></div>
+        </div>
+      </div>
+      <div class="col-span-12 grid grid-cols-3 gap-6">
+        <div class="glass-card p-6 card-hover"><h4 class="font-semibold">行业结构</h4><div class="skeleton-block h-48 mt-3"></div></div>
+        <div class="glass-card p-6 card-hover"><h4 class="font-semibold">投资热度</h4><div class="skeleton-block h-48 mt-3"></div></div>
+        <div class="glass-card p-6 card-hover"><h4 class="font-semibold">企业画像</h4><div class="skeleton-block h-48 mt-3"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/effects.js') }}"></script>
+<script>initParticleLoader('loaderC');</script>
+{% endblock %}

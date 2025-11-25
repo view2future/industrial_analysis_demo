@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}{{ report.title }} - 区域产业分析小工作台{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    <!-- Report Header -->
+    <div class="gradient-bg text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h2 class="text-4xl font-bold mb-4">{{ report_data.title }}</h2>
+                    <div class="flex gap-6 text-lg">
+                        <span><i class="fas fa-clock mr-2"></i>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        {% if report_data.summary %}
+                        <span><i class="fas fa-file-word mr-2"></i>{{ report_data.summary.word_count }} 字</span>
+                        <span><i class="fas fa-book-reader mr-2"></i>阅读时间 {{ report_data.summary.reading_time }} 分钟</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="window.print()" class="btn btn-light"><i class="fas fa-print mr-2"></i>打印</button>
+                    <a href="{{ url_for('api_export_report', report_id=report.report_id, format='pdf') }}" class="btn btn-light inline-flex items-center"><i class="fas fa-file-pdf mr-2"></i>导出PDF</a>
+                    <a href="{{ url_for('api_export_report', report_id=report.report_id, format='word') }}" class="btn btn-light inline-flex items-center"><i class="fas fa-file-word mr-2"></i>导出Word</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Key Insights Cards -->
+        {% if report_data.summary and report_data.summary.key_highlights %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {% for highlight in report_data.summary.key_highlights %}
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+                <div class="flex items-center">
+                    <i class="fas fa-lightbulb text-3xl text-yellow-500 mr-4"></i>
+                    <div>
+                        <p class="text-gray-600 text-sm">关键发现 {{ loop.index }}</p>
+                        <p class="text-lg font-semibold text-gray-800">{{ highlight }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Statistics Overview -->
+        {% if report_data.statistics %}
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>统计概览
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <i class="fas fa-layer-group text-3xl text-blue-600 mb-2"></i>
+                    <p class="text-sm text-gray-600">分析类别</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ report_data.summary.categories_analyzed }}</p>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <i class="fas fa-robot text-3xl text-green-600 mb-2"></i>
+                    <p class="text-sm text-gray-600">AI应用机会</p>
+                    <p class="text-3xl font-bold text-green-600">{{ report_data.summary.ai_opportunities }}</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <i class="fas fa-star text-3xl text-purple-600 mb-2"></i>
+                    <p class="text-sm text-gray-600">高优先级AI</p>
+                    <p class="text-3xl font-bold text-purple-600">{{ report_data.summary.high_priority_ai }}</p>
+                </div>
+                <div class="text-center p-4 bg-orange-50 rounded-lg">
+                    <i class="fas fa-file-alt text-3xl text-orange-600 mb-2"></i>
+                    <p class="text-sm text-gray-600">总字数</p>
+                    <p class="text-3xl font-bold text-orange-600">{{ report_data.summary.word_count }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Category Distribution Chart -->
+            {% if report_data.charts and report_data.charts.category_distribution %}
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-pie-chart mr-2 text-indigo-600"></i>内容分布分析
+                </h3>
+                <div id="category-chart" style="width: 100%; height: 400px;"></div>
+            </div>
+            {% endif %}
+
+            <!-- AI Opportunities Chart -->
+            {% if report_data.charts and report_data.charts.ai_opportunities %}
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-brain mr-2 text-purple-600"></i>AI应用潜力评估
+                </h3>
+                <div id="ai-chart" style="width: 100%; height: 400px;"></div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Keyword Frequency -->
+        {% if report_data.charts and report_data.charts.keyword_frequency %}
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-tags mr-2 text-green-600"></i>关键词频率分析
+            </h3>
+            <div id="keyword-chart" style="width: 100%; height: 400px;"></div>
+        </div>
+        {% endif %}
+
+        <!-- Key Insights -->
+        {% if report_data.key_insights %}
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>核心洞察
+            </h3>
+            <div class="space-y-4">
+                {% for insight in report_data.key_insights %}
+                <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded-r-lg">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-2">{{ insight.title }}</h4>
+                    {% if insight.type == 'top_keywords' %}
+                        <div class="flex flex-wrap gap-2">
+                            {% for item in insight.data[:10] %}
+                            <span class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm">
+                                {{ item.term }} ({{ item.frequency }})
+                            </span>
+                            {% endfor %}
+                        </div>
+                    {% elif insight.type == 'numerical_data' and insight.data is iterable %}
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {% for item in insight.data %}
+                            <div class="bg-white p-3 rounded-lg border border-indigo-200">
+                                <div class="text-xs text-gray-600">{{ item.label if item is mapping else '' }}</div>
+                                <div class="text-lg font-bold text-indigo-700">{{ item.value if item is mapping else item }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% elif insight.data is iterable and insight.data is not string %}
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            {% for item in insight.data %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-gray-700">{{ insight.data }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- AI Opportunities Detail -->
+        {% if report_data.ai_opportunities %}
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-robot mr-2 text-purple-600"></i>AI应用机会详情
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for opp_name, opp_data in report_data.ai_opportunities.items() %}
+                <div class="border rounded-lg p-4 hover:shadow-lg transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-lg font-semibold text-gray-800">{{ opp_name }}</h4>
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold
+                            {% if opp_data.priority_level == 'high' %}bg-red-100 text-red-700
+                            {% elif opp_data.priority_level == 'medium' %}bg-yellow-100 text-yellow-700
+                            {% else %}bg-green-100 text-green-700{% endif %}">
+                            {{ opp_data.priority_level|upper }}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 mb-3">{{ opp_data.recommendation }}</p>
+                    {% if opp_data.relevant_content %}
+                    <div class="mt-3 text-sm text-gray-500">
+                        <p class="font-semibold mb-1">相关内容：</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            {% for content in opp_data.relevant_content[:3] %}
+                            <li>{{ content[:100] }}{% if content|length > 100 %}...{% endif %}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <div class="flex items-center mt-3">
+                        <div class="flex-1 bg-gray-200 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full" 
+                                 style="width: {{ opp_data.potential_score }}%"></div>
+                        </div>
+                        <span class="ml-3 text-sm font-semibold text-gray-700">{{ opp_data.potential_score }}/100</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Categories Content （详细内容）-->
+        {% if report_data.categories %}
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-folder-open mr-2 text-indigo-600"></i>详细内容
+            </h3>
+            <div class="space-y-6">
+                {% for category_name, category_data in report_data.categories.items() %}
+                <div class="border-b pb-6 last:border-b-0">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-3">
+                        {{ category_name }}
+                        <span class="text-sm text-gray-500 ml-2">(相关度: {{ category_data.relevance_score }})</span>
+                    </h4>
+                    {% if category_data.top_content %}
+                    <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                        {% for content in category_data.top_content %}
+                        <p class="text-gray-800 leading-relaxed pb-3 border-b last:border-b-0" style="word-break: break-word; overflow-wrap: anywhere;">{{ content }}</p>
+                        {% endfor %}
+                    </div>
+                    {% elif category_data.key_points %}
+                    <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                        {% for point in category_data.key_points %}
+                        <p class="text-gray-800 leading-relaxed pb-3 border-b last:border-b-0" style="word-break: break-word; overflow-wrap: anywhere;">{{ point }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Category Distribution Chart
+        {% if report_data.charts and report_data.charts.category_distribution %}
+        const categoryChart = echarts.init(document.getElementById('category-chart'));
+        const categoryData = {{ report_data.charts.category_distribution.data[0].labels | tojson | safe }};
+        const categoryValues = {{ report_data.charts.category_distribution.data[0].chart_values | tojson | safe }};
+        
+        categoryChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                formatter: '{b}: {c} 字 ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+                top: '10%'
+            },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 10,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                label: {
+                    show: true,
+                    position: 'outside',
+                    formatter: '{b}\n{d}%'
+                },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: 16,
+                        fontWeight: 'bold'
+                    }
+                },
+                data: categoryData.map((label, idx) => ({
+                    name: label,
+                    value: categoryValues[idx]
+                }))
+            }]
+        });
+        {% endif %}
+
+        // AI Opportunities Chart
+        {% if report_data.charts and report_data.charts.ai_opportunities %}
+        const aiChart = echarts.init(document.getElementById('ai-chart'));
+        const aiLabels = {{ report_data.charts.ai_opportunities.data[0].theta | tojson | safe }};
+        const aiScores = {{ report_data.charts.ai_opportunities.data[0].r | tojson | safe }};
+        
+        aiChart.setOption({
+            tooltip: {
+                trigger: 'item'
+            },
+            radar: {
+                indicator: aiLabels.map((label, index) => ({
+                    name: label,
+                    max: 100
+                })),
+                axisName: {
+                    color: '#666'
+                }
+            },
+            series: [{
+                type: 'radar',
+                data: [{
+                    value: aiScores,
+                    name: 'AI应用机会',
+                    itemStyle: {
+                        color: '#764ba2'
+                    },
+                    areaStyle: {
+                        opacity: 0.3
+                    }
+                }]
+            }]
+        });
+        {% endif %}
+
+        // Keyword Frequency Chart
+        {% if report_data.charts and report_data.charts.keyword_frequency %}
+        const keywordChart = echarts.init(document.getElementById('keyword-chart'));
+        const keywords = {{ report_data.charts.keyword_frequency.data[0].x | tojson | safe }};
+        const frequencies = {{ report_data.charts.keyword_frequency.data[0].y | tojson | safe }};
+        
+        keywordChart.setOption({
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                }
+            },
+            xAxis: {
+                type: 'category',
+                data: keywords,
+                axisLabel: {
+                    interval: 0,
+                    rotate: 45
+                }
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [{
+                type: 'bar',
+                data: frequencies,
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+                        { offset: 0, color: '#10b981' },
+                        { offset: 1, color: '#34d399' }
+                    ]),
+                    borderRadius: [5, 5, 0, 0]
+                },
+                label: {
+                    show: true,
+                    position: 'top'
+                }
+            }]
+        });
+        {% endif %}
+
+        // Responsive charts
+        window.addEventListener('resize', () => {
+            {% if report_data.charts and report_data.charts.category_distribution %}
+            categoryChart.resize();
+            {% endif %}
+            {% if report_data.charts and report_data.charts.ai_opportunities %}
+            aiChart.resize();
+            {% endif %}
+            {% if report_data.charts and report_data.charts.keyword_frequency %}
+            keywordChart.resize();
+            {% endif %}
+        });
+    </script>
+    
+    <!-- Original Report Content （报告原文）-->
+    {% if report and report.file_path %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-file-alt mr-2 text-gray-600"></i>报告原文
+            </h2>
+            <div class="border border-gray-200 rounded-lg p-6 bg-white">
+                <div class="markdown-content" style="word-break: break-word; overflow-wrap: anywhere;">
+                    {% if report_data.full_content %}
+                        {{ render_markdown(report_data.full_content) | safe }}
+                    {% elif report.original_content %}
+                        <div style="white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;">
+                            {{ report.original_content }}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500">原文内容不可用</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}

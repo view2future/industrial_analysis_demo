@@ -1,0 +1,56 @@
+# Regional Industrial Dashboard - Complete Dependencies
+# This file contains all dependencies needed to run the application
+
+# Web Framework
+Flask>=2.3.0,<3.0.0
+Werkzeug>=2.3.0,<3.0.0
+Flask-Login>=0.6.0,<1.0.0
+Flask-SQLAlchemy>=3.0.0,<4.0.0
+
+# Data Processing
+pandas>=1.5.0,<2.0.0
+numpy>=1.21.0,<2.0.0
+
+# Text Processing and NLP
+jieba>=0.42.1,<1.0.0
+snownlp>=0.12.3,<1.0.0
+
+# Web Scraping
+requests>=2.25.0,<3.0.0
+beautifulsoup4>=4.11.0,<5.0.0
+wechatsogou>=2023.3.3,<2024.0.0
+
+# Visualization
+plotly>=5.0.0,<6.0.0
+
+# File Processing
+python-docx>=0.8.11,<1.0.0
+PyPDF2>=2.0.0,<3.0.0
+openpyxl>=3.0.0,<4.0.0
+mammoth>=1.4.0,<2.0.0
+docx2txt>=0.8,<1.0
+
+# PDF Generation
+reportlab>=3.6.0,<4.0.0
+
+# AI/LLM Integration
+openai>=0.27.0,<1.0.0
+google-generativeai>=0.3.0,<1.0.0
+
+# Geocoding and Maps
+googlemaps>=4.10.0,<5.0.0
+
+# Task Queue
+celery>=5.2.0,<6.0.0
+redis>=4.5.0,<5.0.0
+
+# Utilities
+python-dateutil>=2.8.0,<3.0.0
+markdown2>=2.4.0,<3.0.0
+
+# Development and Testing
+pytest>=7.0.0,<8.0.0
+pytest-cov>=4.0.0,<5.0.0
+
+# Optional dependencies for enhanced functionality
+lxml>=4.9.0,<5.0.0  # For better XML/HTML parsing

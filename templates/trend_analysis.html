@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趋势预测分析 - 区域产业分析小工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">📈 趋势预测分析</a>
+            <div class="ms-auto">
+                <a href="{{ url_for('reports_list') }}" class="btn btn-outline-light btn-sm">返回报告列表</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="mb-4"><i class="bi bi-graph-up-arrow"></i> 趋势预测分析</h2>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">选择历史报告</h5>
+                <p class="text-muted">请选择至少3份相关的历史报告进行趋势分析</p>
+                
+                <div class="row mb-3">
+                    {% for report in reports %}
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input report-select" type="checkbox" value="{{ report.report_id }}" 
+                                   id="trend{{ loop.index }}">
+                            <label class="form-check-label" for="trend{{ loop.index }}">
+                                <strong>{{ report.title }}</strong><br>
+                                <small class="text-muted">{{ report.created_at.strftime('%Y-%m-%d') }}</small>
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">选择分析指标</label>
+                    <select class="form-select" id="metric">
+                        <option value="market_size">市场规模</option>
+                        <option value="company_count">企业数量</option>
+                        <option value="growth_rate">增长率</option>
+                        <option value="investment">投资金额</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" id="btnAnalyzeTrend" disabled>
+                    <i class="bi bi-play-circle"></i> 开始趋势分析
+                </button>
+                <small class="text-muted ms-2">至少选择3份报告</small>
+            </div>
+        </div>
+
+        <div id="trendResults" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="text-muted">趋势方向</h6>
+                            <h3 id="trendDirection"></h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="text-muted">平均增长率</h6>
+                            <h3 id="growthRate"></h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="text-muted">数据点数</h6>
+                            <h3 id="dataPoints"></h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="text-muted">预测期数</h6>
+                            <h3 id="predictionPeriods"></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-graph-up"></i> 趋势预测图表</h5>
+                    <div id="trendChart" style="height: 500px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingTrend" class="text-center" style="display: none;">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p>正在分析趋势...</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const checkboxes = document.querySelectorAll('.report-select');
+        const btnAnalyzeTrend = document.getElementById('btnAnalyzeTrend');
+        
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const selected = Array.from(checkboxes).filter(c => c.checked);
+                btnAnalyzeTrend.disabled = selected.length < 3;
+            });
+        });
+
+        btnAnalyzeTrend.addEventListener('click', async function() {
+            const selected = Array.from(checkboxes).filter(c => c.checked).map(c => c.value);
+            const metric = document.getElementById('metric').value;
+            
+            document.getElementById('loadingTrend').style.display = 'block';
+            document.getElementById('trendResults').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/trend-analysis', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({report_ids: selected, metric: metric})
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('loadingTrend').style.display = 'none';
+                document.getElementById('trendResults').style.display = 'block';
+                
+                // Update statistics
+                document.getElementById('trendDirection').textContent = data.trend_direction;
+                document.getElementById('growthRate').textContent = (data.avg_growth_rate || 0).toFixed(2) + '%';
+                document.getElementById('dataPoints').textContent = data.data_points || 0;
+                document.getElementById('predictionPeriods').textContent = data.prediction_periods || 6;
+                
+                // Render chart
+                if (data.chart) {
+                    const chart = echarts.init(document.getElementById('trendChart'));
+                    chart.setOption(data.chart);
+                }
+                
+            } catch (error) {
+                alert('趋势分析失败: ' + error.message);
+                document.getElementById('loadingTrend').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

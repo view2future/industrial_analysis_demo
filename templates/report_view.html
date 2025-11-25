@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report.title }} - 区域产业分析小工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link id="hljsTheme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+        }
+        body { background-color: #f8f9fa; }
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand, .nav-link { color: white !important; }
+        .report-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .summary-card .card-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+        }
+        .content-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .swot-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .swot-box {
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .swot-strength { background-color: #d4edda; border-left: 4px solid #28a745; }
+        .swot-weakness { background-color: #f8d7da; border-left: 4px solid #dc3545; }
+        .swot-opportunity { background-color: #d1ecf1; border-left: 4px solid #17a2b8; }
+        .swot-threat { background-color: #fff3cd; border-left: 4px solid #ffc107; }
+        .qa-container {
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        .qa-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        .qa-question {
+            background-color: #e9ecef;
+            margin-left: 50px;
+        }
+        .qa-answer {
+            background-color: #d4edda;
+            margin-right: 50px;
+        }
+        .source-highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .lang-toggle {
+            display: inline-flex;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .lang-toggle button {
+            border: none;
+            padding: 8px 20px;
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .lang-toggle button.active {
+            background-color: rgba(255,255,255,0.4);
+            font-weight: bold;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-modern.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">🏭 区域产业分析小工作台</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}"><i class="bi bi-house-door"></i> 返回首页</a>
+                <button id="themeToggle" class="btn btn-outline-light ms-2"><i id="themeIcon" class="bi bi-moon"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="report-header">
+        <div class="container">
+            <h1><i class="bi bi-file-earmark-text"></i> {{ report.title }}</h1>
+            <p class="mb-0">
+                {% if report.city %}<i class="bi bi-geo-alt"></i> {{ report.city }}{% endif %}
+                {% if report.industry %}<i class="bi bi-briefcase"></i> {{ report.industry }}{% endif %}
+                <i class="bi bi-calendar"></i> {{ report.created_at.strftime('%Y-%m-%d %H:%M') }}
+            </p>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="lang-toggle">
+                <button onclick="showSummary('zh')" class="active" id="lang-zh">中文</button>
+                <button onclick="showSummary('en')" id="lang-en">English</button>
+            </div>
+            <div>
+                <button class="btn btn-light me-2" id="printBtn"><i class="bi bi-printer"></i> 打印</button>
+                <button class="btn btn-primary" id="pdfBtn"><i class="bi bi-filetype-pdf"></i> 导出PDF</button>
+            </div>
+        </div>
+        <!-- Summary Section -->
+        {% if report_data.summary %}
+        <div class="card summary-card">
+            <div class="card-header">
+                <h3 class="mb-0"><i class="bi bi-star"></i> 执行摘要 (Executive Summary)</h3>
+                <div class="lang-toggle mt-3">
+                    <button onclick="showSummary('zh')" class="active" id="lang-zh">中文</button>
+                    <button onclick="showSummary('en')" id="lang-en">English</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="summary-zh" class="summary-content">
+                    <div style="white-space: pre-wrap; line-height: 1.8;">{{ report_data.summary.zh }}</div>
+                </div>
+                <div id="summary-en" class="summary-content" style="display: none;">
+                    <div style="white-space: pre-wrap; line-height: 1.8;">{{ report_data.summary.en }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- SWOT Analysis -->
+        {% if report_data.swot_analysis %}
+        <div class="card content-card mb-4">
+            <div class="card-body">
+                <h4 class="mb-4"><i class="bi bi-diagram-3"></i> SWOT 分析</h4>
+                <div class="swot-grid">
+                    <div class="swot-box swot-strength">
+                        <h5><i class="bi bi-arrow-up-circle"></i> 优势 (Strengths)</h5>
+                        <ul>
+                            {% for item in report_data.swot_analysis.strengths %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="swot-box swot-weakness">
+                        <h5><i class="bi bi-arrow-down-circle"></i> 劣势 (Weaknesses)</h5>
+                        <ul>
+                            {% for item in report_data.swot_analysis.weaknesses %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="swot-box swot-opportunity">
+                        <h5><i class="bi bi-lightbulb"></i> 机遇 (Opportunities)</h5>
+                        <ul>
+                            {% for item in report_data.swot_analysis.opportunities %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="swot-box swot-threat">
+                        <h5><i class="bi bi-exclamation-triangle"></i> 威胁 (Threats)</h5>
+                        <ul>
+                            {% for item in report_data.swot_analysis.threats %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Full Report Content -->
+        <div class="row">
+            <div class="col-lg-3 mb-4">
+                <div class="toc"></div>
+            </div>
+            <div class="col-lg-9">
+                <div class="card content-card mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-4"><i class="bi bi-file-text"></i> 完整报告</h4>
+                        <div id="full-content" class="markdown-content">{{ report_data.full_content }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Q&A Section -->
+        <div class="card content-card">
+            <div class="card-body">
+                <h4 class="mb-4"><i class="bi bi-chat-dots"></i> 智能问答</h4>
+                <p class="text-muted">您可以针对报告内容进行提问，AI助手会基于报告为您解答</p>
+                
+                <div class="qa-container">
+                    <div id="qa-history"></div>
+                    
+                    <form id="qa-form" class="mt-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="question-input" 
+                                   placeholder="请输入您的问题..." required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-send"></i> 提问
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showSummary(lang) {
+            document.getElementById('summary-zh').style.display = lang === 'zh' ? 'block' : 'none';
+            document.getElementById('summary-en').style.display = lang === 'en' ? 'block' : 'none';
+            document.getElementById('lang-zh').classList.toggle('active', lang === 'zh');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+        }
+
+        // Q&A functionality
+        document.getElementById('qa-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const questionInput = document.getElementById('question-input');
+            const question = questionInput.value.trim();
+            
+            if (!question) return;
+            
+            // Add question to history
+            const qaHistory = document.getElementById('qa-history');
+            qaHistory.innerHTML += `
+                <div class="qa-message qa-question">
+                    <strong>Q:</strong> ${question}
+                </div>
+                <div class="qa-message qa-answer" id="loading-answer">
+                    <div class="spinner-border spinner-border-sm me-2"></div> AI正在思考...
+                </div>
+            `;
+            
+            questionInput.value = '';
+            
+            try {
+                const response = await fetch('/api/report/{{ report.report_id }}/qa', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('loading-answer').outerHTML = `
+                    <div class="qa-message qa-answer">
+                        <strong>A:</strong> ${data.answer}
+                    </div>
+                `;
+                
+                // Scroll to bottom
+                qaHistory.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            } catch (error) {
+                document.getElementById('loading-answer').outerHTML = `
+                    <div class="qa-message qa-answer" style="background-color: #f8d7da;">
+                        <strong>错误:</strong> 无法获取答案，请稍后重试
+                    </div>
+                `;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const full = document.getElementById('full-content');
+            if (full) {
+                const raw = full.textContent || full.innerText || '';
+                const html = marked.parse(raw, { breaks: true });
+                full.innerHTML = html;
+                if (window.hljs) window.hljs.highlightAll();
+                // Build sections for collapsible content
+                const headersAll = full.querySelectorAll('h1, h2, h3');
+                const rootChildren = Array.from(full.childNodes);
+                const sectionRoot = document.createElement('div');
+                sectionRoot.className = 'markdown-sections';
+                full.innerHTML = '';
+                let current = null;
+                rootChildren.forEach(function(node){
+                    if (node.nodeType === 1 && /H[1-3]/.test(node.tagName)) {
+                        current = document.createElement('div');
+                        current.className = 'md-section';
+                        const anchorId = node.id || ('h-' + Math.random().toString(36).slice(2));
+                        node.id = anchorId;
+                        const anchor = document.createElement('a');
+                        anchor.href = '#' + anchorId;
+                        anchor.className = 'md-anchor';
+                        anchor.innerHTML = '<i class="bi bi-link-45deg"></i>';
+                        node.appendChild(anchor);
+                        const toggle = document.createElement('button');
+                        toggle.className = 'md-collapse btn btn-sm btn-light';
+                        toggle.innerHTML = '<i class="bi bi-chevron-up"></i>';
+                        toggle.setAttribute('aria-expanded', 'true');
+                        toggle.style.marginLeft = '8px';
+                        node.appendChild(toggle);
+                        sectionRoot.appendChild(current);
+                        current.appendChild(node);
+                        toggle.addEventListener('click', function(){
+                            const expanded = this.getAttribute('aria-expanded') === 'true';
+                            this.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+                            this.innerHTML = expanded ? '<i class="bi bi-chevron-down"></i>' : '<i class="bi bi-chevron-up"></i>';
+                            contentWrap.style.display = expanded ? 'none' : '';
+                        });
+                        var contentWrap = document.createElement('div');
+                        contentWrap.className = 'md-section-content';
+                        current.appendChild(contentWrap);
+                    } else {
+                        if (!current) {
+                            current = document.createElement('div');
+                            current.className = 'md-section';
+                            var contentWrap0 = document.createElement('div');
+                            contentWrap0.className = 'md-section-content';
+                            current.appendChild(contentWrap0);
+                            sectionRoot.appendChild(current);
+                        }
+                        const target = current.querySelector('.md-section-content');
+                        target.appendChild(node);
+                    }
+                });
+                full.appendChild(sectionRoot);
+                // Add copy buttons to code blocks
+                const pres = full.querySelectorAll('pre');
+                pres.forEach(function(pre){
+                    const btn = document.createElement('button');
+                    btn.className = 'code-copy-btn btn btn-sm btn-outline-secondary';
+                    btn.innerHTML = '<i class="bi bi-clipboard"></i> 复制';
+                    btn.addEventListener('click', function(){
+                        const code = pre.querySelector('code');
+                        const text = code ? code.innerText : pre.innerText;
+                        navigator.clipboard.writeText(text || '').then(function(){
+                            btn.innerHTML = '<i class="bi bi-clipboard-check"></i> 已复制';
+                            setTimeout(function(){ btn.innerHTML = '<i class="bi bi-clipboard"></i> 复制'; }, 1500);
+                        });
+                    });
+                    pre.style.position = 'relative';
+                    btn.style.position = 'absolute';
+                    btn.style.top = '8px';
+                    btn.style.right = '8px';
+                    pre.appendChild(btn);
+                });
+                const toc = document.querySelector('.toc');
+                if (toc) {
+                    const headers = full.querySelectorAll('h1, h2, h3');
+                    let links = '';
+                    headers.forEach(function(h, idx) {
+                        if (!h.id) h.id = 'h-' + idx + '-' + h.textContent.trim().replace(/\s+/g, '-');
+                        const indent = h.tagName === 'H1' ? '' : (h.tagName === 'H2' ? '&nbsp;&nbsp;' : '&nbsp;&nbsp;&nbsp;&nbsp;');
+                        links += '<a href="#' + h.id + '">' + indent + h.textContent + '</a>';
+                    });
+                    toc.innerHTML = links;
+                    toc.addEventListener('click', function(ev) {
+                        const a = ev.target.closest('a');
+                        if (!a) return;
+                        ev.preventDefault();
+                        const id = a.getAttribute('href').slice(1);
+                        const el = document.getElementById(id);
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        toc.querySelectorAll('a').forEach(function(x){ x.classList.remove('active'); });
+                        a.classList.add('active');
+                    });
+                }
+            }
+            // Theme toggle for this standalone page
+            (function(){
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const saved = localStorage.getItem('theme');
+                const theme = saved ? saved : (prefersDark ? 'dark' : 'light');
+                document.documentElement.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
+                const icon = document.getElementById('themeIcon');
+                if (icon) icon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+                const btn = document.getElementById('themeToggle');
+                const hl = document.getElementById('hljsTheme');
+                function applyHlTheme(isDark){ if (hl) hl.href = isDark ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css' : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'; }
+                applyHlTheme(theme === 'dark');
+                if (btn) btn.addEventListener('click', function(){
+                    const isDark = document.documentElement.classList.contains('theme-dark');
+                    document.documentElement.classList.toggle('theme-dark', !isDark);
+                    document.documentElement.classList.toggle('theme-light', isDark);
+                    localStorage.setItem('theme', isDark ? 'light' : 'dark');
+                    const icon2 = document.getElementById('themeIcon');
+                    if (icon2) icon2.className = !isDark ? 'bi bi-sun' : 'bi bi-moon';
+                    applyHlTheme(!isDark);
+                });
+            })();
+            const printBtn = document.getElementById('printBtn');
+            if (printBtn) printBtn.addEventListener('click', function(){ window.print(); });
+            const pdfBtn = document.getElementById('pdfBtn');
+            if (pdfBtn) pdfBtn.addEventListener('click', function(){
+                if (!window.html2pdf) return;
+                const element = document.getElementById('full-content');
+                const opt = { margin: 10, filename: 'report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+                window.html2pdf().from(element).set(opt).save();
+            });
+        });
+    </script>
+</body>
+</html>
