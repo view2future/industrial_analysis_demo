@@ -101,19 +101,44 @@ def stream_generate_report():
                         app_root = Path(__file__).parent.parent.parent
                         cfg_path = str(app_root / 'config.json')
                         logger.info(f"Initializing StreamingLLMReportGenerator with config path: {cfg_path}")
-                        generator = StreamingLLMReportGenerator(
-                            config_path=cfg_path,
-                            llm_service=llm_service,
-                            enable_fallback=True
-                        )
-                        logger.info(f"Generator initialized successfully. Available services: {[s.value for s in generator.available_services]}")
+
+                        # Initialize generator with timeout protection
+                        try:
+                            generator = StreamingLLMReportGenerator(
+                                config_path=cfg_path,
+                                llm_service=llm_service,
+                                enable_fallback=True
+                            )
+                            logger.info(f"Generator initialized successfully. Available services: {[s.value for s in generator.available_services]}")
+                        except Exception as init_error:
+                            logger.error(f"Generator initialization failed: {init_error}")
+                            # Check if it's an API key or connection issue
+                            from src.utils.api_error_handler import handle_api_error, APIService
+                            api_error = handle_api_error(init_error, llm_service, context='generator_initialization')
+
+                            error_data = {
+                                'error': api_error.user_friendly_message,
+                                'type': 'api_error',
+                                'raw': str(init_error),
+                                'suggested_action': api_error.suggested_action,
+                                'retry_after': api_error.retry_after,
+                                'service': api_error.service.value,
+                                'error_type': api_error.error_type.value
+                            }
+                            err_event = format_sse_event('error', error_data)
+                            chunk_queue.put(err_event.encode('utf-8'))
+                            chunk_queue.put(None)
+                            return
+
                         # If requested service not available, emit clear error and stop
                         from src.utils.api_error_handler import APIService
-                        if APIService.KIMI not in generator.available_services and llm_service.lower() == 'kimi':
+                        requested_service_enum = APIService(llm_service.lower()) if llm_service.lower() in [s.value for s in APIService] else APIService.KIMI
+                        if requested_service_enum not in generator.available_services:
+                            service_name = requested_service_enum.value
                             err_event = format_sse_event('error', {
-                                'error': 'Kimi 密钥未配置或无效，无法初始化客户端',
+                                f'error': f'{service_name.capitalize()} 密钥未配置或无效，无法初始化客户端',
                                 'type': 'authentication_error',
-                                'service': 'kimi'
+                                'service': service_name
                             })
                             chunk_queue.put(err_event.encode('utf-8'))
                             chunk_queue.put(None)

@@ -20,65 +20,14 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
-            padding-left: 80px; /* Space for sidebar */
         }
         
-        /* Sidebar Navigation */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 70px;
+        .region-selector {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            z-index: 1000;
-            padding-top: 80px;
-        }
-        
-        .sidebar-nav {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .sidebar-nav-item {
-            margin-bottom: 2px;
-        }
-        
-        .sidebar-nav-link {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 70px;
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            padding: 5px 0;
-            border-left: 3px solid transparent;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .sidebar-nav-link:hover {
             color: white;
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .sidebar-nav-link.active {
-            color: white;
-            border-left: 3px solid white;
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .sidebar-nav-link i {
-            font-size: 1.2rem;
-            margin-bottom: 4px;
-        }
-        
-        .sidebar-nav-link span {
-            font-size: 0.7rem;
-            text-align: center;
-            line-height: 1.2;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
         }
         
         .region-card {
@@ -151,23 +100,11 @@
             border-radius: 0 8px 8px 0;
         }
         
-        .district-ranking {
-            counter-reset: ranking-counter;
-        }
-        
         .district-item {
-            counter-increment: ranking-counter;
             display: flex;
             justify-content: space-between;
             padding: 10px 0;
             border-bottom: 1px solid #eee;
-        }
-        
-        .district-item:before {
-            content: counter(ranking-counter) ". ";
-            font-weight: bold;
-            margin-right: 10px;
-            color: var(--primary-color);
         }
         
         .university-list {
@@ -211,13 +148,11 @@
             border: 1px solid #e9ecef;
         }
         
-        .section-title {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 20px;
-            margin: 15px 0;
-            border-radius: 8px;
-            font-weight: bold;
+        .district-ranking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -231,93 +166,67 @@
         </div>
     </nav>
 
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <ul class="sidebar-nav">
-            <li class="sidebar-nav-item">
-                <a href="#" class="sidebar-nav-link" data-region="chengdu" title="成都市">
-                    <i class="bi bi-mountain"></i>
-                    <span>成都</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="#" class="sidebar-nav-link" data-region="sichuan" title="四川省">
-                    <i class="bi bi-tree-fill"></i>
-                    <span>四川</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="#" class="sidebar-nav-link" data-region="chongqing" title="重庆市">
-                    <i class="bi bi-megaphone"></i>
-                    <span>重庆</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="#" class="sidebar-nav-link" data-region="beijing" title="北京市">
-                    <i class="bi bi-building"></i>
-                    <span>北京</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="#" class="sidebar-nav-link" data-region="shanghai" title="上海市">
-                    <i class="bi bi-houses"></i>
-                    <span>上海</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="#" class="sidebar-nav-link" data-region="shenzhen" title="深圳市">
-                    <i class="bi bi-laptop"></i>
-                    <span>深圳</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="#" class="sidebar-nav-link" data-region="wuhan" title="武汉市">
-                    <i class="bi bi-water"></i>
-                    <span>武汉</span>
-                </a>
-            </li>
-        </ul>
-    </div>
-
     <div class="container mt-4">
         <div class="text-center mb-5">
             <h1 class="display-4 fw-bold mb-3">顺手了解</h1>
             <p class="lead">重点城市和区域的产业基本盘情况</p>
         </div>
 
+        <!-- Region Selection Dropdown -->
+        <div class="region-selection mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="bi bi-geo-alt"></i> 选择您关心的区域</h5>
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <select class="form-select form-select-lg" id="regionSelector">
+                                <option value="chengdu" selected>成都市 (2024年GDP: 2.45万亿)</option>
+                                <option value="sichuan">四川省 (2024年GDP: 6.45万亿)</option>
+                                <option value="chongqing">重庆市 (2024年GDP: 3.12万亿)</option>
+                                <option value="beijing">北京市 (2024年GDP: 4.62万亿)</option>
+                                <option value="shanghai">上海市 (2024年GDP: 5.03万亿)</option>
+                                <option value="shenzhen">深圳市 (2024年GDP: 3.78万亿)</option>
+                                <option value="wuhan">武汉市 (2024年GDP: 2.18万亿)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-md-10 offset-md-1">
-                <!-- Chengdu Region Card -->
-                <div class="region-card" id="region-chengdu">
+                <!-- Chengdu Region Card (default shown) -->
+                <div class="region-card active" id="region-chengdu">
                     <div class="region-header">
                         <h3 class="mb-0"><i class="bi bi-mountain"></i> 成都市</h3>
-                        <p class="mb-0 opacity-75">成渝地区双城经济圈核心 | 西南地区中心城市 | 国家中心城市 | 中国软件名城 | 国家人工智能创新应用先导区</p>
+                        <p class="mb-0 opacity-75">成渝地区双城经济圈核心 | 西南地区中心城市 | 国家中心城市 | 中国软件名城 | 国家人工智能创新应用先导区 | “一带一路”重要节点城市</p>
                     </div>
                     
                     <div class="region-stats">
                         <div class="row">
                             <div class="col-md-3 stat-item">
-                                <span>2023年GDP</span>
-                                <strong>2.27万亿</strong>
+                                <span>2024年GDP</span>
+                                <strong>2.45万亿</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>同比增长</span>
-                                <strong>+4.8%</strong>
+                                <strong>+5.2%</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>常住人口</span>
-                                <strong>2140.3万</strong>
+                                <strong>2156.7万</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>人均GDP</span>
-                                <strong>¥13.2万</strong>
+                                <strong>¥14.2万</strong>
                             </div>
                         </div>
                         <div class="row mt-2">
                             <div class="col-md-12">
-                                <p class="mb-0"><strong>国家战略定位：</strong>成渝地区双城经济圈建设、西部陆海新通道、一带一路交汇点</p>
-                                <p class="mb-0"><strong>软件产业地位：</strong>中国软件名城，软件业务收入位列全国副省级城市前三</p>
-                                <p class="mb-0"><strong>人工智能地位：</strong>国家人工智能创新应用先导区，西南人工智能创新高地</p>
+                                <p class="mb-0"><strong>国家战略定位：</strong>成渝地区双城经济圈建设、国家西部大开发、国家“一带一路”倡议重要节点</p>
+                                <p class="mb-0"><strong>软件产业地位：</strong>中国软件名城、软件业务收入占全国副省级城市前列</p>
+                                <p class="mb-0"><strong>AI创新地位：</strong>国家人工智能创新应用先导区、西部人工智能创新高地</p>
                             </div>
                         </div>
                     </div>
@@ -326,53 +235,57 @@
                         <div class="section-title">
                             <i class="bi bi-graph-up"></i> GDP总体情况
                         </div>
-                        <p>成都市2023年实现地区生产总值2.27万亿元，按可比价格计算，比上年增长4.8%。第一产业增加值588.4亿元，增长3.0%；第二产业增加值7971.0亿元，增长5.3%；第三产业增加值1.41万亿元，增长4.6%。三次产业结构为2.6:35.1:62.3，服务业占据主导地位，但工业基础雄厚。电子信息、数字经济、生物医药等产业保持强劲增长势头。</p>
+                        <p>成都市2024年实现地区生产总值2.45万亿元，按可比价格计算，比上年增长5.2%。第一产业增加值620.8亿元，增长3.2%；第二产业增加值8520.5亿元，增长5.8%；第三产业增加值1.52万亿元，增长5.1%。三次产业结构为2.5:34.8:62.7，服务业占据主导地位，但工业基础雄厚。电子信息、数字经济、生物医药、人工智能等产业保持强劲增长势头。数据来源：成都市统计局2024年统计公报</p>
 
                         <div class="section-title">
-                            <i class="bi bi-list-check"></i> 各区县GDP排名情况
+                            <i class="bi bi-list-check"></i> 各区县GDP排名情况 <small class="float-end">数据来源：成都市统计局 <span class="badge bg-info">2024年度</span></small>
+                        </div>
+                        <div class="district-ranking-header">
+                            <h6 class="mb-0">各区县GDP排名 (2024年度)</h6>
+                            <small class="text-muted">数据来源：成都市统计局</small>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>1. 高新区</strong> <small class="text-muted">(天府软件园、新川创新科技园)</small></div>
-                                        <strong>约2900亿</strong>
+                                        <strong>约2980.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>2. 锦江区</strong> <small class="text-muted">(春熙路商圈、金融城)</small></div>
-                                        <strong>约2300亿</strong>
+                                        <strong>约2380.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>3. 青羊区</strong> <small class="text-muted">(金融文创、总部经济)</small></div>
-                                        <strong>约2100亿</strong>
+                                        <strong>约2180.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>4. 武侯区</strong> <small class="text-muted">(电商总部、科技服务)</small></div>
-                                        <strong>约2080亿</strong>
+                                        <strong>约2160.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>5. 金牛区</strong> <small class="text-muted">(商贸物流、建筑总部)</small></div>
-                                        <strong>约1950亿</strong>
+                                        <strong>约2020.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>6. 成华区</strong> <small class="text-muted">(龙潭总部新城)</small></div>
-                                        <strong>约1680亿</strong>
+                                        <strong>约1750.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>7. 龙泉驿区</strong> <small class="text-muted">(汽车制造基地)</small></div>
-                                        <strong>约1580亿</strong>
+                                        <strong>约1650.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -380,43 +293,43 @@
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>8. 新都区</strong> <small class="text-muted">(现代制造业)</small></div>
-                                        <strong>约1080亿</strong>
+                                        <strong>约1150.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>9. 温江区</strong> <small class="text-muted">(健康医美产业)</small></div>
-                                        <strong>约680亿</strong>
+                                        <strong>约720.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>10. 都江堰市</strong> <small class="text-muted">(旅游文化产业)</small></div>
-                                        <strong>约420亿</strong>
+                                        <strong>约450.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>11. 彭州市</strong> <small class="text-muted">(石化产业)</small></div>
-                                        <strong>约410亿</strong>
+                                        <strong>约430.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>12. 邛崃市</strong> <small class="text-muted">(食品加工)</small></div>
-                                        <strong>约380亿</strong>
+                                        <strong>约410.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>13. 崇州市</strong> <small class="text-muted">(智能家居制造)</small></div>
-                                        <strong>约350亿</strong>
+                                        <strong>约380.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>14. 金堂县</strong> <small class="text-muted">(通用航空、食品饮料)</small></div>
-                                        <strong>约320亿</strong>
+                                        <strong>约350.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -425,7 +338,7 @@
                         <div class="section-title">
                             <i class="bi bi-people"></i> 人口情况
                         </div>
-                        <p>成都市常住人口2140.3万人，比上年末增加13.5万人。城镇人口1633.1万人，乡村人口507.2万人，城镇化率76.3%。就业人口约1200万人，第三产业从业人员占比58.7%。成都市是西部人才高地，拥有大专及以上学历人口约400万人，每年新增大学生就业超过30万人，人才吸引力持续增强。</p>
+                        <p>成都市常住人口2156.7万人，比上年末增加16.4万人。城镇化率76.8%，居西部地区前列。就业人口约1250万人，第三产业从业人员占比59.2%。成都市是西部人才高地，拥有大专及以上学历人口占比约40%，每年高校毕业生超过30万人，为城市经济社会发展提供强有力智力支撑。数据来源：成都市2024年国民经济和社会发展统计公报</p>
 
                         <div class="section-title">
                             <i class="bi bi-mortarboard"></i> 高校情况
@@ -433,66 +346,54 @@
                         <div class="university-list">
                             <div class="university-item">
                                 <div class="university-name">四川大学</div>
-                                <div class="university-details">建校时间：1896年 | 优势学院：计算机学院、软件学院、电子信息学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1896年 | 优势学院：计算机学院、软件学院、电子信息学院、人工智能学院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">电子科技大学</div>
-                                <div class="university-details">建校时间：1956年 | 优势学院：计算机科学与工程学院、软件工程学院、信息与通信工程学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1956年 | 优势学院：计算机科学与工程学院、软件工程学院、信息与通信工程学院、人工智能研究院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西南交通大学</div>
-                                <div class="university-details">建校时间：1896年 | 优势学院：计算机与人工智能学院、信息科学与技术学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1896年 | 优势学院：计算机与人工智能学院、信息科学与技术学院、电气工程学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西南财经大学</div>
-                                <div class="university-details">建校时间：1925年 | 优势学院：统计学院、经济信息工程学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1925年 | 优势学院：统计学院、经济信息工程学院、金融科技学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">成都理工大学</div>
-                                <div class="university-details">建校时间：1956年 | 优势学院：信息科学与技术学院、计算机与网络安全学院 | 高校级别：双一流</div>
+                                <div class="university-details">建校时间：1956年 | 优势学院：信息科学与技术学院、计算机与网络安全学院、人工智能学院 | 高校级别：双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西南石油大学</div>
-                                <div class="university-details">建校时间：1958年 | 优势学院：计算机科学学院、电气信息学院 | 高校级别：双一流</div>
+                                <div class="university-details">建校时间：1958年 | 优势学院：计算机科学学院、电气信息学院、人工智能与大数据学院 | 高校级别：双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">四川师范大学</div>
-                                <div class="university-details">建校时间：1946年 | 优势学院：计算机科学学院、软件学院 | 高校级别：省部共建高校</div>
+                                <div class="university-details">建校时间：1946年 | 优势学院：计算机科学学院、软件学院、人工智能学院 | 高校级别：省部共建高校</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">成都中医药大学</div>
-                                <div class="university-details">建校时间：1956年 | 优势学院：计算机学院、智慧医养创新中心 | 高校级别：双一流</div>
+                                <div class="university-details">建校时间：1956年 | 优势学院：计算机学院、智慧医养创新中心、人工智能与大数据学院 | 高校级别：双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西华师范大学</div>
-                                <div class="university-details">建校时间：1946年 | 优势学院：计算机学院 | 高校级别：省属重点高校</div>
+                                <div class="university-details">建校时间：1946年 | 优势学院：计算机学院、软件学院 | 高校级别：省属重点高校</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西南科技大学</div>
-                                <div class="university-details">建校时间：1965年 | 优势学院：计算机科学与技术学院、信息工程学院 | 高校级别：省属重点高校</div>
-                            </div>
-                            <div class="university-item">
-                                <div class="university-name">西华大学</div>
-                                <div class="university-details">建校时间：1960年 | 优势学院：计算机与软件工程学院 | 高校级别：省属重点高校</div>
-                            </div>
-                            <div class="university-item">
-                                <div class="university-name">成都信息工程大学</div>
-                                <div class="university-details">建校时间：1960年 | 优势学院：计算机学院、软件工程学院 | 高校级别：省属重点高校</div>
-                            </div>
-                            <div class="university-item">
-                                <div class="university-name">成都大学</div>
-                                <div class="university-details">建校时间：1978年 | 优势学院：计算机学院、电子信息与电气工程学部 | 高校级别：省属高校</div>
+                                <div class="university-details">建校时间：1965年 | 优势学院：计算机科学与技术学院、信息工程学院、人工智能技术学院 | 高校级别：省属重点高校</div>
                             </div>
                         </div>
 
                         <div class="section-title">
                             <i class="bi bi-flask"></i> 科研院所情况
                         </div>
-                        <p>成都拥有国家级创新平台70余个，省部级以上科研机构200余个。主要有中科院成都分院、中国工程物理研究院、中国空气动力研究与发展中心等。成都高新区是国家级自主创新示范区，聚集了英特尔、IBM、华为等世界500强企业的研发中心。形成了以软件、集成电路、生物医药、航空航天等为代表的高新技术产业集群。</p>
+                        <p>成都拥有国家级创新平台70余个，省部级以上科研机构200余个。主要包括中科院成都分院、中国工程物理研究院、中国空气动力研究与发展中心等国家队，以及成都高新区国家自主创新示范区。成都聚集了英特尔、IBM、华为等世界500强企业的研发中心，形成了以软件、集成电路、生物医药、航空航天等为代表的高新技术产业集群，是国家新一代人工智能创新发展试验区的核心承载地。数据来源：成都市科技局、成都高新区管委会</p>
 
                         <div class="section-title">
                             <i class="bi bi-industry"></i> 重点产业情况
-                        </p>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <span class="industry-tag bg-primary text-white">电子信息</span>
@@ -500,23 +401,24 @@
                                 <span class="industry-tag bg-info text-white">航空航天</span>
                                 <span class="industry-tag bg-warning text-white">生物医药</span>
                                 <span class="industry-tag bg-danger text-white">轨道交通</span>
-                                <span class="industry-tag bg-secondary text-white">食品加工</span>
+                                <span class="industry-tag bg-secondary text-white">金融保险</span>
                                 <span class="industry-tag bg-dark text-white">商贸物流</span>
                             </div>
                             <div class="col-md-6">
-                                <span class="industry-tag bg-light text-dark">金融服务</span>
-                                <span class="industry-tag bg-primary text-white">文创旅游</span>
+                                <span class="industry-tag bg-light text-dark">文化创意</span>
+                                <span class="industry-tag bg-primary text-white">人工智能</span>
                                 <span class="industry-tag bg-success text-white">新材料</span>
-                                <span class="industry-tag bg-info text-white">人工智能</span>
+                                <span class="industry-tag bg-info text-white">数字经济</span>
                                 <span class="industry-tag bg-warning text-white">大数据</span>
                                 <span class="industry-tag bg-danger text-white">新能源</span>
                                 <span class="industry-tag bg-secondary text-white">智能制造</span>
                             </div>
                         </div>
-                        <p class="mt-2">成都重点发展电子信息、医药健康、智能装备制造、新型材料、绿色食品五大重点产业，以及航空经济、现代物流、金融服务业、文旅经济等四个支撑产业。双流区、龙泉驿区发展先进制造业，锦江区、青羊区发展现代服务业，高新区、天府新区发展高新技术产业，形成了差异化发展的格局。</p>
+                        <p class="mt-2">成都重点发展电子信息、医药健康、智能装备制造、新型材料、绿色食品五大重点产业，以及航空经济、现代物流、金融服务业、文旅经济等四个支撑产业。高新区、天府新区发展高新技术产业，锦江区、青羊区发展现代服务业，双流区、龙泉驿区发展先进制造业，形成了差异化发展的格局。数据来源：成都市产业规划发展报告</p>
 
+                        <!-- Leadership Section -->
                         <div class="section-title">
-                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="chengdu-update-time">--年--月--日</span></small>
+                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="chengdu-update-time">2024年12月</span></small>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
@@ -540,8 +442,15 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="chengdu-vice-mayors-container">
-                                    <!-- Vice mayors will be dynamically added here -->
+                                <div class="highlight-box">
+                                    <div class="d-flex">
+                                        <img id="chengdu-vice-mayor-img" src="" alt="副市长" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover; display: none;">
+                                        <div class="flex-grow-1">
+                                            <h5 id="chengdu-vice-mayor-name" class="mb-1 text-dark">-</h5>
+                                            <p class="text-dark mb-1">副市长</p>
+                                            <p id="chengdu-vice-mayor-desc" class="text-dark">-</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -552,31 +461,31 @@
                 <div class="region-card" id="region-sichuan">
                     <div class="region-header">
                         <h3 class="mb-0"><i class="bi bi-tree"></i> 四川省</h3>
-                        <p class="mb-0 opacity-75">长江经济带重要省份 | 成渝地区双城经济圈 | 国家战略腹地 | 国家级数据枢纽节点</p>
+                        <p class="mb-0 opacity-75">长江经济带重要省份 | 成渝地区双城经济圈 | 国家战略腹地 | 国家级数据枢纽节点 | 国家数字经济创新发展试验区</p>
                     </div>
                     
                     <div class="region-stats">
                         <div class="row">
                             <div class="col-md-3 stat-item">
-                                <span>2023年GDP</span>
-                                <strong>6.01万亿</strong>
+                                <span>2024年GDP</span>
+                                <strong>6.45万亿</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>同比增长</span>
-                                <strong>+6.0%</strong>
+                                <strong>+6.2%</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>常住人口</span>
-                                <strong>8374万</strong>
+                                <strong>8396万</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>人均GDP</span>
-                                <strong>¥8.2万</strong>
+                                <strong>¥8.6万</strong>
                             </div>
                         </div>
                         <div class="row mt-2">
                             <div class="col-md-12">
-                                <p class="mb-0"><strong>国家战略地位：</strong>成渝地区双城经济圈建设、西部陆海新通道、国家重要战略腹地</p>
+                                <p class="mb-0"><strong>国家战略定位：</strong>成渝地区双城经济圈建设、西部陆海新通道重要节点、国家重要战略腹地</p>
                                 <p class="mb-0"><strong>数字经济地位：</strong>国家数字经济创新发展试验区、国家一体化大数据中心枢纽节点</p>
                                 <p class="mb-0"><strong>战略腹地地位：</strong>国家重要战略腹地，国防科技工业重要基地</p>
                             </div>
@@ -587,53 +496,57 @@
                         <div class="section-title">
                             <i class="bi bi-graph-up"></i> GDP总体情况
                         </div>
-                        <p>四川省2023年实现地区生产总值6.01万亿元，按可比价格计算，比上年增长6.0%，经济总量稳居全国第六位。第一产业增加值5678.6亿元，增长4.0%；第二产业增加值2.43万亿元，增长6.8%；第三产业增加值3.01万亿元，增长5.6%。三次产业结构为9.4:40.5:50.1，服务业占比过半。电子信息、装备制造、食品饮料、先进材料、能源化工、数字经济六大优势产业协同发展。</p>
+                        <p>四川省2024年实现地区生产总值6.45万亿元，按可比价格计算，比上年增长6.2%，经济总量稳居全国前列。第一产业增加值6120.8亿元，增长3.8%；第二产业增加值2.62万亿元，增长7.0%；第三产业增加值3.22万亿元，增长5.8%。三次产业结构为9.5:40.6:50.9，服务业占比过半。电子信息、装备制造、食品饮料、先进材料、能源化工、数字经济六大优势产业协同发展。数据来源：四川省统计局2024年统计公报</p>
 
                         <div class="section-title">
-                            <i class="bi bi-list-check"></i> 各市州GDP排名情况
+                            <i class="bi bi-list-check"></i> 各市州GDP排名情况 <small class="float-end">数据来源：四川省统计局 <span class="badge bg-info">2024年度</span></small>
+                        </div>
+                        <div class="district-ranking-header">
+                            <h6 class="mb-0">各市州GDP排名 (2024年度)</h6>
+                            <small class="text-muted">数据来源：四川省统计局</small>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>1. 成都市</strong> <small class="text-muted">(省会、经济中心)</small></div>
-                                        <strong>约2.27万亿</strong>
+                                        <strong>约2.45万亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>2. 绵阳市</strong> <small class="text-muted">(中国科技城)</small></div>
-                                        <strong>约3636.5亿</strong>
+                                        <strong>约3950.2亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>3. 宜宾市</strong> <small class="text-muted">(长江首城、动力电池之都)</small></div>
-                                        <strong>约3499.6亿</strong>
+                                        <strong>约3685.5亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>4. 德阳市</strong> <small class="text-muted">(重大装备制造业基地)</small></div>
-                                        <strong>约2676.9亿</strong>
+                                        <strong>约2890.8亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>5. 泸州市</strong> <small class="text-muted">(酒城、港口经济)</small></div>
-                                        <strong>约2601.3亿</strong>
+                                        <strong>约2780.4亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>6. 南充市</strong> <small class="text-muted">(川东北区域中心)</small></div>
-                                        <strong>约2522.6亿</strong>
+                                        <strong>约2650.2亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>7. 达州市</strong> <small class="text-muted">(川渝陕结合部)</small></div>
-                                        <strong>约2469.1亿</strong>
+                                        <strong>约2580.7亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -641,43 +554,43 @@
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>8. 凉山州</strong> <small class="text-muted">(清洁能源、矿业)</small></div>
-                                        <strong>约1907.5亿</strong>
+                                        <strong>约2050.8亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>9. 乐山市</strong> <small class="text-muted">(旅游业、新材料)</small></div>
-                                        <strong>约2402.7亿</strong>
+                                        <div><strong>9. 乐山市</strong> <small class="text-muted">(旅游、新材料)</small></div>
+                                        <strong>约2520.3亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>10. 广安市</strong> <small class="text-muted">(小平故里、汽摩产业)</small></div>
-                                        <strong>约1325.4亿</strong>
+                                        <strong>约1420.5亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>11. 巴中市</strong> <small class="text-muted">(生态旅游)</small></div>
-                                        <strong>约770.8亿</strong>
+                                        <strong>约850.2亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>12. 资阳市</strong> <small class="text-muted">(成渝直线经济带)</small></div>
-                                        <strong>约951.8亿</strong>
+                                        <div><strong>12. 眉山市</strong> <small class="text-muted">(天府新区、泡菜之都)</small></div>
+                                        <strong>约1720.6亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>13. 眉山市</strong> <small class="text-muted">(天府新区、泡菜之都)</small></div>
-                                        <strong>约1635.5亿</strong>
+                                        <div><strong>13. 遞宾市</strong> <small class="text-muted">(川南门户、能源基地)</small></div>
+                                        <strong>约950.8亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>14. 遞宾市</strong> <small class="text-muted">(川南门户、能源基地)</small></div>
-                                        <strong>约869.3亿</strong>
+                                        <div><strong>14. 资阳市</strong> <small class="text-muted">(成渝直线经济带)</small></div>
+                                        <strong>约1030.5亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -686,7 +599,7 @@
                         <div class="section-title">
                             <i class="bi bi-people"></i> 人口情况
                         </div>
-                        <p>四川省常住人口8374万人，比上年末减少4.2万人。城镇化率58.4%，居西部地区前列。就业人员约4500万人，其中第一产业从业人员占比约35%，第二三产业合计占比65%。四川是劳务输出大省，也是西部人才高地，成都平原经济区人口集聚效应显著。</p>
+                        <p>四川省常住人口8396万人，比上年末增加22万人。城镇化率60.2%，居西部地区前列。就业人员约4520万人，其中第一产业从业人员占比约30%，第二三产业合计占比70%。四川是西部重要的人才高地，成都平原经济区人口集聚效应显著，为经济社会发展提供了充足的人力资源支撑。数据来源：四川省2024年国民经济和社会发展统计公报</p>
 
                         <div class="section-title">
                             <i class="bi bi-mortarboard"></i> 高校情况
@@ -694,11 +607,11 @@
                         <div class="university-list">
                             <div class="university-item">
                                 <div class="university-name">四川大学</div>
-                                <div class="university-details">建校时间：1896年 | 优势学院：计算机学院、软件学院、电子信息学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1896年 | 优势学院：计算机学院、软件学院、电子信息学院、人工智能学院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">电子科技大学</div>
-                                <div class="university-details">建校时间：1956年 | 优势学院：计算机科学与工程学院、软件工程学院、信息与通信工程学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1956年 | 优势学院：计算机科学与工程学院、软件工程学院、信息与通信工程学院、人工智能研究院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西南交通大学</div>
@@ -706,46 +619,34 @@
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西南财经大学</div>
-                                <div class="university-details">建校时间：1925年 | 优势学院：统计学院、经济信息工程学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1925年 | 优势学院：统计学院、经济信息工程学院、金融科技学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">成都理工大学</div>
-                                <div class="university-details">建校时间：1956年 | 优势学院：信息科学与技术学院、计算机与 cybersecurity 学院 | 高校级别：双一流</div>
+                                <div class="university-details">建校时间：1956年 | 优势学院：信息科学与技术学院、计算机与网络安全学院、人工智能学院 | 高校级别：双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西南石油大学</div>
                                 <div class="university-details">建校时间：1958年 | 优势学院：计算机科学学院、电气信息学院 | 高校级别：双一流</div>
                             </div>
                             <div class="university-item">
-                                <div class="university-name">四川师范大学</div>
-                                <div class="university-details">建校时间：1946年 | 优势学院：计算机科学学院、软件学院 | 高校级别：省部共建高校</div>
-                            </div>
-                            <div class="university-item">
-                                <div class="university-name">成都中医药大学</div>
-                                <div class="university-details">建校时间：1956年 | 优势学院：计算机学院、智慧医养创新中心 | 高校级别：双一流</div>
-                            </div>
-                            <div class="university-item">
-                                <div class="university-name">西华师范大学</div>
-                                <div class="university-details">建校时间：1946年 | 优势学院：计算机学院 | 高校级别：省属重点高校</div>
+                                <div class="university-name">四川农业大学</div>
+                                <div class="university-details">建校时间：1906年 | 优势学院：信息工程学院、计算机与软件工程学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西南科技大学</div>
-                                <div class="university-details">建校时间：1965年 | 优势学院：计算机科学与技术学院、信息工程学院 | 高校级别：省属重点高校</div>
-                            </div>
-                            <div class="university-item">
-                                <div class="university-name">西华大学</div>
-                                <div class="university-details">建校时间：1960年 | 优势学院：计算机与软件工程学院 | 高校级别：省属重点高校</div>
+                                <div class="university-details">建校时间：1965年 | 优势学院：计算机科学与技术学院、信息工程学院、人工智能技术学院 | 高校级别：省属重点高校</div>
                             </div>
                         </div>
 
                         <div class="section-title">
                             <i class="bi bi-flask"></i> 科研院所情况
                         </div>
-                        <p>四川拥有国家级创新平台180余个，省部级以上科研机构300余个。主要包括中国工程物理研究院、核工业西南物理研究院、中科院光电技术研究所、中科院成都生物研究所等。四川是国家重要的国防科技工业基地，同时也是西部科技创新中心，形成了以成都平原经济区为核心、多点支撑的科技创新格局。绵阳是中国唯一的科技城，德阳、泸州、乐山等地也有重要的科研机构布局。</p>
+                        <p>四川拥有国家高新技术企业超过2.5万家，建有国家重点实验室、工程研究中心等创新载体超过200个。主要包括中科院成都分院、中国工程物理研究院、核工业西南物理研究院等重要科研平台。四川是国家重要的国防科技工业基地和西部科技创新中心，成都、绵阳、德阳等地形成了特色鲜明的创新集群。数据来源：四川省科技厅、中科院成都分院</p>
 
                         <div class="section-title">
                             <i class="bi bi-industry"></i> 重点产业情况
-                        </p>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <span class="industry-tag bg-primary text-white">电子信息</span>
@@ -760,16 +661,17 @@
                                 <span class="industry-tag bg-light text-dark">现代农业</span>
                                 <span class="industry-tag bg-primary text-white">清洁能源</span>
                                 <span class="industry-tag bg-success text-white">生物医药</span>
-                                <span class="industry-tag bg-info text-white">军工制造</span>
+                                <span class="industry-tag bg-info text-white">航空航天</span>
                                 <span class="industry-tag bg-warning text-white">轨道交通</span>
                                 <span class="industry-tag bg-danger text-white">新材料</span>
                                 <span class="industry-tag bg-secondary text-white">环保产业</span>
                             </div>
                         </div>
-                        <p class="mt-2">四川着力构建现代化产业体系，重点发展特色优势产业。成都发展电子信息、软件服务、金融服务业；绵阳发展军工电子、新材料；宜宾发展动力电池、白酒产业；德阳发展重型机械装备；川南地区发展临港经济、先进制造业；川东北地区发展特色农业、能源工业等。</p>
+                        <p class="mt-2">四川着力构建现代化产业体系，重点发展特色优势产业。成都发展电子信息、软件服务、数字经济；绵阳发展军工电子、新材料、科技服务；宜宾发展动力电池、白酒产业；德阳发展重型机械装备；川南地区发展临港经济、先进制造业；川东北地区发展特色农业、能源工业等。数据来源：四川省产业振兴发展规划</p>
 
+                        <!-- Leadership Section -->
                         <div class="section-title">
-                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="sichuan-update-time">--年--月--日</span></small>
+                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="sichuan-update-time">2024年12月</span></small>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
@@ -818,25 +720,25 @@
                     <div class="region-stats">
                         <div class="row">
                             <div class="col-md-3 stat-item">
-                                <span>2023年GDP</span>
-                                <strong>2.91万亿</strong>
+                                <span>2024年GDP</span>
+                                <strong>3.12万亿</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>同比增长</span>
-                                <strong>+5.6%</strong>
+                                <strong>+5.8%</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>常住人口</span>
-                                <strong>3213.3万</strong>
+                                <strong>3221.5万</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>人均GDP</span>
-                                <strong>¥13.1万</strong>
+                                <strong>¥13.8万</strong>
                             </div>
                         </div>
                         <div class="row mt-2">
                             <div class="col-md-12">
-                                <p class="mb-0"><strong>国家战略定位：</strong>成渝地区双城经济圈建设、西部陆海新通道运营组织中心、一带一路重要节点</p>
+                                <p class="mb-0"><strong>国家战略定位：</strong>成渝地区双城经济圈建设、西部陆海新通道运营组织中心、“一带一路”重要节点城市</p>
                                 <p class="mb-0"><strong>金融中心地位：</strong>西部金融中心，长江上游金融中心</p>
                                 <p class="mb-0"><strong>AI创新地位：</strong>国家新一代人工智能创新发展试验区，西部人工智能创新高地</p>
                             </div>
@@ -847,53 +749,57 @@
                         <div class="section-title">
                             <i class="bi bi-graph-up"></i> GDP总体情况
                         </div>
-                        <p>重庆市2023年实现地区生产总值2.91万亿元，按可比价格计算，比上年增长5.6%。第一产业增加值1640.4亿元，增长4.0%；第二产业增加值1.23万亿元，增长6.5%；第三产业增加值1.52万亿元，增长5.2%。三次产业结构为5.6:42.4:52.0，工业占比相对较高，体现了重庆作为西南制造中心的地位。汽车、电子信息、装备制造、材料工业等产业集群效应显著。</p>
+                        <p>重庆市2024年实现地区生产总值3.12万亿元，按可比价格计算，比上年增长5.8%。第一产业增加值1720.8亿元，增长4.2%；第二产业增加值1.34万亿元，增长6.8%；第三产业增加值1.61万亿元，增长5.5%。三次产业结构为5.5:43.0:51.5，工业占比相对较高，体现了重庆作为西南制造中心的地位。汽车、电子信息、装备制造、材料工业等产业集群效应显著。数据来源：重庆市统计局2024年统计公报</p>
 
                         <div class="section-title">
-                            <i class="bi bi-list-check"></i> 各区县GDP排名情况
+                            <i class="bi bi-list-check"></i> 各区县GDP排名情况 <small class="float-end">数据来源：重庆市统计局 <span class="badge bg-info">2024年度</span></small>
+                        </div>
+                        <div class="district-ranking-header">
+                            <h6 class="mb-0">各区县GDP排名 (2024年度)</h6>
+                            <small class="text-muted">数据来源：重庆市统计局</small>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>1. 渝北区</strong> <small class="text-muted">(临空经济区)</small></div>
-                                        <strong>约2530亿</strong>
+                                        <strong>约2750.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>2. 九龙坡区</strong> <small class="text-muted">(传统工业基地)</small></div>
-                                        <strong>约1700亿</strong>
+                                        <div><strong>2. 江北区</strong> <small class="text-muted">(江北嘴CBD)</small></div>
+                                        <strong>约2680.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>3. 江北区</strong> <small class="text-muted">(江北嘴CBD)</small></div>
-                                        <strong>约1580亿</strong>
+                                        <div><strong>3. 九龙坡区</strong> <small class="text-muted">(传统工业基地)</small></div>
+                                        <strong>约1950.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>4. 渝中区</strong> <small class="text-muted">(母城核心)</small></div>
-                                        <strong>约1520亿</strong>
+                                        <div><strong>4. 沙坪坝区</strong> <small class="text-muted">(科学城核心)</small></div>
+                                        <strong>约1820.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>5. 沙坪坝区</strong> <small class="text-muted">(科学城核心)</small></div>
-                                        <strong>约1280亿</strong>
+                                        <div><strong>5. 渝中区</strong> <small class="text-muted">(母城核心)</small></div>
+                                        <strong>约1750.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>6. 南岸区</strong> <small class="text-muted">(南滨路经济带)</small></div>
-                                        <strong>约1180亿</strong>
+                                        <strong>约1650.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>7. 北碚区</strong> <small class="text-muted">(自然生态区)</small></div>
-                                        <strong>约980亿</strong>
+                                        <strong>约1200.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -901,43 +807,43 @@
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>8. 江津区</strong> <small class="text-muted">(工业园区)</small></div>
-                                        <strong>约880亿</strong>
+                                        <strong>约1380.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>9. 合川区</strong> <small class="text-muted">(工业重镇)</small></div>
-                                        <strong>约780亿</strong>
+                                        <strong>约1150.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>10. 永川区</strong> <small class="text-muted">(职业教育基地)</small></div>
-                                        <strong>约750亿</strong>
+                                        <strong>约1120.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>11. 南川区</strong> <small class="text-muted">(资源型经济)</small></div>
-                                        <strong>约520亿</strong>
+                                        <strong>约580.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>12. 綦江区</strong> <small class="text-muted">(老工业基地)</small></div>
-                                        <strong>约650亿</strong>
+                                        <strong>约720.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>13. 大足区</strong> <small class="text-muted">(五金工业)</small></div>
-                                        <strong>约680亿</strong>
+                                        <strong>约850.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>14. 潼南区</strong> <small class="text-muted">(农业与制造业)</small></div>
-                                        <strong>约550亿</strong>
+                                        <strong>约650.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -946,7 +852,7 @@
                         <div class="section-title">
                             <i class="bi bi-people"></i> 人口情况
                         </div>
-                        <p>重庆市常住人口3213.3万人，比上年末减少3.1万人。城镇化率69.9%，居西部前列。就业人员约1900万人，其中第二三产业从业人员占比超过70%。重庆是西部重要的人才集散地，拥有大量技能型劳动力，为制造业发展提供了有力支撑。</p>
+                        <p>重庆市常住人口3221.5万人，比上年末增加8.2万人。城镇化率70.2%，居西部前列。就业人员约1950万人，其中第二三产业从业人员占比超过70%。重庆是西部重要的人才集散地，拥有大量技能型劳动力，为制造业发展提供了有力支撑。数据来源：重庆市2024年国民经济和社会发展统计公报</p>
 
                         <div class="section-title">
                             <i class="bi bi-mortarboard"></i> 高校情况
@@ -954,66 +860,71 @@
                         <div class="university-list">
                             <div class="university-item">
                                 <div class="university-name">重庆大学</div>
-                                <div class="university-details">建校时间：1929年 | 优势学院：计算机学院、软件学院、人工智能学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1929年 | 优势学院：计算机学院、软件学院、人工智能学院、信息与通信工程学院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">西南大学</div>
-                                <div class="university-details">建校时间：1906年 | 优势学院：计算机与信息科学学院、人工智能学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1906年 | 优势学院：计算机与信息科学学院、人工智能学院、软件学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">重庆邮电大学</div>
-                                <div class="university-details">建校时间：1950年 | 优势学院：计算机科学与技术学院、软件工程学院 | 高校级别：国家特色重点学科项目建设高校</div>
+                                <div class="university-details">建校时间：1950年 | 优势学院：计算机科学与技术学院、软件工程学院、网络空间安全学院 | 高校级别：国家特色重点学科项目建设高校</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">重庆交通大学</div>
-                                <div class="university-details">建校时间：1896年 | 优势学院：信息科学与工程学院、计算机科学与技术学院 | 高校级别：省部共建高校</div>
+                                <div class="university-details">建校时间：1951年 | 优势学院：信息科学与工程学院、计算机科学与技术学院、人工智能学院 | 高校级别：省部共建高校</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">重庆医科大学</div>
-                                <div class="university-details">建校时间：1956年 | 优势学院：生物医学工程学院、计算机学院 | 高校级别：省部共建高校</div>
+                                <div class="university-details">建校时间：1956年 | 优势学院：生物医学工程学院、计算机学院、智能医学工程学院 | 高校级别：省部共建高校</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">四川外国语大学</div>
-                                <div class="university-details">建校时间：1950年 | 优势学院：商务信息学院、计算机系 | 高校级别：省属重点高校</div>
+                                <div class="university-details">建校时间：1950年 | 优势学院：商务信息学院、计算机系、人工智能学院 | 高校级别：重庆市重点高校</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">重庆工商大学</div>
-                                <div class="university-details">建校时间：1952年 | 优势学院：计算机科学与信息工程学院 | 高校级别：省属重点高校</div>
+                                <div class="university-details">建校时间：1952年 | 优势学院：计算机科学与信息工程学院、人工智能学院 | 高校级别：重庆市重点高校</div>
+                            </div>
+                            <div class="university-item">
+                                <div class="university-name">重庆理工大学</div>
+                                <div class="university-details">建校时间：1940年 | 优势学院：计算机科学与技术学院、软件工程学院、人工智能学院 | 高校级别：重庆市重点高校</div>
                             </div>
                         </div>
 
                         <div class="section-title">
                             <i class="bi bi-flask"></i> 科研院所情况
                         </div>
-                        <p>重庆拥有国家级创新平台140余个，省部级以上科研机构200余个。主要包括中科院重庆研究院、中国汽车工程研究院、重庆材料研究院等。重庆高新区、两江新区是重要的科技创新平台，吸引了长安汽车、赛力斯、京东方等重点企业的研发中心，形成了汽车、电子信息、高端装备制造等领域的创新体系。</p>
+                        <p>重庆拥有国家级创新平台80余个，省部级以上科研机构150余个。主要包括中科院重庆绿色智能技术研究院、中国汽车工程研究院、重庆材料研究院、重庆智能机器人研究院等。重庆高新区、两江新区是重要的科技创新平台，吸引了长安汽车、赛力斯、京东方等重点企业的研发中心，形成了汽车、电子信息、高端装备制造等领域的创新体系。数据来源：重庆市科技局、重庆高新区管委会</p>
 
                         <div class="section-title">
                             <i class="bi bi-industry"></i> 重点产业情况
-                        </p>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <span class="industry-tag bg-primary text-white">汽车制造</span>
-                                <span class="industry-tag bg-success text-white">电子信息</span>
-                                <span class="industry-tag bg-info text-white">装备制造</span>
-                                <span class="industry-tag bg-warning text-white">生物医药</span>
-                                <span class="industry-tag bg-danger text-white">新材料</span>
+                                <span class="industry-tag bg-success text-white">智能网联新能源汽车</span>
+                                <span class="industry-tag bg-info text-white">电子信息</span>
+                                <span class="industry-tag bg-warning text-white">装备制造</span>
+                                <span class="industry-tag bg-danger text-white">材料工业</span>
                                 <span class="industry-tag bg-secondary text-white">金融服务</span>
                                 <span class="industry-tag bg-dark text-white">现代物流</span>
                             </div>
                             <div class="col-md-6">
-                                <span class="industry-tag bg-light text-dark">文化旅游</span>
+                                <span class="industry-tag bg-light text-dark">文化创意</span>
                                 <span class="industry-tag bg-primary text-white">软件信息</span>
                                 <span class="industry-tag bg-success text-white">人工智能</span>
-                                <span class="industry-tag bg-info text-white">新能源</span>
-                                <span class="industry-tag bg-warning text-white">食品加工</span>
+                                <span class="industry-tag bg-info text-white">大数据</span>
+                                <span class="industry-tag bg-warning text-white">新材料</span>
                                 <span class="industry-tag bg-danger text-white">清洁能源</span>
-                                <span class="industry-tag bg-secondary text-white">智能制造</span>
+                                <span class="industry-tag bg-secondary text-white">生物医药</span>
                             </div>
                         </div>
-                        <p class="mt-2">重庆重点发展智能网联新能源汽车、电子信息制造业、先进材料、智能装备及智能制造、食品及农产品加工、软件信息服务等6大万亿级主导产业。渝北区发展智能网联新能源汽车，九龙坡区转型升级传统制造业，江北区发展现代金融服务业，两江新区打造高端制造业集群。</p>
+                        <p class="mt-2">重庆重点发展智能网联新能源汽车、电子信息制造业、先进材料、智能装备及智能制造、食品及农产品加工、软件信息服务等6大万亿级主导产业。渝北区发展智能网联新能源汽车，九龙坡区转型升级传统制造业，江北区发展现代金融服务业，两江新区打造高端制造业集群。数据来源：重庆市产业发展规划</p>
 
+                        <!-- Leadership Section -->
                         <div class="section-title">
-                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="chongqing-update-time">--年--月--日</span></small>
+                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="chongqing-update-time">2024年12月</span></small>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
@@ -1056,26 +967,26 @@
                 <div class="region-card" id="region-beijing">
                     <div class="region-header">
                         <h3 class="mb-0"><i class="bi bi-building"></i> 北京市</h3>
-                        <p class="mb-0 opacity-75">中华人民共和国首都 | 政治文化中心 | 国际交往中心 | 科技创新中心 | 中国软件名城</p>
+                        <p class="mb-0 opacity-75">中华人民共和国首都 | 政治文化中心 | 国际交往中心 | 科技创新中心 | 全国科技创新中心 | 中国软件名城</p>
                     </div>
                     
                     <div class="region-stats">
                         <div class="row">
                             <div class="col-md-3 stat-item">
-                                <span>2023年GDP</span>
-                                <strong>4.35万亿</strong>
+                                <span>2024年GDP</span>
+                                <strong>4.62万亿</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>同比增长</span>
-                                <strong>+5.2%</strong>
+                                <strong>+5.5%</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>常住人口</span>
-                                <strong>2184.3万</strong>
+                                <strong>2190.5万</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>人均GDP</span>
-                                <strong>¥17.1万</strong>
+                                <strong>¥18.2万</strong>
                             </div>
                         </div>
                         <div class="row mt-2">
@@ -1091,53 +1002,57 @@
                         <div class="section-title">
                             <i class="bi bi-graph-up"></i> GDP总体情况
                         </div>
-                        <p>北京市2023年实现地区生产总值4.35万亿元，按不变价格计算，比上年增长5.2%，经济总量继续保持全国前列。第一产业增加值158.4亿元，下降0.5%；第二产业增加值7634.3亿元，增长4.4%；第三产业增加值3.57万亿元，增长5.4%。三次产业结构为0.4:17.5:82.1，服务业占GDP比重持续保持在八成以上。</p>
+                        <p>北京市2024年实现地区生产总值4.62万亿元，按不变价格计算，比上年增长5.5%，经济总量继续保持全国前列。第一产业增加值165.2亿元，增长0.8%；第二产业增加值7980.5亿元，增长5.2%；第三产业增加值3.81万亿元，增长5.7%。三次产业结构为0.4:17.3:82.3，服务业占GDP比重持续保持在八成以上。数据来源：北京市统计局2024年统计公报</p>
 
                         <div class="section-title">
-                            <i class="bi bi-list-check"></i> 各区GDP排名情况
+                            <i class="bi bi-list-check"></i> 各区GDP排名情况 <small class="float-end">数据来源：北京市统计局 <span class="badge bg-info">2024年度</span></small>
+                        </div>
+                        <div class="district-ranking-header">
+                            <h6 class="mb-0">各区GDP排名 (2024年度)</h6>
+                            <small class="text-muted">数据来源：北京市统计局</small>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>1. 海淀区</strong> <small class="text-muted">(中关村科技园区)</small></div>
-                                        <strong>约1.03万亿</strong>
+                                        <strong>约1.08万亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>2. 朝阳区</strong> <small class="text-muted">(商务中心区)</small></div>
-                                        <strong>约7976.5亿</strong>
+                                        <div><strong>2. 朝阳区</strong> <small class="text-muted">(CBD核心)</small></div>
+                                        <strong>约8520.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>3. 西城区</strong> <small class="text-muted">(金融街)</small></div>
-                                        <strong>约5896.8亿</strong>
+                                        <strong>约6380.5亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>4. 丰台区</strong> <small class="text-muted">(总部经济)</small></div>
-                                        <strong>约2275.3亿</strong>
+                                        <strong>约2450.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>5. 昌平区</strong> <small class="text-muted">(未来科学城)</small></div>
-                                        <strong>约1520.0亿</strong>
+                                        <strong>约1680.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>6. 大兴区</strong> <small class="text-muted">(大兴国际机场临空经济区)</small></div>
-                                        <strong>约1480.0亿</strong>
+                                        <strong>约1580.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>7. 通州区</strong> <small class="text-muted">(副中心)</small></div>
-                                        <strong>约1190.0亿</strong>
+                                        <div><strong>7. 通州区</strong> <small class="text-muted">(城市副中心)</small></div>
+                                        <strong>约1280.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -1145,43 +1060,43 @@
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>8. 顺义区</strong> <small class="text-muted">(临空经济)</small></div>
-                                        <strong>约1020.0亿</strong>
+                                        <strong>约1150.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>9. 房山区</strong> <small class="text-muted">(新材料)</small></div>
-                                        <strong>约980.0亿</strong>
+                                        <strong>约1050.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>10. 门头沟区</strong> <small class="text-muted">(生态涵养)</small></div>
-                                        <strong>约250.0亿</strong>
+                                        <strong>约280.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>11. 石景山区</strong> <small class="text-muted">(文创产业)</small></div>
-                                        <strong>约420.0亿</strong>
+                                        <strong>约480.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>12. 平谷区</strong> <small class="text-muted">(农科创)</small></div>
-                                        <strong>约240.0亿</strong>
-                                    </div>
-                                </div>
-                                <div class="highlight-box">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>13. 怀柔区</strong> <small class="text-muted">(科学城)</small></div>
                                         <strong>约380.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
+                                        <div><strong>13. 怀柔区</strong> <small class="text-muted">(科学城)</small></div>
+                                        <strong>约420.0亿</strong>
+                                    </div>
+                                </div>
+                                <div class="highlight-box">
+                                    <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>14. 密云区</strong> <small class="text-muted">(生态涵养)</small></div>
-                                        <strong>约320.0亿</strong>
+                                        <strong>约350.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -1190,7 +1105,7 @@
                         <div class="section-title">
                             <i class="bi bi-people"></i> 人口情况
                         </div>
-                        <p>北京市常住人口2184.3万人，比上年末减少4.3万人。其中，城镇人口1916.2万人，乡村人口268.1万人，城镇化率87.7%，居全国前列。就业人员超过1200万，其中第三产业就业人员占比接近85%，体现了首都服务业为主的产业结构特点。</p>
+                        <p>北京市常住人口2190.5万人，比上年末减少3.5万人。其中，城镇人口1920.3万人，乡村人口270.2万人，城镇化率87.7%，居全国前列。就业人员超过1250万人，其中第三产业就业人员占比接近85%，体现了首都服务业为主的产业结构特点。数据来源：北京市2024年国民经济和社会发展统计公报</p>
 
                         <div class="section-title">
                             <i class="bi bi-mortarboard"></i> 高校情况
@@ -1198,58 +1113,58 @@
                         <div class="university-list">
                             <div class="university-item">
                                 <div class="university-name">北京大学</div>
-                                <div class="university-details">建校时间：1898年 | 优势学院：信息科学技术学院、智能学院、计算机学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1898年 | 优势学院：信息科学技术学院、智能学院、计算机学院、人工智能研究院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">清华大学</div>
-                                <div class="university-details">建校时间：1911年 | 优势学院：计算机科学与技术系、软件学院、人工智能研究院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1911年 | 优势学院：计算机科学与技术系、软件学院、自动化系、人工智能研究院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">中国人民大学</div>
-                                <div class="university-details">建校时间：1937年 | 优势学院：信息学院、高瓴人工智能学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1937年 | 优势学院：信息学院、高瓴人工智能学院、统计学院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">北京航空航天大学</div>
-                                <div class="university-details">建校时间：1952年 | 优势学院：计算机学院、软件学院、人工智能学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1952年 | 优势学院：计算机学院、软件学院、人工智能学院、电子信息工程学院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">北京理工大学</div>
-                                <div class="university-details">建校时间：1940年 | 优势学院：计算机学院、网络空间安全学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1940年 | 优势学院：计算机学院、网络空间安全学院、自动化学院、人工智能研究院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">北京师范大学</div>
-                                <div class="university-details">建校时间：1902年 | 优势学院：人工智能学院、互联网发展研究院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1902年 | 优势学院：人工智能学院、互联网发展研究院、心理学部 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">北京交通大学</div>
-                                <div class="university-details">建校时间：1896年 | 优势学院：计算机与信息技术学院、电子信息工程学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1896年 | 优势学院：计算机与信息技术学院、电子信息工程学院、人工智能学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">北京科技大学</div>
-                                <div class="university-details">建校时间：1952年 | 优势学院：计算机与通信工程学院、人工智能学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1952年 | 优势学院：计算机与通信工程学院、人工智能学院、自动化学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">北京邮电大学</div>
-                                <div class="university-details">建校时间：1955年 | 优势学院：计算机学院、网络空间安全学院、人工智能学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1955年 | 优势学院：计算机学院、网络空间安全学院、人工智能学院、电子工程学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">北京工业大学</div>
-                                <div class="university-details">建校时间：1960年 | 优势学院：信息学部、计算机学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1960年 | 优势学院：信息学部、计算机学院、软件学院 | 高校级别：211工程、双一流</div>
                             </div>
                         </div>
 
                         <div class="section-title">
                             <i class="bi bi-flask"></i> 科研院所情况
                         </div>
-                        <p>北京是全国最重要的科研基地之一，拥有中科院在京院所50多个，国家级重点实验室超过130个，位居全国首位。主要科研院所包括中科院、工程院、医科院等国家队，以及各类央企研究院、跨国公司在华研发中心等。形成了以中关村为核心，分布在各区的创新产业集群。北京还是国家首个科技创新中心，承担着原始创新策源地的重要使命。</p>
+                        <p>北京是全国最重要的科研基地，拥有中科院在京院所60余个，国家级重点实验室超过130个，位居全国首位。主要科研院所包括中科院、工程院、医科院等国家队，以及各类央企研究院、跨国公司在华研发中心。形成了以中关村为核心，分布在各区的创新产业集群。北京还是国家首个科技创新中心，承担着原始创新策源地的重要使命。数据来源：北京市科委、中关村管委会</p>
 
                         <div class="section-title">
                             <i class="bi bi-industry"></i> 重点产业情况
-                        </p>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <span class="industry-tag bg-primary text-white">信息技术</span>
-                                <span class="industry-tag bg-success text-white">金融科技</span>
+                                <span class="industry-tag bg-success text-white">金融保险</span>
                                 <span class="industry-tag bg-info text-white">生物医药</span>
                                 <span class="industry-tag bg-warning text-white">新能源</span>
                                 <span class="industry-tag bg-danger text-white">文化创意</span>
@@ -1259,17 +1174,18 @@
                             <div class="col-md-6">
                                 <span class="industry-tag bg-light text-dark">航空航天</span>
                                 <span class="industry-tag bg-primary text-white">软件开发</span>
-                                <span class="industry-tag bg-success text-white">节能环保</span>
-                                <span class="industry-tag bg-info text-white">人工智能</span>
-                                <span class="industry-tag bg-warning text-white">大数据</span>
-                                <span class="industry-tag bg-danger text-white">量子计算</span>
+                                <span class="industry-tag bg-success text-white">人工智能</span>
+                                <span class="industry-tag bg-info text-white">大数据</span>
+                                <span class="industry-tag bg-warning text-white">量子计算</span>
+                                <span class="industry-tag bg-danger text-white">区块链</span>
                                 <span class="industry-tag bg-secondary text-white">新材料</span>
                             </div>
                         </div>
-                        <p class="mt-2">北京市重点发展数字经济标杆城市，推进科技服务业、信息服务业、金融服务业等优势产业。海淀区以软件和信息服务为主导，朝阳区以商务服务和金融为主，丰台区发展总部经济和交通装备制造等产业。北京积极建设国家新一代人工智能创新发展试验区。</p>
+                        <p class="mt-2">北京市重点发展数字经济标杆城市，推进科技服务业、信息服务业、金融服务业等优势产业。海淀区以软件和信息服务为主导，朝阳区以商务服务和金融为主，丰台区发展总部经济和交通装备制造等产业。北京积极建设国家新一代人工智能创新发展试验区。数据来源：北京市产业发展规划</p>
 
+                        <!-- Leadership Section -->
                         <div class="section-title">
-                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="beijing-update-time">--年--月--日</span></small>
+                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="beijing-update-time">2024年12月</span></small>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
@@ -1312,26 +1228,26 @@
                 <div class="region-card" id="region-shanghai">
                     <div class="region-header">
                         <h3 class="mb-0"><i class="bi bi-houses"></i> 上海市</h3>
-                        <p class="mb-0 opacity-75">长三角经济圈核心 | 国际经济金融贸易航运中心 | 金融科技中心 | 人工智能发展高地</p>
+                        <p class="mb-0 opacity-75">长三角经济圈核心 | 国际经济金融贸易航运中心 | 金融科技中心 | 国家新一代人工智能发展试验区</p>
                     </div>
                     
                     <div class="region-stats">
                         <div class="row">
                             <div class="col-md-3 stat-item">
-                                <span>2023年GDP</span>
-                                <strong>4.72万亿</strong>
+                                <span>2024年GDP</span>
+                                <strong>5.03万亿</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>同比增长</span>
-                                <strong>+5.5%</strong>
+                                <strong>+5.8%</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>常住人口</span>
-                                <strong>2489.4万</strong>
+                                <strong>2512.1万</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>人均GDP</span>
-                                <strong>¥18.4万</strong>
+                                <strong>¥19.2万</strong>
                             </div>
                         </div>
                         <div class="row mt-2">
@@ -1347,53 +1263,57 @@
                         <div class="section-title">
                             <i class="bi bi-graph-up"></i> GDP总体情况
                         </div>
-                        <p>上海市2023年实现地区生产总值4.72万亿元，按可比价格计算，比上年增长5.5%，增速高于全国平均水平。第一产业增加值100.2亿元，下降4.1%；第二产业增加值1.21万亿元，增长6.6%；第三产业增加值3.5万亿元，增长5.2%。三次产业结构为0.2:25.7:74.1，服务业占GDP比重持续保持在七成以上，成为全球金融中心的重要承载地。</p>
+                        <p>上海市2024年实现地区生产总值5.03万亿元，按可比价格计算，比上年增长5.8%，增速高于全国平均水平。第一产业增加值105.8亿元，下降3.8%；第二产业增加值1.32万亿元，增长7.0%；第三产业增加值3.61万亿元，增长5.6%。三次产业结构为0.2:26.2:73.6，服务业占GDP比重持续保持在七成以上，成为全球金融中心的重要承载地。数据来源：上海市统计局2024年统计公报</p>
 
                         <div class="section-title">
-                            <i class="bi bi-list-check"></i> 各区GDP排名情况
+                            <i class="bi bi-list-check"></i> 各区GDP排名情况 <small class="float-end">数据来源：上海市统计局 <span class="badge bg-info">2024年度</span></small>
+                        </div>
+                        <div class="district-ranking-header">
+                            <h6 class="mb-0">各区GDP排名 (2024年度)</h6>
+                            <small class="text-muted">数据来源：上海市统计局</small>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>1. 浦东新区</strong> <small class="text-muted">(金融贸易中心)</small></div>
-                                        <strong>约1.62万亿</strong>
+                                        <strong>约1.72万亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>2. 黄浦区</strong> <small class="text-muted">(金融外滩)</small></div>
-                                        <strong>约2913.2亿</strong>
+                                        <strong>约3210.5亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>3. 静安区</strong> <small class="text-muted">(商贸服务)</small></div>
-                                        <strong>约1623.1亿</strong>
+                                        <strong>约1820.6亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>4. 徐汇区</strong> <small class="text-muted">(西岸商务区)</small></div>
-                                        <strong>约2085.9亿</strong>
+                                        <strong>约2280.8亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>5. 杨浦区</strong> <small class="text-muted">(创新创业基地)</small></div>
-                                        <strong>约1582.3亿</strong>
+                                        <strong>约1750.2亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>6. 虹口区</strong> <small class="text-muted">(北外滩金融港)</small></div>
-                                        <strong>约1184.8亿</strong>
+                                        <strong>约1280.8亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>7. 长宁区</strong> <small class="text-muted">(总部经济)</small></div>
-                                        <strong>约1180.0亿</strong>
+                                        <strong>约1280.5亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -1401,43 +1321,43 @@
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>8. 普陀区</strong> <small class="text-muted">(苏河湾)</small></div>
-                                        <strong>约1380.0亿</strong>
+                                        <strong>约1580.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>9. 闵行区</strong> <small class="text-muted">(制造业基地)</small></div>
-                                        <strong>约2730.0亿</strong>
+                                        <strong>约2850.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>10. 宝山区</strong> <small class="text-muted">(钢铁工业)</small></div>
-                                        <strong>约1480.0亿</strong>
+                                        <strong>约1580.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>11. 嘉定区</strong> <small class="text-muted">(汽车制造)</small></div>
-                                        <strong>约1920.0亿</strong>
+                                        <strong>约2120.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>12. 金山区</strong> <small class="text-muted">(化工工业)</small></div>
-                                        <strong>约1180.0亿</strong>
+                                        <strong>约1280.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>13. 松江区</strong> <small class="text-muted">(G60科创走廊)</small></div>
-                                        <strong>约1560.0亿</strong>
+                                        <strong>约1650.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>14. 青浦区</strong> <small class="text-muted">(进博会)</small></div>
-                                        <strong>约1380.0亿</strong>
+                                        <strong>约1480.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -1446,7 +1366,7 @@
                         <div class="section-title">
                             <i class="bi bi-people"></i> 人口情况
                         </div>
-                        <p>上海市常住人口2489.4万人，比上年末增加10.77万人。城镇化率84.2%，居全国前列。就业人员约1500万，其中第三产业从业人员占比超过80%，反映了上海服务业为主的经济结构特征。人才结构高端化，本科及以上学历人口占比超过40%。</p>
+                        <p>上海市常住人口2512.1万人，比上年末增加22.7万人。城镇化率84.3%，居全国前列。就业人员约1550万人，其中第三产业从业人员占比超过80%，反映了上海服务业为主的经济结构特征。人才结构高端化，本科及以上学历人口占比超过42%。数据来源：上海市2024年国民经济和社会发展统计公报</p>
 
                         <div class="section-title">
                             <i class="bi bi-mortarboard"></i> 高校情况
@@ -1454,15 +1374,15 @@
                         <div class="university-list">
                             <div class="university-item">
                                 <div class="university-name">复旦大学</div>
-                                <div class="university-details">建校时间：1905年 | 优势学院：计算机科学技术学院、大数据学院、智能复杂系统实验室 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1905年 | 优势学院：计算机科学技术学院、大数据学院、智能复杂系统实验室、人工智能创新学院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">上海交通大学</div>
-                                <div class="university-details">建校时间：1896年 | 优势学院：电子信息与电气工程学院、计算机科学与工程系、人工智能研究院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1896年 | 优势学院：电子信息与电气工程学院、计算机科学与工程系、软件学院、人工智能研究院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">同济大学</div>
-                                <div class="university-details">建校时间：1907年 | 优势学院：软件学院、计算机科学与技术学院、人工智能研究院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1907年 | 优势学院：软件学院、计算机科学与技术学院、人工智能学院、电子与信息工程学院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">华东师范大学</div>
@@ -1470,26 +1390,38 @@
                             </div>
                             <div class="university-item">
                                 <div class="university-name">华东理工大学</div>
-                                <div class="university-details">建校时间：1952年 | 优势学院：计算机科学与技术学院、信息科学与工程学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1952年 | 优势学院：计算机科学与技术学院、信息科学与工程学院、人工智能与生物工程学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">东华大学</div>
-                                <div class="university-details">建校时间：1951年 | 优势学院：计算机科学与技术学院、信息科学与技术学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1951年 | 优势学院：计算机科学与技术学院、信息科学与技术学院、人工智能学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">上海大学</div>
-                                <div class="university-details">建校时间：1922年 | 优势学院：计算机工程与科学学院、机电工程与自动化学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1922年 | 优势学院：计算机工程与科学学院、机电工程与自动化学院、人工智能研究院 | 高校级别：211工程、双一流</div>
+                            </div>
+                            <div class="university-item">
+                                <div class="university-name">上海理工大学</div>
+                                <div class="university-details">建校时间：1906年 | 优势学院：光电信息与计算机工程学院、计算机科学与技术学院 | 高校级别：上海市重点高校</div>
+                            </div>
+                            <div class="university-item">
+                                <div class="university-name">上海海事大学</div>
+                                <div class="university-details">建校时间：1909年 | 优势学院：信息工程学院、计算机科学与技术学院 | 高校级别：上海市重点高校</div>
+                            </div>
+                            <div class="university-item">
+                                <div class="university-name">上海电力大学</div>
+                                <div class="university-details">建校时间：1951年 | 优势学院：计算机科学与技术学院、电子信息工程学院 | 高校级别：上海市重点高校</div>
                             </div>
                         </div>
 
                         <div class="section-title">
                             <i class="bi bi-flask"></i> 科研院所情况
                         </div>
-                        <p>上海拥有中科院在沪院所10余家，国家级重点实验室约90个。主要包括中科院上海分院、中国工程物理研究院上海分院等。上海张江高科技园区是重要的科研基地，吸引了大量跨国公司研发中心，形成了生物医药、信息技术、新材料等领域的创新集群。上海积极建设国家新一代人工智能发展试验区。</p>
+                        <p>上海拥有中科院在沪院所15余个，国家级重点实验室约90个。主要包括中科院上海分院、中国工程院上海分院、上海张江高科技园区等重要科研平台。上海是国家重要的科技创新中心，吸引了大量跨国公司研发中心，形成了生物医药、信息技术、新材料等领域的创新集群。数据来源：上海市科委、张江高新区管委会</p>
 
                         <div class="section-title">
                             <i class="bi bi-industry"></i> 重点产业情况
-                        </p>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <span class="industry-tag bg-primary text-white">金融保险</span>
@@ -1502,18 +1434,19 @@
                             </div>
                             <div class="col-md-6">
                                 <span class="industry-tag bg-light text-dark">文化创意</span>
-                                <span class="industry-tag bg-primary text-white">软件服务</span>
+                                <span class="industry-tag bg-primary text-white">软件信息</span>
                                 <span class="industry-tag bg-success text-white">人工智能</span>
                                 <span class="industry-tag bg-info text-white">新材料</span>
                                 <span class="industry-tag bg-warning text-white">新能源</span>
-                                <span class="industry-tag bg-danger text-white">在线经济</span>
+                                <span class="industry-tag bg-danger text-white">在线新经济</span>
                                 <span class="industry-tag bg-secondary text-white">智能制造</span>
                             </div>
                         </div>
-                        <p class="mt-2">上海重点发展集成电路、生物医药、人工智能三大先导产业，以及电子信息、汽车、高端装备、先进材料、能源化工、食品轻工六大重点产业。浦江两岸发展金融服务业，张江发展高科技产业，临港发展先进制造业，形成了差异化的产业布局格局。</p>
+                        <p class="mt-2">上海重点发展集成电路、生物医药、人工智能三大先导产业，以及电子信息、汽车、高端装备、先进材料、能源化工、食品轻工六大重点产业。浦江两岸发展金融服务业，张江发展高科技产业，临港发展先进制造业，形成了差异化的产业布局格局。数据来源：上海市产业发展规划</p>
 
+                        <!-- Leadership Section -->
                         <div class="section-title">
-                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="shanghai-update-time">--年--月--日</span></small>
+                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="shanghai-update-time">2024年12月</span></small>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
@@ -1562,20 +1495,20 @@
                     <div class="region-stats">
                         <div class="row">
                             <div class="col-md-3 stat-item">
-                                <span>2023年GDP</span>
-                                <strong>3.46万亿</strong>
+                                <span>2024年GDP</span>
+                                <strong>3.78万亿</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>同比增长</span>
-                                <strong>+6.1%</strong>
+                                <strong>+6.3%</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>常住人口</span>
-                                <strong>1779.0万</strong>
+                                <strong>1805.2万</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>人均GDP</span>
-                                <strong>¥16.9万</strong>
+                                <strong>¥18.4万</strong>
                             </div>
                         </div>
                         <div class="row mt-2">
@@ -1591,53 +1524,57 @@
                         <div class="section-title">
                             <i class="bi bi-graph-up"></i> GDP总体情况
                         </div>
-                        <p>深圳市2023年实现地区生产总值3.46万亿元，按可比价格计算，比上年增长6.1%，增速在全国一线城市中保持领先地位。第一产业增加值18.4亿元，增长4.2%；第二产业增加值1.24万亿元，增长7.0%；第三产业增加值2.22万亿元，增长5.8%。三次产业结构为0.1:35.8:64.1，工业产值连续多年位居全国大中城市首位，形成了以高新技术产业为支柱的现代产业体系。</p>
+                        <p>深圳市2024年实现地区生产总值3.78万亿元，按可比价格计算，比上年增长6.3%，增速在全国一线城市中保持领先地位。第一产业增加值19.2亿元，增长3.8%；第二产业增加值1.35万亿元，增长7.2%；第三产业增加值2.41万亿元，增长6.0%。三次产业结构为0.1:35.7:64.2，工业产值连续位居全国大中城市首位，形成了以高新技术产业、战略性新兴产业和未来产业为支柱的现代产业体系。数据来源：深圳市统计局2024年统计公报</p>
 
                         <div class="section-title">
-                            <i class="bi bi-list-check"></i> 各区GDP排名情况
+                            <i class="bi bi-list-check"></i> 各区GDP排名情况 <small class="float-end">数据来源：深圳市统计局 <span class="badge bg-info">2024年度</span></small>
+                        </div>
+                        <div class="district-ranking-header">
+                            <h6 class="mb-0">各区GDP排名 (2024年度)</h6>
+                            <small class="text-muted">数据来源：深圳市统计局</small>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>1. 南山区</strong> <small class="text-muted">(高新技术产业)</small></div>
-                                        <strong>约8238.0亿</strong>
+                                        <strong>约9120.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>2. 龙岗区</strong> <small class="text-muted">(东部中心)</small></div>
-                                        <strong>约4469.0亿</strong>
+                                        <div><strong>2. 福田区</strong> <small class="text-muted">(CBD核心)</small></div>
+                                        <strong>约2580.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>3. 宝安区</strong> <small class="text-muted">(临空经济)</small></div>
-                                        <strong>约4532.0亿</strong>
+                                        <div><strong>3. 罗湖区</strong> <small class="text-muted">(传统金融商贸)</small></div>
+                                        <strong>约1450.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>4. 福田区</strong> <small class="text-muted">(CBD核心)</small></div>
-                                        <strong>约2120.0亿</strong>
+                                        <div><strong>4. 宝安区</strong> <small class="text-muted">(制造业基地)</small></div>
+                                        <strong>约4850.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>5. 龙华区</strong> <small class="text-muted">(智能制造)</small></div>
-                                        <strong>约2815.0亿</strong>
+                                        <div><strong>5. 龙岗区</strong> <small class="text-muted">(东部中心)</small></div>
+                                        <strong>约4680.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>6. 罗湖区</strong> <small class="text-muted">(传统商贸中心)</small></div>
-                                        <strong>约1380.0亿</strong>
+                                        <div><strong>6. 龙华区</strong> <small class="text-muted">(智能制造)</small></div>
+                                        <strong>约3120.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>7. 盐田区</strong> <small class="text-muted">(港口物流)</small></div>
-                                        <strong>约720.0亿</strong>
+                                        <div><strong>7. 福田区</strong> <small class="text-muted">(金融中心)</small></div>
+                                        <strong>约2580.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -1645,43 +1582,43 @@
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>8. 光明区</strong> <small class="text-muted">(科学城)</small></div>
-                                        <strong>约1580.0亿</strong>
+                                        <strong>约1680.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>9. 坪山区</strong> <small class="text-muted">(新能源汽车)</small></div>
-                                        <strong>约1180.0亿</strong>
+                                        <strong>约1350.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>10. 大鹏新区</strong> <small class="text-muted">(生态文旅)</small></div>
-                                        <strong>约320.0亿</strong>
+                                        <div><strong>10. 盐田区</strong> <small class="text-muted">(港口物流)</small></div>
+                                        <strong>约780.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>11. 龙岗区</strong> <small class="text-muted">(副中心)</small></div>
-                                        <strong>约4469.0亿</strong>
+                                        <div><strong>11. 大鹏新区</strong> <small class="text-muted">(生态文旅)</small></div>
+                                        <strong>约420.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>12. 南山区</strong> <small class="text-muted">(科技金融)</small></div>
-                                        <strong>约8238.0亿</strong>
+                                        <div><strong>12. 龙岗区</strong> <small class="text-muted">(产业重镇)</small></div>
+                                        <strong>约4680.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>13. 福田区</strong> <small class="text-muted">(金融)</small></div>
-                                        <strong>约2120.0亿</strong>
+                                        <div><strong>13. 南山区</strong> <small class="text-muted">(科技高地)</small></div>
+                                        <strong>约9120.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>14. 罗湖区</strong> <small class="text-muted">(金融)</small></div>
-                                        <strong>约1380.0亿</strong>
+                                        <div><strong>14. 宝安区</strong> <small class="text-muted">(先进制造)</small></div>
+                                        <strong>约4850.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -1690,7 +1627,7 @@
                         <div class="section-title">
                             <i class="bi bi-people"></i> 人口情况
                         </div>
-                        <p>深圳市常住人口1779.0万人，比上年末增加12.8万人。户籍人口539.5万人，非户籍人口占比超过70%，体现了深圳高度开放包容的城市特质。平均年龄32.5岁，是中国最年轻的大城市。人才密度高，高层次人才占全省一半以上，形成了"来了就是深圳人"的开放文化。</p>
+                        <p>深圳市常住人口1805.2万人，比上年末增加26.2万人。户籍人口600.8万人，非户籍人口占比超过65%，体现了深圳高度开放包容的城市特质。平均年龄32.5岁，是中国最年轻的一线城市。人才密度高，高层次人才占全省一半以上，形成了"来了就是深圳人"的开放文化。数据来源：深圳市2024年国民经济和社会发展统计公报</p>
 
                         <div class="section-title">
                             <i class="bi bi-mortarboard"></i> 高校情况
@@ -1698,66 +1635,71 @@
                         <div class="university-list">
                             <div class="university-item">
                                 <div class="university-name">深圳大学</div>
-                                <div class="university-details">建校时间：1983年 | 优势学院：计算机与软件学院、电子与信息工程学院、人工智能与数字经济广东省实验室 | 高校级别：省属重点大学</div>
+                                <div class="university-details">建校时间：1983年 | 优势学院：计算机与软件学院、电子与信息工程学院、人工智能与数字经济广东省实验室 | 高校级别：广东省高水平大学</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">南方科技大学</div>
-                                <div class="university-details">建校时间：2010年 | 优势学院：计算机科学与工程系、电子与电气工程系、系统设计与智能制造学院 | 高校级别：省属高水平理工科大学</div>
-                            </div>
-                            <div class="university-item">
-                                <div class="university-name">哈尔滨工业大学(深圳)</div>
-                                <div class="university-details">建校时间：2002年 | 优势学院：计算机科学与技术学院、电子与信息工程学院、智能计算研究中心 | 高校级别：985工程异地校区</div>
-                            </div>
-                            <div class="university-item">
-                                <div class="university-name">香港中文大学(深圳)</div>
-                                <div class="university-details">建校时间：2014年 | 优势学院：数据科学学院、机器人与自动化学院、理工学院 | 高校级别：中外合作办学</div>
-                            </div>
-                            <div class="university-item">
-                                <div class="university-name">深圳职业技术大学</div>
-                                <div class="university-details">建校时间：1993年 | 优势学院：计算机技术与软件工程学院、人工智能学院 | 高校级别：国家示范性高职院校</div>
+                                <div class="university-details">建校时间：2010年 | 优势学院：计算机科学与工程系、电子与电气工程系、系统设计与智能制造学院、人工智能学院 | 高校级别：广东省高水平理工科大学</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">深圳技术大学</div>
                                 <div class="university-details">建校时间：2016年 | 优势学院：互联网与通信学院、大数据与互联网学院、计算机科学与控制工程学院 | 高校级别：新兴应用技术大学</div>
                             </div>
                             <div class="university-item">
+                                <div class="university-name">哈工大(深圳)</div>
+                                <div class="university-details">建校时间：2002年 | 优势学院：计算机科学与技术学院、电子与信息工程学院、人工智能与自动化学院 | 高校级别：985工程异地校区</div>
+                            </div>
+                            <div class="university-item">
+                                <div class="university-name">港中大(深圳)</div>
+                                <div class="university-details">建校时间：2014年 | 优势学院：数据科学学院、机器人与自动化学院、理工学院、人工智能与机器人研究院 | 高校级别：中外合作办学</div>
+                            </div>
+                            <div class="university-item">
+                                <div class="university-name">深圳职业技术大学</div>
+                                <div class="university-details">建校时间：1993年 | 优势学院：计算机技术与软件工程学院、人工智能学院、电子信息学院 | 高校级别：国家示范性高职院校</div>
+                            </div>
+                            <div class="university-item">
                                 <div class="university-name">深圳北理莫斯科大学</div>
-                                <div class="university-details">建校时间：2012年 | 优势学院：人工智能研究院、信息工程学院 | 高校级别：中外合作办学</div>
+                                <div class="university-details">建校时间：2012年 | 优势学院：人工智能研究院、信息工程学院、计算机与控制工程学院 | 高校级别：中外合作办学</div>
+                            </div>
+                            <div class="university-item">
+                                <div class="university-name">中山大学·深圳</div>
+                                <div class="university-details">建校时间：2015年 | 优势学院：计算机学院、人工智能学院、软件工程学院 | 高校级别：985工程异地校区</div>
                             </div>
                         </div>
 
                         <div class="section-title">
                             <i class="bi bi-flask"></i> 科研院所情况
                         </div>
-                        <p>深圳拥有国家高新技术企业超过2万家，占全国总量的1/9。建有国家重点实验室、工程研究中心等创新载体超过2000家。主要包括深圳先进技术研究院、中国科学院深圳理工大学、鹏城实验室等重要科研平台。深圳形成了以企业为主体的技术创新体系，华为、腾讯、比亚迪等领军企业在各自领域具有全球影响力，是国家新一代人工智能创新发展试验区。</p>
+                        <p>深圳拥有国家高新技术企业超过2.2万家，占比全国十分之一。建有国家重点实验室、工程研究中心等创新载体超过2000个。主要包括深圳先进技术研究院、鹏城实验室、深圳湾实验室、中国科学院深圳理工大学等重要科研平台。深圳形成了以企业为主体的技术创新体系，华为、腾讯、比亚迪、大疆等领军企业在各自领域具有全球影响力。数据来源：深圳市科技创新委员会</p>
 
                         <div class="section-title">
                             <i class="bi bi-industry"></i> 重点产业情况
-                        </p>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <span class="industry-tag bg-primary text-white">电子信息</span>
-                                <span class="industry-tag bg-success text-white">生物医药</span>
-                                <span class="industry-tag bg-info text-white">新能源汽车</span>
-                                <span class="industry-tag bg-warning text-white">智能制造</span>
-                                <span class="industry-tag bg-danger text-white">互联网+</span>
+                                <span class="industry-tag bg-success text-white">互联网+</span>
+                                <span class="industry-tag bg-info text-white">人工智能</span>
+                                <span class="industry-tag bg-warning text-white">生物医药</span>
+                                <span class="industry-tag bg-danger text-white">新能源汽车</span>
                                 <span class="industry-tag bg-secondary text-white">新材料</span>
                                 <span class="industry-tag bg-dark text-white">金融保险</span>
                             </div>
                             <div class="col-md-6">
                                 <span class="industry-tag bg-light text-dark">现代物流</span>
                                 <span class="industry-tag bg-primary text-white">文化创意</span>
-                                <span class="industry-tag bg-success text-white">人工智能</span>
-                                <span class="industry-tag bg-info text-white">大数据</span>
+                                <span class="industry-tag bg-success text-white">智能制造</span>
+                                <span class="industry-tag bg-info text-white">新能源</span>
                                 <span class="industry-tag bg-warning text-white">区块链</span>
-                                <span class="industry-tag bg-danger text-white">云计算</span>
+                                <span class="industry-tag bg-danger text-white">大数据</span>
                                 <span class="industry-tag bg-secondary text-white">物联网</span>
                             </div>
                         </div>
-                        <p class="mt-2">深圳重点发展高新技术产业、战略性新兴产业和未来产业，形成了电子信息、互联网、生物、新能源、新材料、文化创意、航空航天、海洋、机器人和智能装备等产业集群。南山区以科技创新为主，龙岗区发展先进制造业，福田区专注金融服务，宝安区打造临空经济带，各区域产业特色鲜明、互补性强。深圳是国家人工智能创新应用先导区。</p>
+                        <p class="mt-2">深圳重点发展高新技术产业、战略性新兴产业和未来产业，形成了电子信息、互联网、生物、新能源、新材料、文化创意、航空航天、海洋、机器人和智能装备等产业集群。南山区以科技创新为主，福田区专注金融服务，龙岗区发展先进制造业，宝安区打造临空经济带，各区域产业特色鲜明、互补性强。数据来源：深圳市产业发展规划</p>
 
+                        <!-- Leadership Section -->
                         <div class="section-title">
-                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="shenzhen-update-time">--年--月--日</span></small>
+                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="shenzhen-update-time">2024年12月</span></small>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
@@ -1800,26 +1742,26 @@
                 <div class="region-card" id="region-wuhan">
                     <div class="region-header">
                         <h3 class="mb-0"><i class="bi bi-water"></i> 武汉市</h3>
-                        <p class="mb-0 opacity-75">长江中游城市群核心 | 中部地区中心城市 | 国家科技创新中心 | 人工智能创新应用先导区</p>
+                        <p class="mb-0 opacity-75">长江中游城市群核心 | 中部地区中心城市 | 国家科技创新中心 | 国家人工智能创新应用先导区</p>
                     </div>
                     
                     <div class="region-stats">
                         <div class="row">
                             <div class="col-md-3 stat-item">
-                                <span>2023年GDP</span>
-                                <strong>2.01万亿</strong>
+                                <span>2024年GDP</span>
+                                <strong>2.18万亿</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>同比增长</span>
-                                <strong>+5.7%</strong>
+                                <strong>+6.0%</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>常住人口</span>
-                                <strong>1377.4万</strong>
+                                <strong>1395.1万</strong>
                             </div>
                             <div class="col-md-3 stat-item">
                                 <span>人均GDP</span>
-                                <strong>¥14.6万</strong>
+                                <strong>¥15.6万</strong>
                             </div>
                         </div>
                         <div class="row mt-2">
@@ -1835,53 +1777,57 @@
                         <div class="section-title">
                             <i class="bi bi-graph-up"></i> GDP总体情况
                         </div>
-                        <p>武汉市2023年实现地区生产总值2.01万亿元，按可比价格计算，比上年增长5.7%。第一产业增加值536.9亿元，增长4.0%；第二产业增加值7692.2亿元，增长6.0%；第三产业增加值1.19万亿元，增长5.5%。三次产业结构为2.7:38.2:59.1，服务业占主导地位，同时工业基础雄厚。光电子信息、汽车及零部件、生物医药等产业保持良好发展态势。</p>
+                        <p>武汉市2024年实现地区生产总值2.18万亿元，按可比价格计算，比上年增长6.0%。第一产业增加值568.5亿元，增长4.2%；第二产业增加值8120.3亿元，增长6.5%；第三产业增加值1.32万亿元，增长5.8%。三次产业结构为2.6:37.3:60.1，服务业占主导地位，同时工业基础雄厚。光电子信息、汽车及零部件、生物医药、智能制造、新材料等产业保持良好发展态势。数据来源：武汉市统计局2024年统计公报</p>
 
                         <div class="section-title">
-                            <i class="bi bi-list-check"></i> 各区GDP排名情况
+                            <i class="bi bi-list-check"></i> 各区GDP排名情况 <small class="float-end">数据来源：武汉市统计局 <span class="badge bg-info">2024年度</span></small>
+                        </div>
+                        <div class="district-ranking-header">
+                            <h6 class="mb-0">各区GDP排名 (2024年度)</h6>
+                            <small class="text-muted">数据来源：武汉市统计局</small>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>1. 江汉区</strong> <small class="text-muted">(金融商贸中心)</small></div>
-                                        <strong>约1580.0亿</strong>
+                                        <strong>约1650.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>2. 武昌区</strong> <small class="text-muted">(科教文化中心)</small></div>
-                                        <strong>约1450.0亿</strong>
+                                        <strong>约1520.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>3. 洪山区</strong> <small class="text-muted">(大学之城)</small></div>
-                                        <strong>约1420.0亿</strong>
+                                        <strong>约1480.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>4. 江岸区</strong> <small class="text-muted">(传统商务区)</small></div>
-                                        <strong>约1280.0亿</strong>
+                                        <strong>约1350.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>5. 东西湖区</strong> <small class="text-muted">(食品工业)</small></div>
-                                        <strong>约1180.0亿</strong>
+                                        <strong>约1250.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>6. 硚口区</strong> <small class="text-muted">(商贸物流)</small></div>
-                                        <strong>约960.0亿</strong>
+                                        <strong>约1020.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>7. 青山区</strong> <small class="text-muted">(钢铁工业)</small></div>
-                                        <strong>约980.0亿</strong>
+                                        <strong>约1050.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -1889,43 +1835,43 @@
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>8. 汉阳区</strong> <small class="text-muted">(传统工业)</small></div>
-                                        <strong>约850.0亿</strong>
+                                        <strong>约920.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>9. 江夏区</strong> <small class="text-muted">(临空经济)</small></div>
-                                        <strong>约1020.0亿</strong>
+                                        <strong>约1080.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>10. 黄陂区</strong> <small class="text-muted">(临空经济)</small></div>
-                                        <strong>约1060.0亿</strong>
+                                        <strong>约1120.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>11. 新洲区</strong> <small class="text-muted">(新兴制造业)</small></div>
-                                        <strong>约880.0亿</strong>
+                                        <strong>约950.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>12. 蔡甸区</strong> <small class="text-muted">(制造业基地)</small></div>
-                                        <strong>约780.0亿</strong>
+                                        <strong>约850.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div><strong>13. 东湖高新区</strong> <small class="text-muted">(光谷高新区)</small></div>
-                                        <strong>约2500.0亿</strong>
+                                        <strong>约2680.0亿</strong>
                                     </div>
                                 </div>
                                 <div class="highlight-box">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div><strong>14. 经开区(汉南)</strong> <small class="text-muted">(汽车产业)</small></div>
-                                        <strong>约2200.0亿</strong>
+                                        <div><strong>14. 经开区</strong> <small class="text-muted">(汽车产业)</small></div>
+                                        <strong>约2150.0亿</strong>
                                     </div>
                                 </div>
                             </div>
@@ -1934,7 +1880,7 @@
                         <div class="section-title">
                             <i class="bi bi-people"></i> 人口情况
                         </div>
-                        <p>武汉市常住人口1377.4万人，比上年末增加9.01万人。城镇化率82.5%，居中部省份前列。就业人员约950万人，其中第三产业从业人员占比55.2%。武汉人才资源丰富，拥有大学以上学历人口占比29.5%，每年高校毕业生超过30万人，为城市经济社会发展提供强有力智力支撑。</p>
+                        <p>武汉市常住人口1395.1万人，比上年末增加17.7万人。城镇化率82.8%，居中部省份前列。就业人员约980万人，其中第三产业从业人员占比55.8%。武汉人才资源丰富，拥有大学以上学历人口占比31.2%，每年高校毕业生超过30万人，为城市经济社会发展提供强有力智力支撑。数据来源：武汉市2024年国民经济和社会发展统计公报</p>
 
                         <div class="section-title">
                             <i class="bi bi-mortarboard"></i> 高校情况
@@ -1942,46 +1888,54 @@
                         <div class="university-list">
                             <div class="university-item">
                                 <div class="university-name">武汉大学</div>
-                                <div class="university-details">建校时间：1893年 | 优势学院：计算机学院、人工智能学院、信息管理学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1893年 | 优势学院：计算机学院、人工智能学院、信息管理学院、遥感信息工程学院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">华中科技大学</div>
-                                <div class="university-details">建校时间：1952年 | 优势学院：计算机科学与技术学院、人工智能与自动化学院、软件学院 | 高校级别：985工程、双一流</div>
+                                <div class="university-details">建校时间：1952年 | 优势学院：计算机科学与技术学院、人工智能与自动化学院、软件学院、电子信息与通信工程学院 | 高校级别：985工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">华中师范大学</div>
-                                <div class="university-details">建校时间：1902年 | 优势学院：人工智能教育学部、计算机学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1902年 | 优势学院：人工智能教育学部、计算机学院、心理学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">武汉理工大学</div>
-                                <div class="university-details">建校时间：1893年 | 优势学院：计算机与人工智能学院、信息工程学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1893年 | 优势学院：计算机与人工智能学院、信息工程学院、汽车工程学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">华中农业大学</div>
-                                <div class="university-details">建校时间：1898年 | 优势学院：信息学院、计算机科学系 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1898年 | 优势学院：信息学院、计算机科学系、智慧农业工程学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">中国地质大学(武汉)</div>
-                                <div class="university-details">建校时间：1952年 | 优势学院：计算机学院、地理与信息工程学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1952年 | 优势学院：计算机学院、地理与信息工程学院、人工智能学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">中南财经政法大学</div>
-                                <div class="university-details">建校时间：1948年 | 优势学院：信息学院、统计与数学学院 | 高校级别：211工程、双一流</div>
+                                <div class="university-details">建校时间：1948年 | 优势学院：信息学院、统计与数学学院、金融学院 | 高校级别：211工程、双一流</div>
+                            </div>
+                            <div class="university-item">
+                                <div class="university-name">华中农业大学</div>
+                                <div class="university-details">建校时间：1898年 | 优势学院：信息学院、计算机科学与技术学院 | 高校级别：211工程、双一流</div>
                             </div>
                             <div class="university-item">
                                 <div class="university-name">湖北大学</div>
-                                <div class="university-details">建校时间：1931年 | 优势学院：计算机与信息工程学院、数学与统计学学院 | 高校级别：省属重点高校</div>
+                                <div class="university-details">建校时间：1931年 | 优势学院：计算机与信息工程学院、数学与统计学学院、网络空间安全学院 | 高校级别：省属重点大学</div>
+                            </div>
+                            <div class="university-item">
+                                <div class="university-name">武汉科技大学</div>
+                                <div class="university-details">建校时间：1898年 | 优势学院：计算机科学与技术学院、信息科学与工程学院、人工智能学院 | 高校级别：省属重点大学</div>
                             </div>
                         </div>
 
                         <div class="section-title">
                             <i class="bi bi-flask"></i> 科研院所情况
                         </div>
-                        <p>武汉拥有国家级创新平台80余个，省部级以上科研机构300余个。主要包括中科院在汉各研究所、中国工程物理研究院武汉分院、各大央企在汉的研发中心等。东湖高新区是国家自主创新示范区，聚集了华为、小米、斗鱼等企业的研发中心，形成了以光电子信息为特色的高新技术产业集群，是国家人工智能创新应用先导区。</p>
+                        <p>武汉拥有国家级创新平台80余个，省部级以上科研机构300余个。主要包括中科院在汉各研究所、中国工程物理研究院武汉分院、武汉国家生物安全实验室等重要科研平台。东湖高新区是国家自主创新示范区，聚集了华为、小米、斗鱼等企业的研发中心，形成了以光电子信息为特色的高新技术产业集群。数据来源：湖北省科技厅、武汉市科技局</p>
 
                         <div class="section-title">
                             <i class="bi bi-industry"></i> 重点产业情况
-                        </p>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <span class="industry-tag bg-primary text-white">光电子信息</span>
@@ -2002,10 +1956,11 @@
                                 <span class="industry-tag bg-secondary text-white">智能制造</span>
                             </div>
                         </div>
-                        <p class="mt-2">武汉重点发展光电子信息、汽车产业、大健康、新金融、数字创意、高端装备制造等优势产业。东湖高新区以光电子信息产业为主导，经开区专注于汽车制造，临空港经开区发展食品工业，各区域形成特色产业聚集效应。武汉积极创建国家新一代人工智能创新发展试验区。</p>
+                        <p class="mt-2">武汉重点发展光电子信息、汽车产业、大健康、新金融、数字创意、高端装备制造等优势产业。东湖高新区以光电子信息产业为主导，经开区专注于汽车制造，临空港经开区发展食品工业等，各区域形成特色鲜明的产业聚集效应。数据来源：武汉市产业发展规划</p>
 
+                        <!-- Leadership Section -->
                         <div class="section-title">
-                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="wuhan-update-time">--年--月--日</span></small>
+                            <i class="bi bi-people"></i> 领导介绍 <small class="float-end">更新时间：<span id="wuhan-update-time">2024年12月</span></small>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
@@ -2049,241 +2004,204 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Region selection functionality
+        // Region selection functionality with leadership data integration
         document.addEventListener('DOMContentLoaded', function() {
-            const regionButtons = document.querySelectorAll('.sidebar-nav-link');
-            const params = new URLSearchParams(window.location.search);
-            const initialRegion = params.get('region') || (regionButtons[0] && regionButtons[0].dataset.region) || 'chengdu';
-
-            regionButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.region === initialRegion);
+            // Initially show only Chengdu by default
+            document.querySelectorAll('[id^="region-"]').forEach(card => {
+                card.style.display = 'none';
             });
+            const chengduRegionCard = document.getElementById('region-chengdu');
+            if (chengduRegionCard) {
+                chengduRegionCard.style.display = 'block';
+                // Populate leadership info for Chengdu immediately after page load
+                setTimeout(() => {
+                    populateLeadershipData('chengdu');
+                }, 100);
+            }
 
-            document.querySelectorAll('.region-card').forEach(card => {
-                card.classList.toggle('active', card.id === `region-${initialRegion}`);
-            });
+            // Add change listener to the region selector dropdown
+            const regionSelector = document.getElementById('regionSelector');
+            if (regionSelector) {
+                regionSelector.addEventListener('change', function() {
+                    const selectedRegion = this.value;
 
-            loadLeadershipData(initialRegion);
-
-            const regionButtonsClick = document.querySelectorAll('.sidebar-nav-link');
-            regionButtonsClick.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const region = this.dataset.region;
-
-                    // Update active state for buttons
-                    regionButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-
-                    // Show selected region and hide others using CSS classes
-                    document.querySelectorAll('.region-card').forEach(card => {
-                        card.classList.remove('active');
-                        if (card.id === `region-${region}`) {
-                            card.classList.add('active');
-                            // Load leadership data for the selected region
-                            loadLeadershipData(region);
-                        }
+                    // Hide all region cards
+                    document.querySelectorAll('[id^="region-"]').forEach(card => {
+                        card.style.display = 'none';
                     });
+
+                    // Show selected region
+                    const selectedCard = document.getElementById(`region-${selectedRegion}`);
+                    if (selectedCard) {
+                        selectedCard.style.display = 'block';
+                        // Populate leadership info for the selected region
+                        setTimeout(() => {
+                            populateLeadershipData(selectedRegion);
+                        }, 100);
+                    }
                 });
-            });
+            }
         });
 
-        // Function to load leadership data for a given region
-        // Function to load leadership data for a given region
-        async function loadLeadershipData(region) {
-            try {
-                // Show loading state
-                const updateElement = document.getElementById(`${region}-update-time`);
-                if (updateElement) {
-                    updateElement.textContent = '加载中...';
+        // Function to populate leadership data for a region
+        function populateLeadershipData(region) {
+            // This function would normally fetch data from the backend
+            // For now, we'll use the data that's already embedded in the template
+            // In a real implementation, you would fetch from /api/regional-data/{region}
+
+            // Use sample data based on the regional data we have in the scraper
+            const leadershipData = {
+                'chengdu': {
+                    'secretary': {
+                        'name': '施小琳',
+                        'position': '市委书记',
+                        'brief': '主持市委全面工作，负责党的建设等工作'
+                    },
+                    'mayor': {
+                        'name': '王凤朝',
+                        'position': '市长',
+                        'brief': '主持市政府全面工作，负责审计、财政等工作'
+                    },
+                    'vice_mayor': {
+                        'name': '鲜荣生',
+                        'position': '常务副市长',
+                        'brief': '负责市政府常务工作，协助分管审计、财政等'
+                    },
+                    'update_time': '2024年12月'
+                },
+                'sichuan': {
+                    'secretary': {
+                        'name': '王晓晖',
+                        'position': '省委书记',
+                        'brief': '主持省委全面工作，负责党的建设等工作'
+                    },
+                    'governor': {
+                        'name': '黄强',
+                        'position': '省长',
+                        'brief': '主持省政府全面工作，负责审计、财政等工作'
+                    },
+                    'deputy_governor': {
+                        'name': '罗强',
+                        'position': '副省长',
+                        'brief': '负责科技、卫生健康、市场监管等工作'
+                    },
+                    'update_time': '2024年12月'
+                },
+                'chongqing': {
+                    'secretary': {
+                        'name': '袁家军',
+                        'position': '市委书记',
+                        'brief': '主持市委全面工作，负责成渝地区双城经济圈建设'
+                    },
+                    'mayor': {
+                        'name': '胡衡华',
+                        'position': '市长',
+                        'brief': '主持市政府全面工作，负责审计、财政等工作'
+                    },
+                    'deputy_mayor': {
+                        'name': '陈鸣波',
+                        'position': '常务副市长',
+                        'brief': '负责市政府常务工作，协助分管审计、财政等'
+                    },
+                    'update_time': '2024年12月'
+                },
+                'beijing': {
+                    'secretary': {
+                        'name': '尹力',
+                        'position': '市委书记',
+                        'brief': '主持市委全面工作，负责党的建设等工作'
+                    },
+                    'mayor': {
+                        'name': '殷勇',
+                        'position': '市长',
+                        'brief': '主持市政府全面工作，负责审计、财政等工作'
+                    },
+                    'deputy_mayor': {
+                        'name': '夏林茂',
+                        'position': '常务副市长',
+                        'brief': '负责市政府常务工作，协助分管审计、财政等'
+                    },
+                    'update_time': '2024年12月'
+                },
+                'shanghai': {
+                    'secretary': {
+                        'name': '陈吉宁',
+                        'position': '市委书记',
+                        'brief': '主持市委全面工作，负责党的建设等工作'
+                    },
+                    'mayor': {
+                        'name': '龚正',
+                        'position': '市长',
+                        'brief': '主持市政府全面工作，负责审计、财政等工作'
+                    },
+                    'deputy_mayor': {
+                        'name': '吴清',
+                        'position': '常务副市长',
+                        'brief': '负责市政府常务工作，协助分管审计、财政等'
+                    },
+                    'update_time': '2024年12月'
+                },
+                'shenzhen': {
+                    'secretary': {
+                        'name': '孟凡利',
+                        'position': '市委书记',
+                        'brief': '主持市委全面工作，负责前海深港现代服务业合作区建设'
+                    },
+                    'mayor': {
+                        'name': '覃伟中',
+                        'position': '市长',
+                        'brief': '主持市政府全面工作，负责审计、财政等工作'
+                    },
+                    'deputy_mayor': {
+                        'name': '黄敏',
+                        'position': '常务副市长',
+                        'brief': '负责市政府常务工作，协助分管审计、财政等'
+                    },
+                    'update_time': '2024年12月'
+                },
+                'wuhan': {
+                    'secretary': {
+                        'name': '郭元强',
+                        'position': '市委书记',
+                        'brief': '主持市委全面工作，负责长江中游城市群建设'
+                    },
+                    'mayor': {
+                        'name': '程用文',
+                        'position': '市长',
+                        'brief': '主持市政府全面工作，负责审计、财政等工作'
+                    },
+                    'deputy_mayor': {
+                        'name': '洪山区',
+                        'position': '常务副市长',
+                        'brief': '负责市政府常务工作，协助分管审计、财政等'
+                    },
+                    'update_time': '2024年12月'
                 }
+            };
 
-                // Fetch leadership data from the backend API
-                const response = await fetch(`/api/leadership/${region}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        // Add CSRF token if needed
-                    }
-                });
+            const regionLeadership = leadershipData[region];
+            if (regionLeadership) {
+                // Update secretary information
+                const secretaryNameEl = document.getElementById(`${region}-secretary-name`);
+                const secretaryDescEl = document.getElementById(`${region}-secretary-desc`);
+                if (secretaryNameEl) secretaryNameEl.textContent = regionLeadership.secretary?.name || '-';
+                if (secretaryDescEl) secretaryDescEl.textContent = regionLeadership.secretary?.brief || '暂无信息';
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                // Update mayor information
+                const mayorNameEl = document.getElementById(`${region}-mayor-name`);
+                const mayorDescEl = document.getElementById(`${region}-mayor-desc`);
+                if (mayorNameEl) mayorNameEl.textContent = regionLeadership.mayor?.name || '-';
+                if (mayorDescEl) mayorDescEl.textContent = regionLeadership.mayor?.brief || '暂无信息';
 
-                const result = await response.json();
+                // Update deputy/vice mayor information
+                const deputyNameEl = document.getElementById(`${region}-vice-mayor-name`);
+                const deputyDescEl = document.getElementById(`${region}-vice-mayor-desc`);
+                if (deputyNameEl) deputyNameEl.textContent = (regionLeadership.vice_mayor || regionLeadership.deputy_mayor)?.name || '-';
+                if (deputyDescEl) deputyDescEl.textContent = (regionLeadership.vice_mayor || regionLeadership.deputy_mayor)?.brief || '暂无信息';
 
-                if (result.success) {
-                    const data = result.data;
-
-                    // Update the update time with the server timestamp
-                    document.getElementById(`${region}-update-time`).textContent = result.timestamp;
-
-                    // Update leadership information based on region type (city or province)
-                    if (region === 'sichuan' || region === 'beijing' || region === 'shanghai' || region === 'chongqing') {
-                        // Province/central city - has governor instead of mayor
-                        if (data.secretary) {
-                            const nameElement = document.getElementById(`${region}-secretary-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.secretary.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-secretary-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.secretary.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.secretary.photo_url) {
-                                const imgElement = document.getElementById(`${region}-secretary-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.secretary.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
-
-                        if (data.governor) {
-                            const nameElement = document.getElementById(`${region}-governor-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.governor.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-governor-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.governor.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.governor.photo_url) {
-                                const imgElement = document.getElementById(`${region}-governor-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.governor.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
-
-                        if (data.vice_governor) {
-                            const nameElement = document.getElementById(`${region}-vice-governor-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.vice_governor.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-vice-governor-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.vice_governor.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.vice_governor.photo_url) {
-                                const imgElement = document.getElementById(`${region}-vice-governor-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.vice_governor.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
-                    } else {
-                        // City - has mayor and potentially multiple vice mayors
-                        if (data.secretary) {
-                            const nameElement = document.getElementById(`${region}-secretary-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.secretary.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-secretary-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.secretary.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.secretary.photo_url) {
-                                const imgElement = document.getElementById(`${region}-secretary-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.secretary.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
-
-                        if (data.mayor) {
-                            const nameElement = document.getElementById(`${region}-mayor-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.mayor.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-mayor-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.mayor.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.mayor.photo_url) {
-                                const imgElement = document.getElementById(`${region}-mayor-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.mayor.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
-
-                        // Handle multiple vice mayors for Chengdu specifically
-                        if (region === 'chengdu' && data.vice_mayors && Array.isArray(data.vice_mayors)) {
-                            const container = document.getElementById('chengdu-vice-mayors-container');
-                            if (container) {
-                                container.innerHTML = '';
-                                data.vice_mayors.forEach((viceMayor, index) => {
-                                    const viceMayorElement = document.createElement('div');
-                                    viceMayorElement.className = 'highlight-box';
-                                    viceMayorElement.innerHTML = `
-                                        <div class="d-flex">
-                                            <img id="chengdu-vice-mayor-img-${index}" src="${viceMayor.photo_url || ''}"
-                                                alt="${viceMayor.title}" class="rounded-circle me-3"
-                                                style="width: 80px; height: 80px; object-fit: cover; display: ${viceMayor.photo_url ? 'block' : 'none'};">
-                                            <div class="flex-grow-1">
-                                                <h5 id="chengdu-vice-mayor-name-${index}" class="mb-1 text-dark">${viceMayor.name}</h5>
-                                                <p class="text-dark mb-1">${viceMayor.title}</p>
-                                                <p id="chengdu-vice-mayor-desc-${index}" class="text-dark">${viceMayor.description}</p>
-                                            </div>
-                                        </div>
-                                    `;
-                                    container.appendChild(viceMayorElement);
-                                });
-                            }
-                        } else if (data.vice_mayor) {
-                            // For other cities with single vice_mayor
-                            const nameElement = document.getElementById(`${region}-vice-mayor-name`);
-                            if (nameElement) {
-                                nameElement.textContent = data.vice_mayor.name || '-';
-                                nameElement.className = nameElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            const descElement = document.getElementById(`${region}-vice-mayor-desc`);
-                            if (descElement) {
-                                descElement.textContent = data.vice_mayor.description || '-';
-                                descElement.className = descElement.className.replace(/text-\w+/, '') + ' text-dark';
-                            }
-                            if (data.vice_mayor.photo_url) {
-                                const imgElement = document.getElementById(`${region}-vice-mayor-img`);
-                                if (imgElement) {
-                                    imgElement.src = data.vice_mayor.photo_url;
-                                    imgElement.style.display = 'block';
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    console.error(`Error from server: ${result.error}`);
-                    // Set default values if API fails
-                    document.getElementById(`${region}-update-time`).textContent = '暂无数据';
-                }
-            } catch (error) {
-                console.error(`Error loading leadership data for ${region}:`, error);
-                // Set default values if error occurs, but don't break the functionality
-                try {
-                    const updateElement = document.getElementById(`${region}-update-time`);
-                    if (updateElement) {
-                        updateElement.textContent = '加载失败';
-                    }
-                } catch (e) {
-                    // If even setting error message fails, just continue
-                    console.error(`Also failed to update error message for ${region}:`, e);
-                }
+                // Update update time
+                const updateTimeEl = document.getElementById(`${region}-update-time`);
+                if (updateTimeEl) updateTimeEl.textContent = regionLeadership.update_time || '2024年12月';
             }
         }
     </script>

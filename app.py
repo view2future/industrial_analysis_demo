@@ -589,6 +589,19 @@ def task_status(task_id):
         })
 
 
+@app.route('/api/stop-task/<task_id>', methods=['POST'])
+@login_required
+def stop_task(task_id):
+    try:
+        from src.tasks.celery_app import celery_app
+        celery_app.control.revoke(task_id, terminate=True)
+        logger.info(f"Revoked task {task_id}")
+        return jsonify({'success': True, 'message': '任务已停止'})
+    except Exception as e:
+        logger.error(f"Error stopping task {task_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/report/<report_id>')
 @login_required
 def view_report(report_id):
@@ -2507,6 +2520,25 @@ def api_export_report(report_id, format):
         logger.error(f"Error exporting report: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/reports/<report_id>/download-json', methods=['GET'])
+@login_required
+def api_download_report_json(report_id):
+    try:
+        from flask import send_file
+        report = Report.query.filter_by(report_id=report_id).first()
+        if not report or (report.user_id != current_user.id and current_user.role != 'admin'):
+            return jsonify({'error': '无权限访问'}), 403
+        file_path = _resolve_report_file_path(report_id, report)
+        if not file_path:
+            return jsonify({'error': '报告文件不存在'}), 404
+        safe_city = (report.city or 'unknown_city').replace('/', '_').replace('\\', '_')
+        safe_industry = (report.industry or 'unknown_industry').replace('/', '_').replace('\\', '_')
+        filename = f"{safe_city}_{safe_industry}_产业分析报告.json"
+        return send_file(str(file_path), as_attachment=True, download_name=filename)
+    except Exception as e:
+        logger.error(f"Error downloading report JSON: {e}")
+        return jsonify({'error': f'下载失败: {str(e)}'}), 500
+
 # Web scraping API
 @app.route('/api/scrape-data', methods=['POST'])
 @login_required
@@ -3081,7 +3113,7 @@ if __name__ == '__main__':
     print("Leadership data refresh completed.")
 
     # webbrowser.open('http://127.0.0.1:5000')
-    app.run(debug=True)
+    main()
 @app.route('/home/a')
 @login_required
 def home_layout_a():
@@ -3180,3 +3212,33 @@ def api_policy_mindmap():
         import traceback
         logger.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+
+
+# API endpoint to fetch regional data including leadership info
+@app.route("/api/regional-data/<region>", methods=["GET"])
+@login_required
+def api_regional_data(region):
+    """Fetch real-time regional data including leadership info"""
+    try:
+        from src.data.regional_data_scraper import RegionalDataScraper
+        scraper = RegionalDataScraper()
+        
+        # Fetch leadership and economic data
+        leadership_data = scraper.get_regional_leadership(region)
+        gdp_data = scraper.get_regional_gdp_data(region)
+        district_rankings = scraper.get_district_rankings(region)
+        university_info = scraper.get_university_info(region)
+        sci_institutions = scraper.get_science_institutions(region)
+        
+        return jsonify({
+            "success": True,
+            "region": region,
+            "leadership": leadership_data,
+            "gdp_data": gdp_data,
+            "district_rankings": district_rankings,
+            "universities": university_info,
+            "research_institutions": sci_institutions
+        })
+    except Exception as e:
+        logger.error(f"Error fetching regional data: {e}")
+        return jsonify({"error": str(e)}), 500

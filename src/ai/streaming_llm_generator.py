@@ -109,13 +109,18 @@ class StreamingLLMReportGenerator:
                 )
                 logger.info(f"Selected Kimi API key (first 10 chars): {api_key[:10] if api_key else 'None'}")
                 if api_key:
+                    # Initialize OpenAI client with timeout settings to prevent hanging
                     self.clients[APIService.KIMI] = OpenAI(
                         api_key=api_key,
-                        base_url="https://api.moonshot.cn/v1"
+                        base_url="https://api.moonshot.cn/v1",
+                        timeout=10.0  # 10 second timeout to prevent hanging
                     )
                     logger.info("✅ Kimi 客户端初始化成功")
             except Exception as e:
                 logger.error(f"❌ Kimi 客户端初始化失败: {e}")
+                # Remove Kimi from available services if initialization failed
+                if APIService.KIMI in self.available_services:
+                    self.available_services.remove(APIService.KIMI)
         else:
             logger.warning("未检测到Kimi密钥，Kimi不可用")
         
@@ -129,11 +134,16 @@ class StreamingLLMReportGenerator:
                     or os.environ.get('GOOGLE_GEMINI_API_KEY')
                 )
                 if api_key:
+                    import google.generativeai as genai
                     genai.configure(api_key=api_key)
+                    # Test the configuration by loading the model
                     self.clients[APIService.GEMINI] = genai.GenerativeModel('gemini-1.5-flash-latest')
                     logger.info("✅ Gemini 客户端(gemini-1.5-flash-latest)初始化成功")
             except Exception as e:
                 logger.error(f"❌ Gemini 客户端初始化失败: {e}")
+                # Remove Gemini from available services if initialization failed
+                if APIService.GEMINI in self.available_services:
+                    self.available_services.remove(APIService.GEMINI)
         else:
             logger.info("Gemini未配置或不可用")
         
@@ -283,6 +293,7 @@ class StreamingLLMReportGenerator:
             while attempts < 2:
                 attempts += 1
                 try:
+                    # Create the OpenAI client with a timeout for this specific call
                     stream = client.chat.completions.create(
                         model=kimi_model,
                         messages=[
@@ -300,14 +311,17 @@ class StreamingLLMReportGenerator:
                         stream=True,
                         stream_options={
                             "include_usage": True
-                        }
+                        },
+                        timeout=30  # 30 second timeout for the API call
                     )
                     err = None
                     break
                 except Exception as e:
                     err = e
+                    logger.warning(f"Kimi API attempt {attempts} failed: {e}")
                     await asyncio.sleep(1.0)
             if err and stream is None:
+                logger.error(f"Kimi API failed after {attempts} attempts: {err}")
                 raise err
             
             accumulated_content = ""
@@ -371,11 +385,25 @@ class StreamingLLMReportGenerator:
             }
             
             # Start streaming generation - using the correct streamGenerateContent method
-            response = client.generate_content(
-                prompt,
-                generation_config=generation_config,
-                stream=True  # This enables streamGenerateContent
-            )
+            import concurrent.futures
+            import threading
+
+            # Use a timeout to prevent hanging on the API call
+            def generate_with_timeout():
+                return client.generate_content(
+                    prompt,
+                    generation_config=generation_config,
+                    stream=True  # This enables streamGenerateContent
+                )
+
+            # Execute with timeout
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(generate_with_timeout)
+                try:
+                    response = future.result(timeout=30)  # 30 second timeout
+                except concurrent.futures.TimeoutError:
+                    logger.error("Gemini API call timed out after 30 seconds")
+                    raise TimeoutError("Gemini API call timed out after 30 seconds")
             
             accumulated_content = ""
             chunk_count = 0

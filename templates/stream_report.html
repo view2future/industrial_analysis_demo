@@ -438,6 +438,12 @@ async function startStreaming() {
                                 window.location.href = `/report/${reportId}`;
                             };
                             document.getElementById('stopBtn').style.display = 'none';
+                        } else if (data.type === 'generation_start') {
+                            updateProgress(15, '已连接 AI 服务，开始生成...');
+                            updateStage(3);
+                            const badge = document.getElementById('statusBadge');
+                            badge.className = 'badge badge-warning';
+                            badge.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>生成中';
                         } else if (data.type === 'error') {
                             throw new Error(data.data.error || '生成失败');
                         }
@@ -468,13 +474,36 @@ async function startStreaming() {
 }
 
 // Background button handler
-document.getElementById('backgroundBtn').addEventListener('click', function() {
+document.getElementById('backgroundBtn').addEventListener('click', async function() {
     try {
         if (typeof window.addBackgroundTask === 'function') {
             window.addBackgroundTask(taskId, city, industry);
         }
-    } catch (e) { console.error(e); }
-    window.location.href = '/';
+        if (typeof window.showFloatingIcon === 'function') {
+            window.showFloatingIcon(true);
+        }
+    } catch (e) {}
+    try {
+        if ('Notification' in window) {
+            const p = await Notification.requestPermission();
+            if (p === 'granted') {
+                const n = new Notification('报告仍在生成中', { body: `${city} - ${industry}`, icon: '/static/icons/report.png' });
+                setTimeout(() => { try { n.close(); } catch(e) {} }, 3000);
+            }
+        }
+    } catch(e) {}
+    let toast = document.getElementById('background-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'background-toast';
+        toast.style.cssText = 'position:fixed;bottom:24px;left:24px;background:rgba(0,0,0,0.75);color:#fff;padding:10px 14px;border-radius:10px;z-index:10002;opacity:0;transform:translateY(10px);transition:opacity 0.2s ease, transform 0.2s ease;font-size:13px;display:flex;align-items:center;gap:8px;';
+        toast.innerHTML = '<i class="fas fa-bell"></i><span>已转入后台运行，右下角可查看进度</span>';
+        document.body.appendChild(toast);
+    }
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(10px)'; }, 1200);
+    setTimeout(() => { window.location.href = '/'; }, 800);
 });
 
 // Refresh button handler
@@ -511,6 +540,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const cachedTime = sessionStorage.getItem(`task_${taskId}_time`);
     const cachedStartTime = sessionStorage.getItem(`task_${taskId}_startTime`);
     
+    const statusProbe = fetch(`/api/task-status/${taskId}`).then(r => r.json()).catch(() => null);
     if (cachedContent && cachedContent.length > 100) {
         console.log('Found cached content, resuming generation');
         // Resume from cached content - continue generation instead of stopping
@@ -543,17 +573,91 @@ window.addEventListener('DOMContentLoaded', () => {
         
         console.log('Loaded cached content, continuing generation');
         
-        if (cache && cache.complete) {
-            streamingStarted = false;
-        } else {
-            streamingStarted = true;
-            setTimeout(startStreaming, 500);
-        }
+        statusProbe.then(st => {
+            const active = st && (String(st.state).toUpperCase() === 'PROGRESS' || String(st.state).toUpperCase() === 'PENDING');
+            if (cache && cache.complete) {
+                streamingStarted = false;
+            } else if (active) {
+                streamingStarted = false;
+                try {
+                    const pct = Number(st.current || 50);
+                    updateProgress(isNaN(pct) ? 50 : pct, st.message || '继续生成报告...');
+                    const stageMap = { init:1, outline:2, generation:3, analysis:4, finalize:5, completed:5, generating:3, report_done:4, saving:5 };
+                    const sname = (st.stage || '').toString();
+                    const stageNum = stageMap[sname] || 3;
+                    updateStage(stageNum);
+                } catch(e) {}
+                const t = setInterval(async () => {
+                    try {
+                        const resp = await fetch(`/api/task-status/${taskId}`);
+                        const d = await resp.json();
+                        const pct = Number(d.current || 50);
+                        updateProgress(isNaN(pct) ? 50 : pct, d.message || d.status || '继续生成报告...');
+                        const stageMap = { init:1, outline:2, generation:3, analysis:4, finalize:5, completed:5, generating:3, report_done:4, saving:5 };
+                        updateStage(stageMap[(d.stage||'').toString()] || 3);
+                        if (String(d.state).toUpperCase() === 'SUCCESS' || String(d.status).toLowerCase() === '完成') {
+                            clearInterval(t);
+                            const rid = d.result && d.result.report_id ? d.result.report_id : (sessionStorage.getItem(`task_${taskId}_final_report_id`) || taskId);
+                            let overlay = document.getElementById('redirect-loading-overlay');
+                            if (!overlay) {
+                                overlay = document.createElement('div');
+                                overlay.id = 'redirect-loading-overlay';
+                                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.85);z-index:10003;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.25s ease';
+                                const box = document.createElement('div');
+                                box.style.cssText = 'background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:20px 24px;display:flex;align-items:center;gap:12px;';
+                                box.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:#667eea;font-size:18px"></i><span style="font-weight:600;color:#333">报告已生成，正在跳转...</span>';
+                                overlay.appendChild(box);
+                                document.body.appendChild(overlay);
+                            }
+                            overlay.style.opacity = '1';
+                            setTimeout(() => { window.location.href = `/report/${rid}`; }, 700);
+                        }
+                    } catch(e) {}
+                }, 1500);
+            } else {
+                streamingStarted = true;
+                setTimeout(startStreaming, 500);
+            }
+        });
     } else {
         console.log('No cached content found, starting fresh streaming');
-        // Start fresh streaming
-        streamingStarted = true;
-        setTimeout(startStreaming, 500);
+        statusProbe.then(st => {
+            const active = st && (String(st.state).toUpperCase() === 'PROGRESS' || String(st.state).toUpperCase() === 'PENDING');
+            if (active) {
+                streamingStarted = false;
+                updateProgress(Number(st.current || 10), st.message || '继续生成报告...');
+                const stageMap = { init:1, outline:2, generation:3, analysis:4, finalize:5, completed:5, generating:3, report_done:4, saving:5 };
+                updateStage(stageMap[(st.stage||'').toString()] || 2);
+                const t = setInterval(async () => {
+                    try {
+                        const resp = await fetch(`/api/task-status/${taskId}`);
+                        const d = await resp.json();
+                        updateProgress(Number(d.current || 10), d.message || d.status || '继续生成报告...');
+                        updateStage(stageMap[(d.stage||'').toString()] || 3);
+                        if (String(d.state).toUpperCase() === 'SUCCESS') {
+                            clearInterval(t);
+                            const rid = d.result && d.result.report_id ? d.result.report_id : taskId;
+                            let overlay = document.getElementById('redirect-loading-overlay');
+                            if (!overlay) {
+                                overlay = document.createElement('div');
+                                overlay.id = 'redirect-loading-overlay';
+                                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.85);z-index:10003;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.25s ease';
+                                const box = document.createElement('div');
+                                box.style.cssText = 'background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:20px 24px;display:flex;align-items:center;gap:12px;';
+                                box.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:#667eea;font-size:18px"></i><span style="font-weight:600;color:#333">报告已生成，正在跳转...</span>';
+                                overlay.appendChild(box);
+                                document.body.appendChild(overlay);
+                            }
+                            overlay.style.opacity = '1';
+                            setTimeout(() => { window.location.href = `/report/${rid}`; }, 700);
+                        }
+                    } catch(e) {}
+                }, 1500);
+            } else {
+                streamingStarted = true;
+                setTimeout(startStreaming, 500);
+            }
+        });
     }
 });
 // Smooth scroll helper

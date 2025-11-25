@@ -285,6 +285,10 @@
                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block">
                     <i class="fas fa-file-word mr-2"></i>导出Word
                 </a>
+<a href="{{ url_for('api_download_report_json', report_id=report.report_id) }}" 
+                   class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-block">
+                    <i class="fas fa-file-code mr-2"></i>下载JSON
+                </a>
             </div>
         </div>
     </div>

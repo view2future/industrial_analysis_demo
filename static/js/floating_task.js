@@ -10,6 +10,7 @@
     window.backgroundTasks = window.backgroundTasks || [];
     let floatingPanel = null;
     let pollIntervals = {};
+    let statusWorker = null;
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -303,10 +304,16 @@
                     padding: 12px;
                     margin-bottom: 12px;
                     background: ${task.reportId ? '#f8f9fa' : '#fff'};
+                    position: relative;
                 ">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <strong style="font-size: 14px;">任务 #${index + 1}</strong>
-                        <span class="badge bg-${statusClass}" style="font-size: 11px;">${statusText}</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="badge bg-${statusClass}" style="font-size: 11px;">${statusText}</span>
+                            <button onclick="window.confirmDeleteTask(${index})" title="删除此任务" style="background:none;border:none;color:#dc3545;cursor:pointer;padding:4px;font-size:16px;line-height:1;border-radius:4px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                     <div style="font-size: 12px; color: #666; margin-bottom: 6px;">
                         <i class="bi bi-geo-alt"></i> ${task.city || '未知'} - ${task.industry || '未知'}
@@ -397,6 +404,7 @@
         saveBackgroundTasks();
         showFloatingIcon(true);
         updateTaskBadge();
+        startStatusWorker();
         startTaskPolling(taskId);
         return task;
     }
@@ -545,6 +553,7 @@
                 if (window.backgroundTasks.length > 0) {
                     const hasProcessing = window.backgroundTasks.some(t => !t.reportId);
                     showFloatingIcon(hasProcessing);
+                    startStatusWorker();
                 }
             }
         } catch (e) {
@@ -576,5 +585,156 @@
     window.openFloatingPanel = openFloatingPanel;
     window.closeFloatingPanel = closeFloatingPanel;
     window.clearCompletedTasks = clearCompletedTasks;
+    window.confirmDeleteTask = function(index) {
+        const existing = document.getElementById('delete-confirm-modal');
+        if (!existing) {
+            const modal = document.createElement('div');
+            modal.id = 'delete-confirm-modal';
+            modal.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);z-index:10001;opacity:0;pointer-events:none;transition:opacity 0.2s ease';
+            const box = document.createElement('div');
+            box.style.cssText = 'width:380px;max-width:90vw;background:#fff;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.25);transform:translateY(20px) scale(0.98);transition:transform 0.25s ease, opacity 0.25s ease;opacity:0;';
+            box.innerHTML = `
+                <div style="padding:18px 20px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="font-weight:700;font-size:15px;color:#333;">确认删除任务</div>
+                    <button id="delete-confirm-close" style="background:none;border:none;font-size:22px;line-height:1;color:#999;cursor:pointer">&times;</button>
+                </div>
+                <div style="padding:16px 20px;color:#555;font-size:14px;">
+                    <div style="margin-bottom:12px;">删除后将无法恢复该任务的进度。</div>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#333;">
+                        <input type="checkbox" id="delete-confirm-check" style="width:16px;height:16px"> 我已确认删除此任务
+                    </label>
+                </div>
+                <div style="padding:14px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #eee;">
+                    <button id="delete-confirm-cancel" style="padding:8px 14px;border:1px solid #ccc;border-radius:8px;background:#f8f9fa;color:#333;cursor:pointer">取消</button>
+                    <button id="delete-confirm-ok" style="padding:8px 14px;border:none;border-radius:8px;background:#dc3545;color:#fff;cursor:not-allowed;opacity:0.6">确认删除</button>
+                </div>
+            `;
+            modal.appendChild(box);
+            document.body.appendChild(modal);
+        }
+        const modalEl = document.getElementById('delete-confirm-modal');
+        const okBtn = modalEl.querySelector('#delete-confirm-ok');
+        const cancelBtn = modalEl.querySelector('#delete-confirm-cancel');
+        const closeBtn = modalEl.querySelector('#delete-confirm-close');
+        const check = modalEl.querySelector('#delete-confirm-check');
+        check.checked = false;
+        okBtn.style.cursor = 'not-allowed';
+        okBtn.style.opacity = '0.6';
+        function closeModal() {
+            modalEl.style.opacity = '0';
+            modalEl.style.pointerEvents = 'none';
+            const boxEl = modalEl.children[0];
+            boxEl.style.transform = 'translateY(20px) scale(0.98)';
+            boxEl.style.opacity = '0';
+        }
+        modalEl.style.opacity = '1';
+        modalEl.style.pointerEvents = 'auto';
+        const boxEl = modalEl.children[0];
+        boxEl.style.transform = 'translateY(0) scale(1)';
+        boxEl.style.opacity = '1';
+        const enable = () => { okBtn.style.cursor = 'pointer'; okBtn.style.opacity = '1'; };
+        const disable = () => { okBtn.style.cursor = 'not-allowed'; okBtn.style.opacity = '0.6'; };
+        const onCheck = () => { if (check.checked) enable(); else disable(); };
+        check.onchange = onCheck;
+        onCheck();
+        const onOk = () => {
+            if (!check.checked) return;
+            closeModal();
+            window.deleteBackgroundTaskByIndex(index);
+        };
+        const onCancel = () => closeModal();
+        okBtn.onclick = onOk;
+        cancelBtn.onclick = onCancel;
+        closeBtn.onclick = onCancel;
+    };
+
+    window.deleteBackgroundTaskByIndex = function(index) {
+        if (window.backgroundTasks[index]) {
+            const taskId = window.backgroundTasks[index].taskId;
+            if (pollIntervals[taskId]) {
+                clearInterval(pollIntervals[taskId]);
+                delete pollIntervals[taskId];
+            }
+            window.backgroundTasks.splice(index, 1);
+            saveBackgroundTasks();
+            updateTaskBadge();
+            if (window.backgroundTasks.length === 0) {
+                hideFloatingIcon();
+                stopStatusWorker();
+            } else {
+                updateFloatingPanelContent();
+            }
+        }
+    };
+
+    function startStatusWorker() {
+        try {
+            if (statusWorker) return;
+            const workerCode = `
+                let tasks = [];
+                let timer = null;
+                function poll() {
+                    if (!tasks.length) return;
+                    tasks.forEach(async (taskId) => {
+                        try {
+                            const r = await fetch('/api/task-status/' + taskId);
+                            const d = await r.json();
+                            postMessage({ type: 'status', taskId, data: d });
+                        } catch(e) {
+                            postMessage({ type: 'error', taskId, error: String(e) });
+                        }
+                    });
+                }
+                onmessage = (e) => {
+                    if (e.data && e.data.type === 'setTasks') {
+                        tasks = e.data.taskIds || [];
+                        if (timer) clearInterval(timer);
+                        timer = setInterval(poll, 2000);
+                        poll();
+                    }
+                };
+            `;
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            statusWorker = new Worker(url);
+            statusWorker.onmessage = (e) => {
+                const msg = e.data || {};
+                if (msg.type === 'status') {
+                    const t = window.backgroundTasks.find(x => x.taskId === msg.taskId);
+                    if (t) {
+                        const d = msg.data || {};
+                        const state = (d.state || '').toUpperCase();
+                        t.stage = d.info && d.info.current_step ? mapStepToStage(d.info.current_step) : (d.stage || t.stage);
+                        if (state === 'SUCCESS') {
+                            t.status = 'completed';
+                            t.stage = 'completed';
+                            t.reportId = d.result?.report_id || d.report_id || t.reportId;
+                        } else if (state === 'FAILURE' || state === 'REVOKED') {
+                            t.status = 'failed';
+                        } else {
+                            t.status = 'processing';
+                        }
+                        try { localStorage.setItem('backgroundTasks', JSON.stringify(window.backgroundTasks)); } catch(e) {}
+                        if (floatingPanel && floatingPanel.style.display !== 'none') updateFloatingPanelContent();
+                        const hasProcessing = window.backgroundTasks.some(x => !x.reportId);
+                        updateFloatingIconStatus(hasProcessing);
+                    }
+                }
+            };
+            const ids = window.backgroundTasks.filter(t => t && t.taskId).map(t => t.taskId);
+            statusWorker.postMessage({ type: 'setTasks', taskIds: ids });
+        } catch(e) {
+            console.error('Start status worker error:', e);
+        }
+    }
+
+    function stopStatusWorker() {
+        try {
+            if (statusWorker) {
+                statusWorker.terminate();
+                statusWorker = null;
+            }
+        } catch(e) {}
+    }
     
 })();
