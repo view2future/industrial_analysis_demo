@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI产业分析报告生成 - 区域产业分析小工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-color: #667eea;
+            --background-light: #f8f9fa;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --glow-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .card-glow {
+            box-shadow: var(--glow-shadow);
+        }
+        
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+        
+        .btn-gradient {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-gradient:active {
+            transform: translateY(0);
+        }
+        
+        .progress-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .progress-bar-custom {
+            height: 12px;
+            border-radius: 6px;
+            background: var(--primary-gradient);
+            transition: width 0.3s ease;
+        }
+        
+        .floating-tasks {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 1000;
+            max-width: 350px;
+        }
+        
+        .floating-task-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        
+        .floating-task-header {
+            padding: 10px 15px;
+            background: var(--primary-gradient);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .floating-task-body {
+            padding: 15px;
+        }
+        
+        .floating-task-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .floating-task-actions button {
+            flex: 1;
+        }
+        
+        .report-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 400px;
+            max-height: 60vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .streaming-paragraph {
+            margin-bottom: 15px;
+            line-height: 1.8;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            text-align: justify;
+        }
+        
+        .report-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .report-section:last-child {
+            border-bottom: none;
+        }
+        
+        .report-section h2 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .status-indicator {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .status-processing {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        
+        .status-completed {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        
+        .status-error {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
+        .streaming-paragraph {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .floating-task-toggle {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 999;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .floating-task-toggle:hover {
+            transform: scale(1.1);
+        }
+        
+        .floating-tasks-panel {
+            position: fixed;
+            right: 20px;
+            bottom: 80px;
+            z-index: 998;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .floating-tasks-panel.show {
+            display: block;
+        }
+        
+        .task-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .task-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .task-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .task-actions button {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.1);">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-bar-chart"></i> AI产业分析报告生成
+            </a>
+            <div class="ms-auto">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">返回首页</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="glass-card card-glow p-4 mb-4">
+                    <h2 class="text-center mb-4 text-white">
+                        <i class="bi bi-robot"></i> AI产业分析报告生成
+                    </h2>
+                    
+                    <form id="reportForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="citySelect" class="form-label text-white">选择城市</label>
+                                <select class="form-select" id="citySelect">
+                                    <option value="成都市" selected>成都市</option>
+                                    <option value="北京市">北京市</option>
+                                    <option value="上海市">上海市</option>
+                                    <option value="深圳市">深圳市</option>
+                                    <option value="广州市">广州市</option>
+                                    <option value="杭州市">杭州市</option>
+                                    <option value="南京市">南京市</option>
+                                    <option value="武汉市">武汉市</option>
+                                    <option value="西安市">西安市</option>
+                                    <option value="成都市">成都市</option>
+                                    <option value="重庆市">重庆市</option>
+                                    <option value="天津市">天津市</option>
+                                    <option value="青岛市">青岛市</option>
+                                    <option value="大连市">大连市</option>
+                                    <option value="宁波市">宁波市</option>
+                                    <option value="厦门市">厦门市</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="industrySelect" class="form-label text-white">选择产业</label>
+                                <select class="form-select" id="industrySelect">
+                                    <option value="人工智能" selected>人工智能</option>
+                                    <option value="新能源">新能源</option>
+                                    <option value="生物医药">生物医药</option>
+                                    <option value="新材料">新材料</option>
+                                    <option value="数字经济">数字经济</option>
+                                    <option value="高端装备制造">高端装备制造</option>
+                                    <option value="集成电路">集成电路</option>
+                                    <option value="新一代信息技术">新一代信息技术</option>
+                                    <option value="节能环保">节能环保</option>
+                                    <option value="新能源汽车">新能源汽车</option>
+                                    <option value="航空航天">航空航天</option>
+                                    <option value="海洋工程">海洋工程</option>
+                                    <option value="生物农业">生物农业</option>
+                                    <option value="智能制造">智能制造</option>
+                                    <option value="5G技术">5G技术</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label for="llmSelect" class="form-label text-white">选择AI模型</label>
+                                <select class="form-select" id="llmSelect">
+                                    <option value="kimi" selected>Kimi (Moonshot)</option>
+                                    <option value="gemini">Google Gemini</option>
+                                    <option value="ernie">百度ERNIE Bot</option>
+                                    <option value="doubao">字节豆包</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="contextInput" class="form-label text-white">补充要求（可选）</label>
+                                <input type="text" class="form-control" id="contextInput" placeholder="例如：重点关注政策环境...">
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-gradient btn-lg">
+                                <i class="bi bi-play-circle"></i> 开始生成报告
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="progressSection" class="glass-card p-4 mb-4" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="text-white mb-0">
+                            <i class="bi bi-file-earmark-text"></i> 报告生成进度
+                        </h4>
+                        <span id="statusIndicator" class="status-indicator status-processing">正在连接AI服务...</span>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress mb-2" style="height: 12px; background: rgba(255,255,255,0.2);">
+                            <div id="progressBar" class="progress-bar-custom" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="text-center text-white">
+                            <small id="progressText">准备开始生成...</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="contentSection" class="glass-card p-4" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="text-white mb-0">
+                            <i class="bi bi-journal-text"></i> 生成的报告内容
+                        </h4>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-light" id="downloadBtn" style="display: none;">
+                                <i class="bi bi-download"></i> 下载
+                            </button>
+                            <button class="btn btn-sm btn-outline-light" id="shareBtn" style="display: none;">
+                                <i class="bi bi-share"></i> 分享
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="reportContent" class="report-content" style="white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word; font-family: 'Georgia', 'Times New Roman', serif; line-height: 1.8; max-width: 100%; hyphens: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Task Toggle Button -->
+    <div class="floating-task-toggle" id="floatingTaskToggle">
+        <i class="bi bi-list-task" style="font-size: 1.5rem;"></i>
+    </div>
+
+    <!-- Floating Tasks Panel -->
+    <div class="floating-tasks-panel" id="floatingTasksPanel">
+        <div class="p-3" style="background: var(--primary-gradient); color: white;">
+            <h6 class="mb-0">后台任务管理</h6>
+        </div>
+        <div id="tasksList">
+            <div class="task-item text-center text-muted p-4">
+                暂无后台任务
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Task manager for floating tasks
+        let activeTasks = [];
+        let eventSource = null;
+        let currentTaskId = null;
+
+        // DOM elements
+        const reportForm = document.getElementById('reportForm');
+        const progressSection = document.getElementById('progressSection');
+        const contentSection = document.getElementById('contentSection');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const reportContent = document.getElementById('reportContent');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        const floatingTaskToggle = document.getElementById('floatingTaskToggle');
+        const floatingTasksPanel = document.getElementById('floatingTasksPanel');
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load tasks from localStorage or fetch from server
+            loadTasks();
+            
+            // Set up floating task toggle
+            floatingTaskToggle.addEventListener('click', function() {
+                floatingTasksPanel.classList.toggle('show');
+            });
+        });
+
+        // Form submission handler
+        reportForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const city = document.getElementById('citySelect').value;
+            const industry = document.getElementById('industrySelect').value;
+            const llmService = document.getElementById('llmSelect').value;
+            const additionalContext = document.getElementById('contextInput').value;
+
+            // Show progress section
+            progressSection.style.display = 'block';
+            contentSection.style.display = 'block';
+            
+            // Clear previous content
+            reportContent.innerHTML = '';
+            downloadBtn.style.display = 'none';
+            shareBtn.style.display = 'none';
+
+            try {
+                // Start streaming report generation
+                startStreamingReport(city, industry, llmService, additionalContext);
+            } catch (error) {
+                console.error('Error starting report generation:', error);
+                statusIndicator.className = 'status-indicator status-error';
+                statusIndicator.textContent = '生成失败';
+                progressText.textContent = '错误: ' + error.message;
+            }
+        });
+
+        function startStreamingReport(city, industry, llmService, additionalContext) {
+            // Create task object
+            const task = {
+                id: 'task_' + Date.now(),
+                city: city,
+                industry: industry,
+                llm_service: llmService,
+                status: 'pending',
+                created_at: new Date().toISOString(),
+                progress: 0,
+                content: ''
+            };
+            
+            // Add to active tasks
+            activeTasks.push(task);
+            updateFloatingTasks();
+            
+            // Send request to create task
+            fetch('/api/stream/generate-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    city: city,
+                    industry: industry,
+                    llm_service: llmService,
+                    additional_context: additionalContext
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                // Process SSE stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                function readStream() {
+                    reader.read().then(({ done, value }) => {
+                        if (done) {
+                            console.log('Stream complete');
+                            return;
+                        }
+                        
+                        // Decode the chunk
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+                        
+                        lines.forEach(line => {
+                            if (line.startsWith('data: ')) {
+                                const data = JSON.parse(line.substring(6));
+                                processEvent(data);
+                            }
+                        });
+                        
+                        readStream(); // Continue reading
+                    });
+                }
+                
+                readStream();
+            })
+            .catch(error => {
+                console.error('Error in stream connection:', error);
+                statusIndicator.className = 'status-indicator status-error';
+                statusIndicator.textContent = '连接失败';
+                progressText.textContent = '连接AI服务失败';
+            });
+        }
+
+        function processEvent(eventData) {
+            const { type, data, timestamp } = eventData;
+            
+            switch (type) {
+                case 'connection_established':
+                    statusIndicator.className = 'status-indicator status-processing';
+                    statusIndicator.textContent = '连接已建立';
+                    progressText.textContent = '开始生成报告...';
+                    currentTaskId = data.task_id;
+                    break;
+                    
+                case 'generation_start':
+                    statusIndicator.className = 'status-indicator status-processing';
+                    statusIndicator.textContent = '生成中';
+                    progressText.textContent = '正在生成报告...';
+                    break;
+                    
+                case 'report_chunk':
+                    // Append content to report
+                    const paragraph = document.createElement('div');
+                    paragraph.className = 'streaming-paragraph';
+                    paragraph.textContent = data.content;
+                    reportContent.appendChild(paragraph);
+
+                    // Update progress
+                    const progress = Math.min(data.chunk_index * 2, 95);
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = `生成中... (${data.chunk_index} 个段落)`;
+
+                    // Scroll to bottom
+                    reportContent.scrollTop = reportContent.scrollHeight;
+                    break;
+
+                case 'summary_complete':
+                    // Summary complete
+                    const summarySection = document.createElement('div');
+                    summarySection.className = 'report-section';
+                    summarySection.id = 'summary-section';
+                    summarySection.innerHTML = `<h2><i class="bi bi-chat-dots"></i> 执行摘要</h2><div>${data.content}</div>`;
+
+                    // Insert at the beginning of report content
+                    if (reportContent.firstChild) {
+                        reportContent.insertBefore(summarySection, reportContent.firstChild);
+                    } else {
+                        reportContent.appendChild(summarySection);
+                    }
+                    progressText.textContent = '摘要生成完成';
+                    break;
+
+                case 'swot_complete':
+                    // SWOT analysis complete
+                    const swotSection = document.createElement('div');
+                    swotSection.className = 'report-section';
+                    swotSection.id = 'swot-section';
+                    swotSection.innerHTML = `<h2><i class="bi bi-diagram-3"></i> SWOT分析</h2><div>${data.content}</div>`;
+
+                    // Add after existing content
+                    reportContent.appendChild(swotSection);
+                    progressText.textContent = 'SWOT分析生成完成';
+                    break;
+                    
+                case 'report_complete':
+                    statusIndicator.className = 'status-indicator status-completed';
+                    statusIndicator.textContent = '生成完成';
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '报告生成完成！';
+                    
+                    // Show action buttons
+                    downloadBtn.style.display = 'inline-block';
+                    shareBtn.style.display = 'inline-block';
+                    
+                    // Update task status
+                    updateTaskStatus(currentTaskId, 'completed');
+                    break;
+                    
+                case 'error':
+                    statusIndicator.className = 'status-indicator status-error';
+                    statusIndicator.textContent = '生成错误';
+                    progressText.textContent = '生成过程中出现错误';
+                    console.error('Generation error:', data);
+                    
+                    // Update task status
+                    updateTaskStatus(currentTaskId, 'failed', data.error);
+                    break;
+                    
+                case 'service_fallback':
+                    progressText.textContent = `切换到 ${data.fallback_service} 服务`;
+                    break;
+            }
+        }
+
+        function updateTaskStatus(taskId, status, error = null) {
+            const task = activeTasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = status;
+                task.error = error;
+                updateFloatingTasks();
+            }
+        }
+
+        // Timer tracking for each active task
+        let taskTimers = {};
+
+        function updateFloatingTasks() {
+            const tasksList = document.getElementById('tasksList');
+
+            if (activeTasks.length === 0) {
+                tasksList.innerHTML = '<div class="task-item text-center text-muted p-4">暂无后台任务</div>';
+                return;
+            }
+
+            tasksList.innerHTML = '';
+
+            activeTasks.forEach(task => {
+                const taskItem = document.createElement('div');
+                taskItem.className = 'task-item';
+
+                // Calculate duration for active tasks
+                let durationText = '';
+                if (task.status === 'processing' || task.status === 'pending') {
+                    const startTime = task.started_at ? new Date(task.started_at).getTime() : new Date(task.created_at).getTime();
+                    const currentTime = Date.now();
+                    const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+
+                    durationText = ` | 用时: ${formatDuration(elapsedSeconds)}`;
+
+                    // Start or update timer if not already running
+                    if (!taskTimers[task.id]) {
+                        taskTimers[task.id] = setInterval(() => updateTaskTimer(task.id), 1000);
+                    }
+                } else if (task.status === 'completed' && task.completed_at) {
+                    // For completed tasks, show total duration
+                    if (task.started_at) {
+                        const start = new Date(task.started_at).getTime();
+                        const end = new Date(task.completed_at).getTime();
+                        const totalSeconds = Math.floor((end - start) / 1000);
+                        durationText = ` | 总用时: ${formatDuration(totalSeconds)}`;
+                    }
+                }
+
+                const statusClass = task.status === 'completed' ? 'text-success' :
+                                  task.status === 'failed' ? 'text-danger' :
+                                  'text-warning';
+
+                taskItem.innerHTML = `
+                    <div class="task-title">${task.city} - ${task.industry}</div>
+                    <div class="task-meta">
+                        <span class="${statusClass}">${getStatusText(task.status)}</span>
+                        <span id="timer-${task.id}">${durationText}</span> |
+                        ${new Date(task.created_at).toLocaleString('zh-CN')}
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn btn-sm btn-outline-primary" onclick="switchToTask('${task.id}')">查看</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeTask('${task.id}')">删除</button>
+                    </div>
+                `;
+
+                tasksList.appendChild(taskItem);
+            });
+        }
+
+        function updateTaskTimer(taskId) {
+            const task = activeTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            if (task.status === 'processing' || task.status === 'pending') {
+                const startTime = task.started_at ? new Date(task.started_at).getTime() : new Date(task.created_at).getTime();
+                const currentTime = Date.now();
+                const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+
+                const timerElement = document.getElementById(`timer-${taskId}`);
+                if (timerElement) {
+                    timerElement.textContent = ` | 用时: ${formatDuration(elapsedSeconds)}`;
+                }
+            } else {
+                // Stop timer for completed tasks
+                if (taskTimers[taskId]) {
+                    clearInterval(taskTimers[taskId]);
+                    delete taskTimers[taskId];
+                }
+
+                // Update the display to show total duration instead
+                const timerElement = document.getElementById(`timer-${taskId}`);
+                if (timerElement && task.status === 'completed' && task.completed_at) {
+                    const start = task.started_at ? new Date(task.started_at).getTime() : new Date(task.created_at).getTime();
+                    const end = new Date(task.completed_at).getTime();
+                    const totalSeconds = Math.floor((end - start) / 1000);
+                    timerElement.textContent = ` | 总用时: ${formatDuration(totalSeconds)}`;
+                }
+            }
+        }
+
+        function formatDuration(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+
+            if (hrs > 0) {
+                return `${hrs}小时${mins}分钟${secs}秒`;
+            } else if (mins > 0) {
+                return `${mins}分钟${secs}秒`;
+            } else {
+                return `${secs}秒`;
+            }
+        }
+
+        // Clean up timers when tasks are removed
+        function cleanupTaskTimers() {
+            for (const taskId in taskTimers) {
+                clearInterval(taskTimers[taskId]);
+            }
+            taskTimers = {};
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return '等待中';
+                case 'processing': return '处理中';
+                case 'completed': return '已完成';
+                case 'failed': return '失败';
+                default: return status;
+            }
+        }
+
+        function switchToTask(taskId) {
+            // In a real implementation, this would switch to the report page for that task
+            alert(`切换到任务 ${taskId} 的报告`);
+            floatingTasksPanel.classList.remove('show');
+        }
+
+        function removeTask(taskId) {
+            // Stop and clean up timer if it exists
+            if (taskTimers[taskId]) {
+                clearInterval(taskTimers[taskId]);
+                delete taskTimers[taskId];
+            }
+
+            activeTasks = activeTasks.filter(task => task.id !== taskId);
+            updateFloatingTasks();
+
+            // Also delete from server if needed
+            fetch(`/api/tasks/${taskId}`, {
+                method: 'DELETE'
+            }).catch(error => {
+                console.error('Error deleting task from server:', error);
+            });
+        }
+
+        function switchToTask(taskId) {
+            // Navigate to the appropriate report page based on task status
+            const task = activeTasks.find(t => t.id === taskId);
+            if (task) {
+                if (task.status === 'completed') {
+                    // If task is completed, try to navigate to the report analysis page
+                    // Assuming the report would have been saved with a report_id that matches the task_id or has some relationship
+                    // For now, we'll use the task_id directly if it looks like a report_id, otherwise we'll go to stream-report
+                    if (task.report_id) {
+                        // If the task has a specific report_id associated with it, navigate to the report view page
+                        window.location.href = `/report/${task.report_id}`;
+                    } else {
+                        // If no specific report_id, go to stream page which should have the completed content
+                        window.location.href = `/stream-report/${taskId}?city=${encodeURIComponent(task.city)}&industry=${encodeURIComponent(task.industry)}&llm_service=${task.llm_service}`;
+                    }
+                } else {
+                    // If task is still processing, go to the live streaming page
+                    window.location.href = `/stream-report/${taskId}?city=${encodeURIComponent(task.city)}&industry=${encodeURIComponent(task.industry)}&llm_service=${task.llm_service}`;
+                }
+            }
+        }
+
+        function loadTasks() {
+            // Fetch tasks from server
+            fetch('/api/tasks')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.tasks) {
+                        activeTasks = data.tasks.map(task => ({
+                            ...task,
+                            id: task.task_id,  // Use task_id as id for consistency
+                            city: task.city,
+                            industry: task.industry,
+                            llm_service: task.llm_service,
+                            status: task.status,
+                            created_at: task.created_at ? new Date(task.created_at * 1000).toISOString() : new Date().toISOString(),
+                            started_at: task.started_at ? new Date(task.started_at * 1000).toISOString() : null,
+                            completed_at: task.completed_at ? new Date(task.completed_at * 1000).toISOString() : null,
+                            report_id: task.report_id,  // Include the report ID
+                            error: task.error
+                        }));
+                        updateFloatingTasks();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading tasks:', error);
+                    activeTasks = [];
+                    updateFloatingTasks();
+                });
+        }
+
+        // Download button functionality
+        downloadBtn.addEventListener('click', function() {
+            const content = reportContent.innerText;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `产业分析报告_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Share button functionality
+        shareBtn.addEventListener('click', function() {
+            const content = reportContent.innerText;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'AI产业分析报告',
+                    text: '由AI生成的产业分析报告',
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(content).then(() => {
+                    alert('报告内容已复制到剪贴板');
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/floating_task.js') }}"></script>
+</body>
+</html>

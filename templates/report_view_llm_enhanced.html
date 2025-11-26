@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report_data.city }} {{ report_data.industry }} 产业分析报告 - 可视化分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Set timezone to Beijing
+        document.addEventListener('DOMContentLoaded', function() {
+            // Convert UTC time to Beijing time
+            const utcTime = new Date("{{ report.created_at.isoformat() }}");
+            const beijingTime = new Date(utcTime.getTime() + 8 * 60 * 60 * 1000);
+            const formattedTime = beijingTime.getFullYear() + '-' +
+                String(beijingTime.getMonth() + 1).padStart(2, '0') + '-' +
+                String(beijingTime.getDate()).padStart(2, '0') + ' ' +
+                String(beijingTime.getHours()).padStart(2, '0') + ':' +
+                String(beijingTime.getMinutes()).padStart(2, '0');
+            document.getElementById('beijing-time') && (document.getElementById('beijing-time').textContent = formattedTime);
+        });
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-card {
+            transition: all 0.3s ease;
+        }
+        
+        .section-card:hover {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <nav class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold">
+                    <i class="fas fa-chart-line mr-2"></i>AI产业分析报告 - 可视化增强版
+                </h1>
+                <div class="flex items-center gap-4">
+                    <a href="{{ url_for('index') }}" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition flex items-center">
+                        <i class="fas fa-home mr-2"></i>返回首页
+                    </a>
+                    <a href="{{ url_for('reports_list') }}" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition flex items-center">
+                        <i class="fas fa-folder mr-2"></i>我的报告
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Report Header -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16">
+        <div class="container mx-auto px-6">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-map-marker-alt text-3xl mr-3"></i>
+                <h2 class="text-5xl font-bold">{{ report_data.city }}</h2>
+            </div>
+            <div class="flex items-center mb-6">
+                <i class="fas fa-industry text-2xl mr-3"></i>
+                <h3 class="text-3xl font-semibold">{{ report_data.industry }}产业深度分析报告</h3>
+            </div>
+            <div class="flex gap-8 text-lg">
+                <span><i class="fas fa-robot mr-2"></i>{{ (report_data.metadata.model if report_data.metadata and report_data.metadata.model) or (report_data.metadata.llm_service|upper if report_data.metadata and report_data.metadata.llm_service) or 'AI' }} 生成</span>
+                <span><i class="fas fa-clock mr-2"></i><span id="beijing-time">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span></span>
+                <span><i class="fas fa-file-word mr-2"></i>{{ report_data.full_content | length if report_data.full_content else (report_data.summary.word_count if report_data.summary and report_data.summary.word_count else 0) }} 字</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Key Performance Indicators -->
+        {% if report_data.statistics or report_data.summary %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm">市场规模</p>
+                        <h3 class="text-3xl font-bold">{{ (report_data.statistics.market_size if report_data.statistics and report_data.statistics.market_size) or 'N/A' }}</h3>
+                        <p class="text-blue-100 text-sm mt-1">年增长率: {{ (report_data.statistics.growth_rate if report_data.statistics and report_data.statistics.growth_rate) or '-' }}</p>
+                    </div>
+                    <i class="fas fa-chart-line text-4xl opacity-50"></i>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-green-100 text-sm">企业数量</p>
+                        <h3 class="text-3xl font-bold">{{ (report_data.statistics.enterprise_count if report_data.statistics and report_data.statistics.enterprise_count) or (report_data.summary.categories_analyzed if report_data.summary and report_data.summary.categories_analyzed) or 0 }}</h3>
+                        <p class="text-green-100 text-sm mt-1">人才储备: {{ (report_data.statistics.talent_pool if report_data.statistics and report_data.statistics.talent_pool) or 'N/A' }}</p>
+                    </div>
+                    <i class="fas fa-building text-4xl opacity-50"></i>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm">AI潜力评分</p>
+                        <h3 class="text-3xl font-bold">{{ (report_data.applicability_score if report_data.applicability_score) or (report_data.summary.ai_opportunities if report_data.summary and report_data.summary.ai_opportunities) or 0 }}</h3>
+                        <p class="text-purple-100 text-sm mt-1">高优先级AI: {{ (report_data.summary.high_priority_ai if report_data.summary and report_data.summary.high_priority_ai) or 0 }}</p>
+                    </div>
+                    <i class="fas fa-robot text-4xl opacity-50"></i>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-orange-100 text-sm">分析类别</p>
+                        <h3 class="text-3xl font-bold">{{ (report_data.summary.categories_analyzed if report_data.summary and report_data.summary.categories_analyzed) or 0 }}</h3>
+                        <p class="text-orange-100 text-sm mt-1">洞察质量: 高</p>
+                    </div>
+                    <i class="fas fa-lightbulb text-4xl opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Visualization Section -->
+        {% if report_data.charts %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-3xl font-bold gradient-text mb-6 flex items-center">
+                <i class="fas fa-chart-bar mr-3"></i>数据分析与可视化
+            </h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Category Distribution Chart -->
+                <div class="section-card bg-gray-50 rounded-lg p-6 shadow-sm">
+                    <h4 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-chart-pie text-indigo-600 mr-2"></i>产业类别分析
+                    </h4>
+                    <div id="categoryChart" style="height: 400px;"></div>
+                </div>
+                
+                <!-- AI Opportunities Chart -->
+                <div class="section-card bg-gray-50 rounded-lg p-6 shadow-sm">
+                    <h4 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-rocket text-indigo-600 mr-2"></i>AI融合潜力
+                    </h4>
+                    <div id="aiChart" style="height: 400px;"></div>
+                </div>
+                
+                <!-- Keyword Frequency Chart -->
+                <div class="section-card bg-gray-50 rounded-lg p-6 shadow-sm">
+                    <h4 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-tags text-indigo-600 mr-2"></i>关键词热度
+                    </h4>
+                    <div id="keywordChart" style="height: 300px;"></div>
+                </div>
+                
+                <!-- Timeline Chart -->
+                {% if report_data.timeline %}
+                <div class="section-card bg-gray-50 rounded-lg p-6 shadow-sm">
+                    <h4 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-timeline text-indigo-600 mr-2"></i>时间轴
+                    </h4>
+                    <div id="timelineChart" style="height: 300px;"></div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- SWOT Analysis -->
+        {% if report_data.analysis and report_data.analysis.industry_relevance %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-3xl font-bold gradient-text mb-6 flex items-center">
+                <i class="fas fa-diagram-3 mr-3"></i>产业链分析
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Upstream -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border-l-4 border-blue-500">
+                    <h4 class="text-xl font-bold text-blue-700 mb-4 flex items-center">
+                        <i class="fas fa-arrow-down mr-2"></i>上游环节
+                    </h4>
+                    {% if report_data.analysis.industry_relevance.value_chain.upstream %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.analysis.industry_relevance.value_chain.upstream %}
+                        <li class="flex items-start">
+                            <i class="fas fa-supplier text-blue-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+
+                <!-- Midstream -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-l-4 border-green-500">
+                    <h4 class="text-xl font-bold text-green-700 mb-4 flex items-center">
+                        <i class="fas fa-arrows-alt-v mr-2"></i>中游环节
+                    </h4>
+                    {% if report_data.analysis.industry_relevance.value_chain.midstream %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.analysis.industry_relevance.value_chain.midstream %}
+                        <li class="flex items-start">
+                            <i class="fas fa-industry text-green-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+
+                <!-- Downstream -->
+                <div class="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-xl border-l-4 border-purple-500">
+                    <h4 class="text-xl font-bold text-purple-700 mb-4 flex items-center">
+                        <i class="fas fa-arrow-up mr-2"></i>下游环节
+                    </h4>
+                    {% if report_data.analysis.industry_relevance.value_chain.downstream %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.analysis.industry_relevance.value_chain.downstream %}
+                        <li class="flex items-start">
+                            <i class="fas fa-store text-purple-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- SWOT Analysis -->
+        {% if report_data.swot_analysis and (report_data.swot_analysis.strengths or report_data.swot_analysis.weaknesses or report_data.swot_analysis.opportunities or report_data.swot_analysis.threats) %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-3xl font-bold gradient-text mb-6 flex items-center">
+                <i class="fas fa-shield-alt mr-3"></i>SWOT 战略分析
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Strengths -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-l-4 border-green-500">
+                    <h4 class="text-xl font-bold text-green-700 mb-4 flex items-center">
+                        <i class="fas fa-arrow-up mr-2"></i>优势 (Strengths)
+                    </h4>
+                    {% if report_data.swot_analysis.strengths %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.swot_analysis.strengths %}
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+
+                <!-- Weaknesses -->
+                <div class="bg-gradient-to-br from-red-50 to-rose-50 p-6 rounded-xl border-l-4 border-red-500">
+                    <h4 class="text-xl font-bold text-red-700 mb-4 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>劣势 (Weaknesses)
+                    </h4>
+                    {% if report_data.swot_analysis.weaknesses %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.swot_analysis.weaknesses %}
+                        <li class="flex items-start">
+                            <i class="fas fa-times-circle text-red-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+
+                <!-- Opportunities -->
+                <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border-l-4 border-blue-500">
+                    <h4 class="text-xl font-bold text-blue-700 mb-4 flex items-center">
+                        <i class="fas fa-lightbulb mr-2"></i>机遇 (Opportunities)
+                    </h4>
+                    {% if report_data.swot_analysis.opportunities %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.swot_analysis.opportunities %}
+                        <li class="flex items-start">
+                            <i class="fas fa-plus-circle text-blue-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+
+                <!-- Threats -->
+                <div class="bg-gradient-to-br from-yellow-50 to-amber-50 p-6 rounded-xl border-l-4 border-yellow-500">
+                    <h4 class="text-xl font-bold text-yellow-700 mb-4 flex items-center">
+                        <i class="fas fa-exclamation mr-2"></i>威胁 (Threats)
+                    </h4>
+                    {% if report_data.swot_analysis.threats %}
+                    <ul class="space-y-2">
+                        {% for item in report_data.swot_analysis.threats %}
+                        <li class="flex items-start">
+                            <i class="fas fa-shield-alt text-yellow-600 mt-1 mr-2"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">暂无数据</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Key Insights -->
+        {% if report_data.key_insights %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-3xl font-bold gradient-text mb-6 flex items-center">
+                <i class="fas fa-lightbulb mr-3"></i>核心洞察
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for insight in report_data.key_insights %}
+                <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-6 rounded-lg border-l-4 border-indigo-500">
+                    <h4 class="text-xl font-semibold text-indigo-700 mb-3">{{ insight.title }}</h4>
+                    <p class="text-gray-700 leading-relaxed">{{ insight.content }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- AI Opportunities Analysis -->
+        {% if report_data.ai_opportunities %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-3xl font-bold gradient-text mb-6 flex items-center">
+                <i class="fas fa-robot mr-3"></i>AI应用潜力分析
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for category, data in report_data.ai_opportunities.items() %}
+                {% if data.potential_score %}
+                <div class="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-lg border-l-4 border-purple-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="text-lg font-semibold text-purple-700">{{ data.get('name', category) }}</h4>
+                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">{{ data.potential_score }}/10</span>
+                    </div>
+                    <p class="text-gray-600 mb-2">优先级: {{ data.priority_level | upper }}</p>
+                    <p class="text-gray-700">{{ data.recommendation }}</p>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Executive Summary -->
+        {% if report_data.summary %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-3xl font-bold gradient-text flex items-center">
+                    <i class="fas fa-star mr-3"></i>执行摘要
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="showSummary('zh')" id="btn-zh" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold">
+                        中文
+                    </button>
+                    <button onclick="showSummary('en')" id="btn-en" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold">
+                        English
+                    </button>
+                </div>
+            </div>
+            <div id="summary-zh" class="summary-content prose max-w-none">
+                <div class="text-lg leading-relaxed text-gray-700 whitespace-pre-wrap">{{ report_data.summary.zh | default(report_data.full_content[:500] + '...' if report_data.full_content else '暂无摘要', true) | replace('```','') }}</div>
+            </div>
+            <div id="summary-en" class="summary-content prose max-w-none hidden">
+                <div class="text-lg leading-relaxed text-gray-700 whitespace-pre-wrap">{{ report_data.summary.en | default(report_data.full_content[:500] + '...' if report_data.full_content else 'No summary available', true) | replace('```','') }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Full Content -->
+        {% if report_data.full_content %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-file-alt mr-2 text-indigo-600"></i>详细报告内容
+            </h3>
+            <div class="prose max-w-none">
+                <div class="text-gray-700 leading-relaxed" style="white-space: pre-wrap; word-break: break-word;">{{ render_markdown(report_data.full_content) | safe }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Export Options -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-download mr-2 text-indigo-600"></i>导出与操作
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button onclick="window.print()" class="px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex flex-col items-center">
+                    <i class="fas fa-print text-xl mb-1"></i>
+                    <span class="text-sm">打印</span>
+                </button>
+                <a href="{{ url_for('api_export_report', report_id=report.report_id, format='pdf') }}"
+                   class="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex flex-col items-center inline-block">
+                    <i class="fas fa-file-pdf text-xl mb-1"></i>
+                    <span class="text-sm">PDF</span>
+                </a>
+                <a href="{{ url_for('api_export_report', report_id=report.report_id, format='word') }}"
+                   class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex flex-col items-center inline-block">
+                    <i class="fas fa-file-word text-xl mb-1"></i>
+                    <span class="text-sm">Word</span>
+                </a>
+                <a href="{{ url_for('api_download_report_json', report_id=report.report_id) }}"
+                   class="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex flex-col items-center inline-block">
+                    <i class="fas fa-file-code text-xl mb-1"></i>
+                    <span class="text-sm">JSON</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Summary language toggle
+        function showSummary(lang) {
+            const zhContent = document.getElementById('summary-zh');
+            const enContent = document.getElementById('summary-en');
+            const zhBtn = document.getElementById('btn-zh');
+            const enBtn = document.getElementById('btn-en');
+
+            if (lang === 'zh') {
+                zhContent.classList.remove('hidden');
+                enContent.classList.add('hidden');
+                zhBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                zhBtn.classList.add('bg-indigo-600', 'text-white');
+                enBtn.classList.remove('bg-indigo-600', 'text-white');
+                enBtn.classList.add('bg-gray-200', 'text-gray-700');
+            } else {
+                zhContent.classList.add('hidden');
+                enContent.classList.remove('hidden');
+                enBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                enBtn.classList.add('bg-indigo-600', 'text-white');
+                zhBtn.classList.remove('bg-indigo-600', 'text-white');
+                zhBtn.classList.add('bg-gray-200', 'text-gray-700');
+            }
+        }
+
+        // Chart rendering
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if report_data.charts and report_data.charts.category_distribution %}
+            // Category Distribution Chart
+            const categoryChart = echarts.init(document.getElementById('categoryChart'));
+            const categoryData = {{ report_data.charts.category_distribution.data[0].labels if report_data.charts.category_distribution.data and report_data.charts.category_distribution.data[0].labels else [] | tojson }};
+            const categoryValues = {{ report_data.charts.category_distribution.data[0].chart_values if report_data.charts.category_distribution.data and report_data.charts.category_distribution.data[0].chart_values else [] | tojson }};
+            
+            const categoryOption = {
+                title: {
+                    text: '产业类别分布',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [{
+                    name: '类别分析',
+                    type: 'pie',
+                    radius: '50%',
+                    data: categoryData.map((label, index) => ({
+                        value: categoryValues[index],
+                        name: label
+                    })),
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+            categoryChart.setOption(categoryOption);
+            {% endif %}
+
+            {% if report_data.charts and report_data.charts.ai_opportunities %}
+            // AI Opportunities Chart
+            const aiChart = echarts.init(document.getElementById('aiChart'));
+            const aiLabels = {{ report_data.charts.ai_opportunities.data[0].theta if report_data.charts.ai_opportunities.data and report_data.charts.ai_opportunities.data[0].theta else [] | tojson }};
+            const aiScores = {{ report_data.charts.ai_opportunities.data[0].r if report_data.charts.ai_opportunities.data and report_data.charts.ai_opportunities.data[0].r else [] | tojson }};
+            
+            const aiOption = {
+                title: {
+                    text: 'AI融合潜力雷达图',
+                    left: 'center'
+                },
+                tooltip: {},
+                radar: {
+                    indicator: aiLabels.map(label => ({ name: label, max: 100 }))
+                },
+                series: [{
+                    name: 'AI潜力',
+                    type: 'radar',
+                    data: [{
+                        value: aiScores,
+                        name: 'AI融合潜力'
+                    }]
+                }]
+            };
+            aiChart.setOption(aiOption);
+            {% endif %}
+
+            {% if report_data.charts and report_data.charts.keyword_frequency %}
+            // Keyword Frequency Chart
+            const keywordChart = echarts.init(document.getElementById('keywordChart'));
+            const keywords = {{ report_data.charts.keyword_frequency.data[0].x if report_data.charts.keyword_frequency.data and report_data.charts.keyword_frequency.data[0].x else [] | tojson }};
+            const frequencies = {{ report_data.charts.keyword_frequency.data[0].y if report_data.charts.keyword_frequency.data and report_data.charts.keyword_frequency.data[0].y else [] | tojson }};
+            
+            const keywordOption = {
+                title: {
+                    text: '关键词热度',
+                    left: 'center'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: keywords
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                series: [{
+                    data: frequencies,
+                    type: 'bar'
+                }]
+            };
+            keywordChart.setOption(keywordOption);
+            {% endif %}
+
+            {% if report_data.timeline %}
+            // Timeline Chart
+            const timelineChart = echarts.init(document.getElementById('timelineChart'));
+            const timelineDates = {{ report_data.timeline | selectattr('date') | map(attribute='date') | list | tojson }};
+            const timelineTitles = {{ report_data.timeline | selectattr('title') | map(attribute='title') | list | tojson }};
+            
+            const timelineOption = {
+                title: {
+                    text: '关键事件时间轴',
+                    left: 'center'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: timelineDates
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                series: [{
+                    name: '事件',
+                    data: Array(timelineDates.length).fill(10), // dummy values
+                    type: 'line',
+                    smooth: true
+                }],
+                dataZoom: [{
+                    type: 'slider',
+                    start: 0,
+                    end: 100
+                }]
+            };
+            timelineChart.setOption(timelineOption);
+            {% endif %}
+        });
+        
+        // Handle window resize for charts
+        window.addEventListener('resize', function() {
+            setTimeout(() => {
+                {% if report_data.charts and report_data.charts.category_distribution %}categoryChart.resize();{% endif %}
+                {% if report_data.charts and report_data.charts.ai_opportunities %}aiChart.resize();{% endif %}
+                {% if report_data.charts and report_data.charts.keyword_frequency %}keywordChart.resize();{% endif %}
+                {% if report_data.timeline %}timelineChart.resize();{% endif %}
+            }, 100);
+        });
+    </script>
+    
+    <script>
+        // Enhance readability for content sections
+        document.addEventListener('DOMContentLoaded', function() {
+            // Process all content blocks for better readability
+            const blocks = document.querySelectorAll('.section-content');
+            blocks.forEach(b => {
+                const raw = b.textContent || '';
+                const lines = raw.split(/\n+/).map(l => l.trim()).filter(Boolean);
+                if (!lines.length) return;
+                const ul = document.createElement('ul');
+                ul.className = 'list-disc pl-6 space-y-1';
+                let isList = false;
+                lines.forEach(line => {
+                    if (/^[-•*\d+\.\)（）\d]/.test(line)) {
+                        const li = document.createElement('li');
+                        li.textContent = line.replace(/^[-•*\d+\.\)（）]+\s*/, '');
+                        ul.appendChild(li);
+                        isList = true;
+                    }
+                });
+                if (isList && ul.children.length >= 2) {
+                    b.innerHTML = '';
+                    b.appendChild(ul);
+                } else {
+                    // fallback: split into paragraphs
+                    b.innerHTML = lines.map(p => `<p class="mb-2">${p}</p>`).join('');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

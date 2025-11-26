@@ -49,6 +49,7 @@ from src.utils.notification_service import notification_service
 from src.utils.performance_optimizer import CacheManager
 from scripts.api_notification_routes import register_notification_routes
 from src.routes.streaming_routes import streaming_bp
+from routes.report_generation import report_gen_bp
 from src.data.wechat_scraper import WeChatScraper
 from src.analysis.wechat_content_analyzer import WeChatContentAnalyzer
 from functools import lru_cache
@@ -417,36 +418,11 @@ def generate_report():
             return render_template('generate_report.html')
         
         try:
-            # Create report record with initial timestamp
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            temp_report_id = f"llm_report_{timestamp}"
-            
-            report = Report(
-                report_id=temp_report_id,
-                title=f"{city} {industry} 产业分析报告",
-                city=city,
-                industry=industry,
-                report_type='llm',
-                user_id=get_current_user_id(),
-                status='processing'
-            )
-            db.session.add(report)
-            db.session.commit()
-            
-            # Start background task
-            task = generate_llm_report_task.delay(
-                city=city,
-                industry=industry,
-                additional_context=additional_context,
-                user_id=get_current_user_id(),
-                initial_report_id=temp_report_id,
-                llm_service=llm_service,
-                app_root_path=str(APP_ROOT)
-            )
-            
-            # Redirect to streaming report page with URL
+            import uuid as _uuid
+            task_id = str(_uuid.uuid4())
+            # Redirect to streaming report page; generation will start via SSE
             return redirect(url_for('stream_report_page',
-                                  task_id=task.id,
+                                  task_id=task_id,
                                   city=city,
                                   industry=industry,
                                   llm_service=llm_service))
@@ -666,10 +642,28 @@ def view_report(report_id):
                                 break
             except Exception as e:
                 logger.warning(f"Could not read original content: {e}")
+
+        # For LLM reports, check if the enhanced template should be used
+        use_enhanced_template = False
+        if report.report_type == 'llm':
+            # Check if the report data has enhanced structure (from streaming)
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    temp_data = json.load(f)
+                # If the report has the richer structure we created (charts, analysis, etc.), use enhanced template
+                if 'charts' in temp_data or 'analysis' in temp_data or 'key_insights' in temp_data:
+                    use_enhanced_template = True
+            except Exception as e:
+                logger.warning(f"Could not check report structure: {e}")
         
+        # Determine which template to use
+        if use_enhanced_template:
+            template = 'report_view_llm_enhanced.html'
+
         logger.info(f"Rendering report {report_id} with template {template}")
         logger.info(f"Report data keys: {list(report_data.keys())}")
-        
+        logger.info(f"Using enhanced template: {use_enhanced_template}")
+
         # Pre-serialize chart data for templates to avoid tojson issues
         if 'charts' in report_data:
             for chart_name, chart_data in report_data['charts'].items():
@@ -3060,6 +3054,7 @@ def main():
 
     # Register streaming blueprint
     app.register_blueprint(streaming_bp, url_prefix='/streaming')
+    app.register_blueprint(report_gen_bp)
 
     # Fetch WeChat articles in the background when the app starts
     try:
