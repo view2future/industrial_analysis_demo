@@ -1245,13 +1245,14 @@ class PoiMapVisualizer {
                 // Apply the boundary style
                 this.applyBoundaryStyle();
 
-                // Fit the map to the boundary
+                // Add the boundary to the map but don't auto-fit to avoid changing zoom level
                 const bounds = new google.maps.LatLngBounds();
                 this.dataLayer.forEach(f => {
                     const geom = f.getGeometry();
                     geom.forEachLatLng && geom.forEachLatLng(latlng => bounds.extend(latlng));
                 });
-                if (!bounds.isEmpty()) {
+                // Only fit bounds if zoom level hasn't been explicitly set
+                if (!bounds.isEmpty() && this.currentMap.getZoom() < 5) { // If zoom level is very low, then fit bounds
                     this.currentMap.fitBounds(bounds);
                 }
             } else {
