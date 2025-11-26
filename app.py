@@ -3217,14 +3217,14 @@ def api_regional_data(region):
     try:
         from src.data.regional_data_scraper import RegionalDataScraper
         scraper = RegionalDataScraper()
-        
+
         # Fetch leadership and economic data
         leadership_data = scraper.get_regional_leadership(region)
         gdp_data = scraper.get_regional_gdp_data(region)
         district_rankings = scraper.get_district_rankings(region)
         university_info = scraper.get_university_info(region)
         sci_institutions = scraper.get_science_institutions(region)
-        
+
         return jsonify({
             "success": True,
             "region": region,
@@ -3237,3 +3237,18 @@ def api_regional_data(region):
     except Exception as e:
         logger.error(f"Error fetching regional data: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+# Route to serve the local POI data file for demo
+@app.route('/data/output/poi_upload/chengdu-ai-pois.json')
+def serve_local_poi_data():
+    """Serve the local POI data file for the demo."""
+    from flask import send_from_directory
+    import os
+
+    # Ensure we use the correct absolute path relative to the app root
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the current script
+    file_path = os.path.join(base_dir, 'data', 'output', 'poi_upload')
+    filename = 'chengdu-ai-pois.json'
+
+    return send_from_directory(file_path, filename)

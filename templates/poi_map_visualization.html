@@ -131,15 +131,12 @@
         color: #000000 !important;
     }
 
-    /* Ensure export button text is visible */
-    #export-btn, #export-upload-btn {
-        background: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #047857 !important;
-    }
-    #export-btn:hover, #export-upload-btn:hover {
-        background: #047857 !important;
-        color: #ffffff !important;
+    /* Export buttons removed for demo */
+
+    /* Hide upload panel completely */
+    #upload-panel,
+    [data-tab="upload"] {
+        display: none !important;
     }
 
     /* Ensure browse button text is pure black */
@@ -212,7 +209,7 @@ function initGoogleMapLoader() {
                                 data-tab="search">
                             <i class="fas fa-search mr-2"></i>标签搜索
                         </button>
-                        <button class="tab-button w-1/2 text-center py-3 px-4 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                        <button class="tab-button w-1/2 text-center py-3 px-4 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors hidden"
                                 data-tab="upload">
                             <i class="fas fa-upload mr-2"></i>清单上传
                         </button>
@@ -244,7 +241,7 @@ function initGoogleMapLoader() {
                             </label>
                             <input type="text" id="keywords-input"
                                    class="input-modern w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white text-gray-800"
-                                   placeholder="输入标签，逗号分隔，如：人工智能,高校,科研院所" required>
+                                   placeholder="输入标签，逗号分隔，如：人工智能,高校,科研院所" value="人工智能" required>
                             <p class="text-xs text-gray-500 mt-2 flex items-center">
                                 <i class="fas fa-info-circle mr-1"></i>
                                 支持多标签搜索，最多10个标签
@@ -253,17 +250,15 @@ function initGoogleMapLoader() {
 
                         <div class="grid grid-cols-2 gap-3 pt-2">
                             <button id="search-btn" class="btn-modern btn-primary py-3 px-4 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-search mr-2"></i>开始搜索
+                                <i class="fas fa-search mr-2"></i>搜索
                             </button>
-                            <button id="export-btn" class="btn-modern btn-success py-3 px-4 rounded-lg flex items-center justify-center text-black" disabled>
-                                <i class="fas fa-download mr-2"></i>导出
-                            </button>
+                            <!-- Export button removed for demo -->
                         </div>
                     </div>
                 </div>
 
                 <!-- Upload Panel -->
-                <div class="tab-content hidden" id="upload-panel">
+                <div class="tab-content hidden" id="upload-panel" style="display: none;">
                     <div class="space-y-5">
                         <div>
                             <label class="block text-sm font-semibold text-gray-800 mb-2 flex items-center">
@@ -296,9 +291,7 @@ function initGoogleMapLoader() {
                             <button id="process-btn" class="btn-modern btn-primary py-3 px-4 rounded-lg flex items-center justify-center" disabled>
                                 <i class="fas fa-cogs mr-2"></i>开始处理
                             </button>
-                            <button id="export-upload-btn" class="btn-modern btn-success py-3 px-4 rounded-lg flex items-center justify-center text-black" disabled>
-                                <i class="fas fa-download mr-2"></i>导出
-                            </button>
+                            <!-- Export button removed for demo -->
                         </div>
                     </div>
                 </div>
@@ -324,6 +317,13 @@ function initGoogleMapLoader() {
                         <i class="fas fa-list mr-2 text-green-500"></i>
                         结果清单
                     </h3>
+                    <!-- Filter controls -->
+                    <div class="mb-4 flex flex-wrap gap-2">
+                        <button id="filter-all" class="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800 border border-blue-300">全部</button>
+                        <button id="filter-enterprise" class="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 border border-green-300">企业</button>
+                        <button id="filter-university" class="px-3 py-1 text-sm rounded-full bg-blue-200 text-blue-900 border border-blue-400">高校</button>
+                        <button id="filter-research" class="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-800 border border-purple-300">科研院所</button>
+                    </div>
                     <div id="results-list-content" class="space-y-2 max-h-64 overflow-y-auto pr-2"></div>
                 </div>
 
@@ -466,6 +466,15 @@ class PoiMapVisualizer {
         };
 
         this.currentMap = new google.maps.Map(document.getElementById('google-map'), mapOptions);
+
+        // Add custom control to display current zoom level
+        this.addZoomDisplayControl();
+
+        // Add event listener to update zoom display when zoom changes
+        google.maps.event.addListener(this.currentMap, 'zoom_changed', () => {
+            this.updateZoomDisplay();
+        });
+
         this.googleMapReady = true;
         this.dataLayer = new google.maps.Data({ map: this.currentMap });
         this.dataLayer.setStyle({ strokeColor: '#ff3b30', strokeWeight: 3, strokeOpacity: 0.95, fillColor: '#ff3b30', fillOpacity: 0.12 });
@@ -492,6 +501,9 @@ class PoiMapVisualizer {
         this.currentMap.addControl(new BMap.OverviewMapControl());
         this.currentMap.addControl(new BMap.MapTypeControl());
         this.currentMap.enableScrollWheelZoom(true);
+
+        // Add custom control to display current zoom level
+        this.addBaiduZoomDisplayControl();
 
         this.baiduMapReady = true;
 
@@ -552,11 +564,6 @@ class PoiMapVisualizer {
         }
 
 
-        // Export functionality
-        document.getElementById('export-btn').addEventListener('click', () => {
-            this.exportResults();
-        });
-
         // Upload functionality
         document.getElementById('browse-btn').addEventListener('click', (e) => {
             e.preventDefault(); // Prevent any default behavior
@@ -572,11 +579,6 @@ class PoiMapVisualizer {
             this.processUploadedFile();
         });
 
-        // Export upload results
-        document.getElementById('export-upload-btn').addEventListener('click', () => {
-            this.exportUploadResults();
-        });
-
         // Visualization controls
         document.getElementById('show-markers').addEventListener('change', (e) => {
             this.toggleVisualization('markers', e.target.checked);
@@ -588,6 +590,23 @@ class PoiMapVisualizer {
 
         document.getElementById('show-clusters').addEventListener('change', (e) => {
             this.toggleVisualization('clusters', e.target.checked);
+        });
+
+        // Filter buttons for results list
+        document.getElementById('filter-all').addEventListener('click', () => {
+            this.applyTypeFilter('all');
+        });
+
+        document.getElementById('filter-enterprise').addEventListener('click', () => {
+            this.applyTypeFilter('企业');
+        });
+
+        document.getElementById('filter-university').addEventListener('click', () => {
+            this.applyTypeFilter('高校');
+        });
+
+        document.getElementById('filter-research').addEventListener('click', () => {
+            this.applyTypeFilter('科研院所');
         });
 
         // On initialization, show the default region boundary if there's a default value
@@ -629,103 +648,46 @@ class PoiMapVisualizer {
     }
 
     async performSearch() {
-        const regionSelect = document.getElementById('region-select');
-        const region = regionSelect ? regionSelect.value : '';
-        const keywordsInput = document.getElementById('keywords-input').value.trim();
-
-        if (!region) {
-            alert('请输入目标区域');
-            return;
-        }
-
-        if (!keywordsInput) {
-            alert('请输入搜索标签');
-            return;
-        }
-
-        // Parse keywords
-        const keywords = keywordsInput.split(',').map(k => k.trim()).filter(k => k);
-        if (keywords.length === 0) {
-            alert('请输入有效的标签，用逗号分隔');
-            return;
-        }
-
         try {
             document.getElementById('search-btn').disabled = true;
-            document.getElementById('search-btn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>搜索中...';
+            document.getElementById('search-btn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>加载中...';
 
-            // Try to get CSRF token from the page (if present)
-            const csrfTokenInput = document.querySelector('[name=csrf_token]');
-            const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
-
-            const headers = {
-                'Content-Type': 'application/json'
-            };
-
-            if (csrfToken) {
-                headers['X-CSRF-Token'] = csrfToken;
-            }
-
-            const response = await fetch('/api/poi-search', {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                    region: region,
-                    keywords: keywords
-                })
-            });
-
+            // Load the local JSON file directly from static directory
+            const response = await fetch('/static/data/output/poi_upload/chengdu-ai-pois.json');
             const result = await response.json();
 
             if (response.ok) {
-                if (result.success) {
-                    const regionSelect = document.getElementById('region-select');
-                    const selectedRegion = regionSelect ? regionSelect.value : '';
-                    const boundaryResp = await fetch(`/api/boundaries?region=${encodeURIComponent(selectedRegion)}&level=city`);
-                    const boundaryJson = await boundaryResp.json();
-                    let rawResults = result.data.results || [];
-                    const filteredTypes = ['企业','高校','科研院所'];
-                    const normalized = rawResults.filter(p => filteredTypes.includes(this.normalizeType(p)));
-                    const boundaryGeoJSON = boundaryResp.ok && boundaryJson.success ? boundaryJson.geojson : null;
-                    const inside = boundaryGeoJSON ? normalized.filter(p => this.isPointInsideGeoJSON(p.location && p.location.lng, p.location && p.location.lat, boundaryGeoJSON)) : normalized;
-                    this.poiData = inside;
-                    this.displayResults(this.poiData, result.data.visualization);
-                    this.updateResultsSummary({ total_count: this.poiData.length });
-                    this.renderResultsList(this.poiData);
+                // Set the loaded data as POI data
+                this.poiData = result.poi_data || result.results || result;
 
-                    // Enable export button
-                    document.getElementById('export-btn').disabled = false;
+                // Apply visualization to the loaded data
+                this.displayResults(this.poiData, null);
+                this.updateResultsSummary({ total_count: this.poiData.length });
+                this.renderResultsList(this.poiData);
 
-                    // Auto-center map on results
-                    if (this.poiData.length > 0) {
-                        this.centerMapOnResults();
+                // Auto-center map on results with appropriate zoom level for demo
+                if (this.poiData.length > 0) {
+                    // Center on Chengdu city center (Tianfu Square) and set appropriate zoom level
+                    if (this.mapType === 'google') {
+                        this.currentMap.setCenter({ lat: 30.6574, lng: 104.0668 }); // Tianfu Square coordinates
+                        this.currentMap.setZoom(12); // Set zoom level for better view
                     } else {
-                        // Show message when no results are found
-                        alert('搜索完成，但未找到相关数据');
+                        const point = new BMap.Point(104.0668, 30.6574); // Tianfu Square coordinates
+                        this.currentMap.centerAndZoom(point, 12);
                     }
+                } else {
+                    // Show message when no results are found
+                    alert('加载完成，但未找到相关数据');
+                }
 
-                    // Display the region boundary on the map
-                    await this.renderRegionBoundaries();
-                } else {
-                    alert('搜索失败: ' + (result.error || '未知错误'));
-                }
+                // Display the region boundary on the map
+                await this.renderRegionBoundaries();
             } else {
-                // Handle HTTP error responses
-                let errorMessage = '搜索失败';
-                if (result && result.error) {
-                    errorMessage = result.error;
-                } else {
-                    try {
-                        errorMessage = await response.text();
-                    } catch(e) {
-                        errorMessage = 'HTTP错误: ' + response.status;
-                    }
-                }
-                alert(errorMessage);
+                alert('加载本地POI数据失败');
             }
         } catch (error) {
-            console.error('Search error:', error);
-            alert('搜索过程中出现错误: ' + error.message);
+            console.error('Local POI data load error:', error);
+            alert('加载本地POI数据失败: ' + error.message);
         } finally {
             document.getElementById('search-btn').disabled = false;
             document.getElementById('search-btn').innerHTML = '<i class="fas fa-search mr-2"></i>开始搜索';
@@ -772,8 +734,6 @@ class PoiMapVisualizer {
                 this.displayResults(this.poiData, result.data.visualization);
                 this.updateResultsSummary(result.data);
 
-                // Enable export button
-                document.getElementById('export-upload-btn').disabled = false;
                 const parse = result.data.parse || {};
                 let statusText = `处理完成：有效 ${parse.valid || result.data.total_count} / 总计 ${parse.processed || result.data.total_count}，无效 ${parse.invalid || 0}`;
                 if (parse.invalid && parse.invalid > 0 && parse.invalid_breakdown) {
@@ -860,6 +820,9 @@ class PoiMapVisualizer {
         this.clearMarkers();
         this.markers = [];
 
+        // Track currently open info window for Google Maps
+        this.currentInfoWindow = null;
+
         poiData.forEach(poi => {
             if (!poi.location || !poi.location.lng || !poi.location.lat) {
                 console.warn(`POI ${poi.name} has no valid coordinates`);
@@ -895,7 +858,14 @@ class PoiMapVisualizer {
                 });
 
                 marker.addListener('click', () => {
+                    // Close any existing info window
+                    if (this.currentInfoWindow) {
+                        this.currentInfoWindow.close();
+                    }
+                    // Open new info window
                     infoWindow.open(this.currentMap, marker);
+                    // Store reference to current info window
+                    this.currentInfoWindow = infoWindow;
                 });
 
                 this.markers.push(marker);
@@ -933,45 +903,73 @@ class PoiMapVisualizer {
 
     getGoogleMarkerIcon(type) {
         // Different icons based on POI type for Google Maps
-        // Using default Google Maps icons for now, but could be customized with custom icons
-        const colors = {
-            '高校': '#3b82f6',     // Blue
-            '科研院所': '#8b5cf6',   // Purple
-            '人工智能': '#10b981',   // Green
-            '制造': '#ef4444',      // Red
-            '文旅': '#f59e0b',     // Yellow
-            '医疗': '#ec4899',     // Pink
-            '金融': '#06b6d4',     // Cyan
-            '互联网': '#8b5cf6'     // Purple
-        };
+        // Using custom icons for different types to distinguish them
+        const iconBaseUrl = 'https://mt.google.com/vt/icon';
 
-        const color = colors[type] || '#6b7280'; // Gray as default
-
-        // For Google Maps, we could return a custom icon object
-        // For now, returning null to use default icon
-        return null;
+        if (type.includes('高校')) {
+            // University/College icon - blue color
+            return {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="32" viewBox="0 0 24 32">
+                    <rect x="6" y="2" width="12" height="20" fill="#3b82f6" stroke="#1e40af" stroke-width="1"/>
+                    <circle cx="12" cy="26" r="4" fill="#3b82f6" stroke="#1e40af" stroke-width="1"/>
+                </svg>`),
+                scaledSize: new google.maps.Size(24, 32),
+                anchor: new google.maps.Point(12, 32)
+            };
+        } else if (type.includes('科研院所')) {
+            // Research Institute icon - purple color
+            return {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="32" viewBox="0 0 24 32">
+                    <rect x="4" y="4" width="16" height="16" fill="#8b5cf6" stroke="#6d28d9" stroke-width="1"/>
+                    <path d="M12 10 L12 26 M6 16 L18 16" stroke="#6d28d9" stroke-width="2"/>
+                </svg>`),
+                scaledSize: new google.maps.Size(24, 32),
+                anchor: new google.maps.Point(12, 32)
+            };
+        } else {
+            // Company/Enterprise icon - green color
+            return {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="32" viewBox="0 0 24 32">
+                    <rect x="2" y="8" width="20" height="20" fill="#10b981" stroke="#047857" stroke-width="1"/>
+                    <rect x="6" y="12" width="4" height="4" fill="#ffffff"/>
+                    <rect x="12" y="12" width="4" height="4" fill="#ffffff"/>
+                    <rect x="6" y="18" width="4" height="4" fill="#ffffff"/>
+                    <rect x="12" y="18" width="4" height="4" fill="#ffffff"/>
+                </svg>`),
+                scaledSize: new google.maps.Size(24, 32),
+                anchor: new google.maps.Point(12, 32)
+            };
+        }
     }
 
     getBaiduMarkerIcon(type) {
         // Different icons based on POI type for Baidu Maps
-        const colors = {
-            '高校': '#3b82f6',     // Blue
-            '科研院所': '#8b5cf6',   // Purple
-            '人工智能': '#10b981',   // Green
-            '制造': '#ef4444',      // Red
-            '文旅': '#f59e0b',     // Yellow
-            '医疗': '#ec4899',     // Pink
-            '金融': '#06b6d4',     // Cyan
-            '互联网': '#8b5cf6'     // Purple
-        };
-
-        const color = colors[type] || '#6b7280'; // Gray as default
-
-        // Create custom icon with color based on type
-        return new BMap.Icon("http://api.map.baidu.com/images/marker_red.png",
-            new BMap.Size(20, 34), {
-                // You can customize the anchor and size
-            });
+        // Create custom marker icons for different types
+        if (type.includes('高校')) {
+            // University/College icon - blue color
+            return new BMap.Icon("http://api.map.baidu.com/images/marker_red.png",
+                new BMap.Size(20, 34), {
+                    imageSize: new BMap.Size(20, 34),
+                    anchor: new BMap.Size(10, 34)
+                });
+        } else if (type.includes('科研院所')) {
+            // Research Institute icon - purple color
+            return new BMap.Icon("http://api.map.baidu.com/images/marker_red.png",
+                new BMap.Size(20, 34), {
+                    imageSize: new BMap.Size(20, 34),
+                    anchor: new BMap.Size(10, 34)
+                });
+        } else {
+            // Company/Enterprise icon - green color
+            return new BMap.Icon("http://api.map.baidu.com/images/marker_red.png",
+                new BMap.Size(20, 34), {
+                    imageSize: new BMap.Size(20, 34),
+                    anchor: new BMap.Size(10, 34)
+                });
+        }
     }
 
     showClusters() {
@@ -1157,6 +1155,12 @@ class PoiMapVisualizer {
     clearMap() {
         // Clear all overlays
         this.clearMarkers();
+
+        // Close any open info window
+        if (this.currentInfoWindow) {
+            this.currentInfoWindow.close();
+            this.currentInfoWindow = null;
+        }
 
         if (this.clusterer) {
             if (this.mapType === 'google') {
@@ -1592,6 +1596,157 @@ class PoiMapVisualizer {
     exportUploadResults() {
         // Same as exportResults for upload data
         this.exportResults();
+    }
+
+    applyTypeFilter(filterType) {
+        // Update active filter button
+        document.querySelectorAll('#filter-all, #filter-enterprise, #filter-university, #filter-research').forEach(btn => {
+            btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-600');
+            btn.classList.add('border', 'border-gray-300');
+        });
+
+        // Highlight selected button
+        let activeBtnId;
+        switch(filterType) {
+            case 'all':
+                activeBtnId = 'filter-all';
+                break;
+            case '企业':
+                activeBtnId = 'filter-enterprise';
+                break;
+            case '高校':
+                activeBtnId = 'filter-university';
+                break;
+            case '科研院所':
+                activeBtnId = 'filter-research';
+                break;
+        }
+
+        if (activeBtnId) {
+            const activeBtn = document.getElementById(activeBtnId);
+            activeBtn.classList.remove('border-gray-300');
+            activeBtn.classList.add('bg-blue-500', 'text-white', 'border-blue-600');
+        }
+
+        // Filter the data based on selected type
+        let filteredData;
+        if (filterType === 'all') {
+            filteredData = this.poiData;
+        } else {
+            filteredData = this.poiData.filter(poi => poi.type === filterType);
+        }
+
+        // Update the map with filtered data
+        this.displayResults(filteredData, null);
+
+        // Update the list with filtered data
+        this.renderResultsList(filteredData);
+
+        // Update the summary with filtered data count
+        this.updateResultsSummary({ total_count: filteredData.length });
+    }
+
+    addZoomDisplayControl() {
+        // Create the DIV to hold the control and call the setZoomControl() constructor
+        // passing in this DIV.
+        this.zoomControlDiv = document.createElement('div');
+        this.setZoomControl(this.zoomControlDiv, this.currentMap);
+
+        // Apply CSS to the control
+        this.zoomControlDiv.index = 1;
+        if (this.mapType === 'google') {
+            this.currentMap.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(this.zoomControlDiv);
+        }
+    }
+
+    setZoomControl(controlDiv, map) {
+        // Set CSS for the control border.
+        const controlUI = document.createElement('div');
+        controlUI.style.backgroundColor = '#fff';
+        controlUI.style.border = '2px solid #fff';
+        controlUI.style.borderRadius = '3px';
+        controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+        controlUI.style.cursor = 'pointer';
+        controlUI.style.marginBottom = '22px';
+        controlUI.style.textAlign = 'center';
+        controlUI.title = '当前地图缩放级别';
+        controlDiv.appendChild(controlUI);
+
+        // Set CSS for the control interior.
+        const controlText = document.createElement('div');
+        controlText.style.color = 'rgb(25,25,25)';
+        controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+        controlText.style.fontSize = '14px';
+        controlText.style.lineHeight = '20px';
+        controlText.style.paddingLeft = '5px';
+        controlText.style.paddingRight = '5px';
+        controlText.innerHTML = '比例尺: ' + (map && map.getZoom ? map.getZoom() : 12);
+        controlUI.appendChild(controlText);
+
+        // Store reference to control text for updates
+        this.zoomControlText = controlText;
+    }
+
+    updateZoomDisplay() {
+        if (this.zoomControlText && this.currentMap) {
+            this.zoomControlText.innerHTML = '比例尺: ' + this.currentMap.getZoom();
+        }
+    }
+
+    addBaiduZoomDisplayControl() {
+        // 对于百度地图，创建自定义控件显示缩放级别
+        const that = this;
+
+        // 创建一个自定义控件类
+        function ZoomControl(){
+            // 设置默认停靠位置和偏移量
+            this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
+            this.defaultOffset = new BMap.Size(10, 10);
+        }
+
+        // 通过JavaScript的prototype属性继承于BMap.Control
+        ZoomControl.prototype = new BMap.Control();
+
+        // 自定义控件必须实现自己的initialize方法，并且将控件的DOM元素返回
+        // 在本方法中创建个div元素作为控件的容器，并将其添加到地图容器中
+        ZoomControl.prototype.initialize = function(map){
+            // 创建一个DOM元素
+            const div = document.createElement('div');
+            div.id = 'baidu-zoom-display';
+            div.style.backgroundColor = '#fff';
+            div.style.border = '2px solid #fff';
+            div.style.borderRadius = '3px';
+            div.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+            div.style.cursor = 'pointer';
+            div.style.textAlign = 'center';
+            div.style.color = 'rgb(25,25,25)';
+            div.style.fontFamily = 'Roboto,Arial,sans-serif';
+            div.style.fontSize = '14px';
+            div.style.lineHeight = '20px';
+            div.style.paddingLeft = '5px';
+            div.style.paddingRight = '5px';
+            div.innerHTML = '比例尺: ' + map.getZoom();
+            div.title = '当前地图缩放级别';
+
+            // 保存对div的引用，以便后续更新
+            that.baiduZoomDiv = div;
+
+            // 添加DOM元素到地图中
+            map.getContainer().appendChild(div);
+
+            // 监听缩放事件以更新显示
+            map.addEventListener('zoomend', function(){
+                div.innerHTML = '比例尺: ' + map.getZoom();
+            });
+
+            // 将DOM元素返回
+            return div;
+        }
+
+        // 创建控件实例
+        const myZoomCtrl = new ZoomControl();
+        // 添加控件到地图中
+        this.currentMap.addControl(myZoomCtrl);
     }
 }
 

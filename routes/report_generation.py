@@ -44,6 +44,9 @@ class TaskInfo:
     error: Optional[str] = None
     report_id: Optional[str] = None  # ID of the generated report after completion
     user_id: Optional[int] = None   # User who created the task
+    paused: bool = False
+    cancelled: bool = False
+    progress: float = 0.0
 
 # Task manager for background tasks
 class TaskManager:
@@ -388,6 +391,14 @@ class TaskManager:
                 'data': data,
                 'timestamp': time.time()
             })
+        with self._lock:
+            ti = self._tasks.get(task_id)
+            if ti:
+                if event_type == 'report_chunk':
+                    pct = min(95.0, float(data.get('chunk_index', 0)) * 2.0)
+                    ti.progress = pct
+                elif event_type in ('report_complete', 'final_complete'):
+                    ti.progress = 100.0
     
     def get_next_chunk(self, task_id: str, timeout: int = 30) -> Optional[dict]:
         """Get next content chunk"""
@@ -564,7 +575,9 @@ def get_all_tasks():
                 'started_at': task_info.started_at if isinstance(task_info.started_at, (int, float)) else int(task_info.started_at) if task_info.started_at else None,
                 'completed_at': task_info.completed_at if isinstance(task_info.completed_at, (int, float)) else int(task_info.completed_at) if task_info.completed_at else None,
                 'report_id': task_info.report_id,
-                'error': task_info.error
+                'error': task_info.error,
+                'progress': task_info.progress,
+                'paused': task_info.paused
             })
 
         return jsonify({'tasks': all_tasks})
@@ -588,3 +601,45 @@ def delete_task(task_id):
     except Exception as e:
         logger.error(f"Error deleting task: {e}")
         return jsonify({'error': 'Failed to delete task'}), 500
+
+@report_gen_bp.route('/api/tasks/<task_id>/pause', methods=['POST'])
+@login_required
+def pause_task(task_id):
+    try:
+        with task_manager._lock:
+            ti = task_manager._tasks.get(task_id)
+            if not ti:
+                return jsonify({'error': 'Task not found'}), 404
+            ti.paused = True
+        return jsonify({'success': True})
+    except Exception:
+        return jsonify({'error': 'Failed to pause task'}), 500
+
+@report_gen_bp.route('/api/tasks/<task_id>/resume', methods=['POST'])
+@login_required
+def resume_task(task_id):
+    try:
+        with task_manager._lock:
+            ti = task_manager._tasks.get(task_id)
+            if not ti:
+                return jsonify({'error': 'Task not found'}), 404
+            ti.paused = False
+        return jsonify({'success': True})
+    except Exception:
+        return jsonify({'error': 'Failed to resume task'}), 500
+
+@report_gen_bp.route('/api/tasks/<task_id>/cancel', methods=['POST'])
+@login_required
+def cancel_task(task_id):
+    try:
+        with task_manager._lock:
+            ti = task_manager._tasks.get(task_id)
+            if not ti:
+                return jsonify({'error': 'Task not found'}), 404
+            ti.cancelled = True
+            ti.status = TaskStatus.FAILED
+        task_manager._send_event(task_id, 'error', {'error': '任务已取消'})
+        task_manager._send_event(task_id, 'end', {})
+        return jsonify({'success': True})
+    except Exception:
+        return jsonify({'error': 'Failed to cancel task'}), 500

@@ -575,7 +575,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         
         // Update UI to show we're continuing generation
-        updateProgress(cache && cache.progress ? Number(cache.progress) : 50, cache && cache.complete ? '缓存内容（30分钟内）' : '继续生成报告...');
+        const resumePct = cache && cache.progress ? Number(cache.progress) : 50;
+        updateProgress(resumePct, cache && cache.complete ? '已加载缓存内容（30分钟内）' : `恢复进度：${Math.round(resumePct)}%，继续生成...`);
         updateStage(3);
         const badge = document.getElementById('statusBadge');
         if (cache && cache.complete) {
