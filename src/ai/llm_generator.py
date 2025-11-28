@@ -349,30 +349,41 @@ class LLMReportGenerator:
         logger.info(f"🔧 重新初始化 {service_name.upper()} 客户端...")
         
         if service_name == 'kimi':
-            self.api_key = self.config.get('api_keys', {}).get('kimi_api_key')
+            api_keys_cfg = self.config.get('api_keys', {})
+            self.api_key = (
+                api_keys_cfg.get('kimi')
+                or api_keys_cfg.get('kimi_api_key')
+                or os.environ.get('KIMI_API_KEY')
+                or os.environ.get('MOONSHOT_API_KEY')
+            )
             if not self.api_key:
                 raise ValueError("Kimi API key not found in config")
-            
+
             self.client = OpenAI(
                 api_key=self.api_key,
                 base_url="https://api.moonshot.cn/v1"
             )
             self.model_name = "moonshot-v1-128k"
-            
+
         elif service_name == 'gemini':
-            self.api_key = self.config.get('api_keys', {}).get('google_gemini_api_key')
+            api_keys_cfg = self.config.get('api_keys', {})
+            self.api_key = (
+                api_keys_cfg.get('google_gemini')
+                or api_keys_cfg.get('google_gemini_api_key')
+                or os.environ.get('GOOGLE_GEMINI_API_KEY')
+            )
             if not self.api_key:
                 raise ValueError("Gemini API key not found in config")
-            
+
             genai.configure(api_key=self.api_key)
             self.client = genai.GenerativeModel('gemini-pro')
             self.model_name = "gemini-pro"
-            
+
         elif service_name == 'doubao':
             self.api_key = self.config.get('api_keys', {}).get('doubao_api_key')
             if not self.api_key:
                 raise ValueError("Doubao API key not found in config")
-            
+
             # 豆包大模型客户端初始化逻辑
             self.client = None  # 占位符
             self.model_name = "doubao-pro"

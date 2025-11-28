@@ -460,16 +460,16 @@
                 <div class="sidebar-section">
                     <h6>快速操作</h6>
                     <button class="btn sidebar-btn" data-bs-toggle="modal" data-bs-target="#addPolicyModal">
-                        <i class="fas fa-robot"></i> 发送文本给Qwen
+                        <i class="fas fa-plus"></i> 手动添加URL
                     </button>
                     <button class="btn sidebar-btn" id="checkEmailBtn">
                         <i class="fas fa-envelope"></i> 检查新邮件
                     </button>
-                    <button class="btn sidebar-btn">
+                    <button class="btn sidebar-btn" id="batchActionsBtn" data-bs-toggle="modal" data-bs-target="#batchActionsModal">
                         <i class="fas fa-bolt"></i> 批量操作
                     </button>
-                    <button class="btn sidebar-btn">
-                        <i class="fas fa-cog"></i> 设置
+                    <button class="btn sidebar-btn" id="qwenCliAnalysisBtn">
+                        <i class="fas fa-robot"></i> Qwen CLI分析
                     </button>
                 </div>
                 
@@ -514,9 +514,14 @@
             <div class="main-content">
                 <div class="main-header d-flex justify-content-between align-items-center mb-4">
                     <h2><i class="fas fa-code me-3"></i>Qwen Code 政策解读</h2>
-                    <div class="search-container d-flex align-items-center">
-                        <i class="fas fa-search"></i>
-                        <input type="text" class="search-input" id="globalSearch" placeholder="搜索政策标题、内容...">
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPolicyModal">
+                            <i class="fas fa-plus me-1"></i>手动添加
+                        </button>
+                        <div class="search-container d-flex align-items-center">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="search-input" id="globalSearch" placeholder="搜索政策标题、内容...">
+                        </div>
                     </div>
                 </div>
 
@@ -610,6 +615,50 @@
     <button class="fab" id="addPolicyFab" data-bs-toggle="modal" data-bs-target="#addPolicyModal">
         <i class="fas fa-robot"></i>
     </button>
+
+    <!-- Batch Actions Modal -->
+    <div class="modal fade" id="batchActionsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">批量操作</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">选择操作类型</label>
+                        <select class="form-select" id="batchActionType">
+                            <option value="delete">删除选中政策</option>
+                            <option value="reanalyze">重新分析选中政策</option>
+                            <option value="export">导出选中政策</option>
+                            <option value="classify">重新分类选中政策</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllCheckbox">
+                            <label class="form-check-label" for="selectAllCheckbox">
+                                全选当前页面政策
+                            </label>
+                        </div>
+                    </div>
+                    <div id="selectedCount" class="text-muted">
+                        已选择 0 条政策
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            提示：按住Ctrl键可多选政策
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="executeBatchActionBtn">执行操作</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Toast Notifications -->
     <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
@@ -748,6 +797,217 @@
                 showNotification('加载政策列表失败', 'error');
             }
         }
+
+        // Batch operations functionality
+        let selectedPolicies = new Set();
+
+        function setupBatchOperations() {
+            // Add Ctrl-click functionality to policy items for selection
+            document.addEventListener('click', function(e) {
+                const policyItem = e.target.closest('.policy-item');
+                if (policyItem && e.ctrlKey) {
+                    const policyId = policyItem.dataset.policyId;
+
+                    if (policyItem.classList.contains('selected')) {
+                        policyItem.classList.remove('selected');
+                        policyItem.style.backgroundColor = '';
+                        selectedPolicies.delete(parseInt(policyId));
+                    } else {
+                        policyItem.classList.add('selected');
+                        policyItem.style.backgroundColor = '#e3f2fd';
+                        selectedPolicies.add(parseInt(policyId));
+                    }
+
+                    updateSelectedCount();
+                }
+            });
+
+            // Execute batch action
+            document.getElementById('executeBatchActionBtn')?.addEventListener('click', executeBatchAction);
+
+            // Set up Qwen CLI analysis button
+            document.getElementById('qwenCliAnalysisBtn')?.addEventListener('click', qwenCliAnalysisHandler);
+        }
+
+        function updateSelectedCount() {
+            const count = selectedPolicies.size;
+            document.getElementById('selectedCount').textContent = `已选择 ${count} 条政策`;
+        }
+
+        async function executeBatchAction() {
+            const actionType = document.getElementById('batchActionType').value;
+
+            if (selectedPolicies.size === 0) {
+                showNotification('请先选择要操作的政策', 'warning');
+                return;
+            }
+
+            const policyIds = Array.from(selectedPolicies);
+
+            try {
+                let success = true;
+                let message = '';
+
+                switch(actionType) {
+                    case 'delete':
+                        // Confirm deletion
+                        if (!confirm(`确定要删除选中的 ${policyIds.length} 条政策吗？此操作不可撤销。`)) {
+                            return;
+                        }
+
+                        // Delete selected policies
+                        for (const policyId of policyIds) {
+                            const response = await fetch(`/api/policy/${policyId}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                }
+                            });
+
+                            if (!response.ok) {
+                                success = false;
+                                break;
+                            }
+                        }
+
+                        message = `已删除 ${policyIds.length} 条政策`;
+                        break;
+
+                    case 'reanalyze':
+                        // Reanalyze selected policies
+                        for (const policyId of policyIds) {
+                            const policy = await fetch(`/api/policy/${policyId}`).then(r => r.json());
+
+                            if (policy.original_url) {
+                                // Send to reanalysis (using the same URL to re-analyze)
+                                const response = await fetch('/api/qwen-process', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        text: policy.original_url,
+                                        processing_type: 'policy',
+                                        custom_instruction: '请重新分析这个政策URL的内容'
+                                    })
+                                });
+
+                                if (!response.ok) {
+                                    success = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        message = `已重新分析 ${policyIds.length} 条政策`;
+                        break;
+
+                    case 'export':
+                        // Export selected policies
+                        try {
+                            const response = await fetch('/api/export-policies', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ policy_ids: policyIds })
+                            });
+
+                            if (response.ok) {
+                                // Create download link for the exported file
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `policies_export_${new Date().toISOString().slice(0,10)}.json`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                document.body.removeChild(a);
+
+                                message = `已导出 ${policyIds.length} 条政策`;
+                            } else {
+                                success = false;
+                                message = '导出失败';
+                            }
+                        } catch (error) {
+                            console.error('Export error:', error);
+                            success = false;
+                            message = '导出失败';
+                        }
+                        break;
+
+                    case 'classify':
+                        // Re-classify selected policies
+                        for (const policyId of policyIds) {
+                            const response = await fetch(`/api/policy/${policyId}/reclassify`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+
+                            if (!response.ok) {
+                                success = false;
+                                break;
+                            }
+                        }
+
+                        message = `已重新分类 ${policyIds.length} 条政策`;
+                        break;
+                }
+
+                if (success) {
+                    showNotification(message, 'success');
+
+                    // Clear selections and reload
+                    selectedPolicies.clear();
+                    updateSelectedCount();
+
+                    // Reload policies
+                    loadPolicies();
+
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('batchActionsModal'));
+                    if (modal) modal.hide();
+                } else {
+                    showNotification('批量操作失败', 'error');
+                }
+            } catch (error) {
+                console.error('Error executing batch action:', error);
+                showNotification('批量操作失败', 'error');
+            }
+        }
+
+        async function qwenCliAnalysisHandler() {
+            const url = prompt('请输入政策URL进行Qwen CLI分析:');
+            if (!url) return;
+
+            try {
+                showNotification('正在提交URL到Qwen CLI分析...', 'info');
+
+                // Submit URL for analysis
+                const response = await fetch('/api/add-policy-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: url
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('URL已提交给Qwen CLI分析', 'success');
+                    // Refresh the policy list to show the newly added item
+                    loadPolicies();
+                } else {
+                    showNotification(`分析失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error with Qwen CLI analysis:', error);
+                showNotification('Qwen CLI分析请求失败', 'error');
+            }
+        }
+
+        // Initialize batch operations when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setupBatchOperations();
+        });
 
         function renderPolicies(policies) {
             const container = document.getElementById('policyList');
@@ -979,5 +1239,49 @@
         window.loadPolicies = loadPolicies;
         window.handleFilterChange = handleFilterChange;
     </script>
+
+    <!-- Batch Actions Modal -->
+    <div class="modal fade" id="batchActionsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">批量操作</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">选择操作类型</label>
+                        <select class="form-select" id="batchActionType">
+                            <option value="delete">删除选中政策</option>
+                            <option value="reanalyze">重新分析选中政策</option>
+                            <option value="export">导出选中政策</option>
+                            <option value="classify">重新分类选中政策</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllCheckbox">
+                            <label class="form-check-label" for="selectAllCheckbox">
+                                全选当前页面政策
+                            </label>
+                        </div>
+                    </div>
+                    <div id="selectedCount" class="text-muted">
+                        已选择 0 条政策
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            提示：按住Ctrl键可多选政策
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="executeBatchActionBtn">执行操作</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

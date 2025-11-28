@@ -47,9 +47,16 @@ from src.analysis.poi_searcher import BaiduPoiSearcher, PoiDataProcessor, PoiExp
 from src.utils.api_error_handler import api_error_handler, handle_api_error
 from src.utils.notification_service import notification_service
 from src.utils.performance_optimizer import CacheManager
+from src.utils.time_utils import utc_to_beijing, format_beijing_time, now_beijing
 from scripts.api_notification_routes import register_notification_routes
+
+# Override the default datetime functions to use Beijing time
+def beijing_now():
+    """Return current time in Beijing timezone for use in models"""
+    return now_beijing()
 from src.routes.streaming_routes import streaming_bp
 from routes.report_generation import report_gen_bp
+from routes.report_generation_new import report_generation_bp
 from src.data.wechat_scraper import WeChatScraper
 from src.analysis.wechat_content_analyzer import WeChatContentAnalyzer
 from functools import lru_cache
@@ -103,7 +110,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), default='user')  # admin, analyst, user
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=beijing_now)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -123,7 +130,7 @@ class Report(db.Model):
     file_path = db.Column(db.String(300))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     status = db.Column(db.String(20), default='pending')  # pending, processing, completed, failed
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=beijing_now)
     completed_at = db.Column(db.DateTime)
 
 
@@ -140,8 +147,8 @@ class WeChatArticle(db.Model):
     keywords = db.Column(db.Text)  # 关键词，以逗号分隔
     industry_relevance = db.Column(db.Text)  # 相关产业，以逗号分隔
     content_html = db.Column(db.Text)  # 原始HTML内容
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # 创建时间
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # 更新时间
+    created_at = db.Column(db.DateTime, default=beijing_now)  # 创建时间
+    updated_at = db.Column(db.DateTime, default=beijing_now, onupdate=beijing_now)  # 更新时间
 
     def to_dict(self):
         """Convert model instance to dictionary for JSON serialization."""
@@ -157,6 +164,95 @@ class WeChatArticle(db.Model):
             'keywords': self.keywords.split(',') if self.keywords else [],
             'industry_relevance': self.industry_relevance.split(',') if self.industry_relevance else [],
             'content_html': self.content_html,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class PolicyAnalysis(db.Model):
+    """Policy analysis model to store analyzed policy documents from email URLs."""
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(500), nullable=False)  # 政策标题
+    original_url = db.Column(db.String(500))  # 原始URL
+    source_type = db.Column(db.String(50), default='email')  # 来源类型
+    content = db.Column(db.Text)  # 政策内容
+    content_summary = db.Column(db.Text)  # 内容摘要
+    analysis_result = db.Column(db.JSON)  # 完整分析结果（JSON格式）
+    classification_region = db.Column(db.String(100))  # 区域分类
+    classification_industry = db.Column(db.String(200))  # 行业分类
+    classification_year = db.Column(db.Integer)  # 年度分类
+    classification_policy_type = db.Column(db.String(100))  # 政策类型
+    applicability_score = db.Column(db.Float, default=0.0)  # 适用性评分
+    entities = db.Column(db.JSON)  # 提取的实体（JSON格式）
+    knowledge_graph = db.Column(db.JSON)  # 知识图谱数据（JSON格式）
+    llm_interpretation = db.Column(db.JSON)  # LLM解读结果（JSON格式）
+    scraped_at = db.Column(db.DateTime, default=beijing_now)  # 抓取时间
+    analyzed_at = db.Column(db.DateTime, default=beijing_now)  # 分析时间
+    created_at = db.Column(db.DateTime, default=beijing_now)  # 创建时间
+    updated_at = db.Column(db.DateTime, default=beijing_now, onupdate=beijing_now)  # 更新时间
+    status = db.Column(db.String(50), default='completed')  # 状态：pending, processing, completed, failed
+    tags = db.Column(db.String(500))  # 标签，以逗号分隔
+
+    def to_dict(self):
+        """Convert model instance to dictionary for JSON serialization."""
+        return {
+            'id': self.id,
+            'title': self.title,
+            'original_url': self.original_url,
+            'source_type': self.source_type,
+            'content_summary': self.content_summary,
+            'classification': {
+                'region': self.classification_region,
+                'industry': self.classification_industry,
+                'year': self.classification_year,
+                'policy_type': self.classification_policy_type
+            },
+            'applicability_score': self.applicability_score,
+            'scraped_at': self.scraped_at.isoformat() if self.scraped_at else None,
+            'analyzed_at': self.analyzed_at.isoformat() if self.analyzed_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'status': self.status,
+            'tags': self.tags.split(',') if self.tags else []
+        }
+
+
+class QwenProcessingResult(db.Model):
+    """Store Qwen text processing results and history"""
+    id = db.Column(db.Integer, primary_key=True)
+    original_text = db.Column(db.Text, nullable=False)  # Original input text
+    processed_text = db.Column(db.Text)  # Processed/modified text
+    summary = db.Column(db.Text)  # Summary of the content
+    key_points = db.Column(db.JSON)  # Key points extracted as JSON array
+    sentiment = db.Column(db.String(50))  # Sentiment (positive, negative, neutral)
+    sentiment_score = db.Column(db.Float, default=0.0)  # Sentiment score (-1 to 1)
+    entities = db.Column(db.JSON)  # Extracted entities as JSON array
+    topics = db.Column(db.JSON)  # Identified topics as JSON array
+    suggestions = db.Column(db.JSON)  # Suggestions as JSON array
+    processing_type = db.Column(db.String(100), default='analysis')  # Type of processing
+    metadata_extra = db.Column(db.JSON)  # Additional metadata as JSON (renamed to avoid SQL Alchemy conflict)
+    status = db.Column(db.String(50), default='completed')  # Status: pending, processing, completed, failed
+    error_message = db.Column(db.Text)  # Error details if processing failed
+    created_at = db.Column(db.DateTime, default=beijing_now)
+    updated_at = db.Column(db.DateTime, default=beijing_now, onupdate=beijing_now)
+
+    def to_dict(self):
+        """Convert model instance to dictionary for JSON serialization"""
+        return {
+            'id': self.id,
+            'original_text': self.original_text,
+            'processed_text': self.processed_text,
+            'summary': self.summary,
+            'key_points': self.key_points or [],
+            'sentiment': self.sentiment,
+            'sentiment_score': self.sentiment_score,
+            'entities': self.entities or [],
+            'topics': self.topics or [],
+            'suggestions': self.suggestions or [],
+            'processing_type': self.processing_type,
+            'metadata': self.metadata_extra or {},  # Map to the renamed field
+            'status': self.status,
+            'error_message': self.error_message,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
@@ -180,7 +276,7 @@ def init_db():
     """Initialize database and create default admin user."""
     with app.app_context():
         db.create_all()
-        
+
         # Create default admin user if not exists
         if not User.query.filter_by(username='admin').first():
             admin = User(username='admin', role='admin')
@@ -188,6 +284,9 @@ def init_db():
             db.session.add(admin)
             db.session.commit()
             logger.info("Default admin user created (username: admin, password: admin)")
+
+        # Ensure PolicyAnalysis table exists
+        logger.info("Policy analysis database initialized")
 
 
 # Authentication Routes
@@ -362,14 +461,14 @@ def api_generate_report():
         industry = data.get('industry')
         additional_context = data.get('additional_context', '')
         llm_service = data.get('llm_service', 'kimi')
-        
+
         if not city or not industry:
             return jsonify({'error': '请输入城市和行业名称'}), 400
-        
+
         # Create report record
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = now_beijing().strftime('%Y%m%d_%H%M%S')
         temp_report_id = f"llm_report_{timestamp}"
-        
+
         report = Report(
             report_id=temp_report_id,
             title=f"{city} {industry} 产业分析报告",
@@ -381,7 +480,7 @@ def api_generate_report():
         )
         db.session.add(report)
         db.session.commit()
-        
+
         # Start background task
         task = generate_llm_report_task.delay(
             city=city,
@@ -392,15 +491,667 @@ def api_generate_report():
             llm_service=llm_service,
             app_root_path=str(APP_ROOT)
         )
-        
+
         return jsonify({
             'task_id': task.id,
             'report_id': temp_report_id,
             'status': 'processing'
         })
-        
+
     except Exception as e:
         logger.error(f"Error in API generate report: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/policy-analysis')
+@login_required
+def policy_analysis_dashboard():
+    """Policy analysis dashboard page."""
+    try:
+        # Get unique values for filters
+        all_policies = PolicyAnalysis.query.all()
+
+        regions = list(set([p.classification_region for p in all_policies if p.classification_region]))
+        industries = list(set([p.classification_industry for p in all_policies if p.classification_industry]))
+        years = list(set([p.classification_year for p in all_policies if p.classification_year]))
+
+        # Sort years in descending order
+        years.sort(reverse=True)
+
+        return render_template('policy_analysis_dashboard.html',
+                             regions=regions,
+                             industries=industries,
+                             years=years)
+    except Exception as e:
+        logger.error(f"Error loading policy analysis dashboard: {e}")
+        flash('加载政策分析工作台失败', 'error')
+        return redirect(url_for('index'))
+
+
+@app.route('/policy-analysis/detail/<int:policy_id>')
+@login_required
+def policy_detail_page(policy_id):
+    """Redirect to the WeChat-style analysis page for enhanced visualization."""
+    return redirect(url_for('policy_wechat_analysis_page', policy_id=policy_id))
+
+
+@app.route('/api/policy-content-analysis/<int:policy_id>')
+@login_required
+def api_policy_content_analysis(policy_id):
+    """API endpoint for content-driven policy analysis."""
+    try:
+        from src.visualization.content_driven_viz_engine import ContentDrivenVisualizationEngine
+
+        policy = PolicyAnalysis.query.get_or_404(policy_id)
+
+        # Create content-driven visualizations
+        viz_engine = ContentDrivenVisualizationEngine()
+
+        # Analyze the policy content
+        content = policy.content or policy.content_summary or policy.title
+        analysis = viz_engine.analyze_policy_content(content)
+        visualization_data = viz_engine.generate_visualization_data(analysis)
+
+        return jsonify({
+            'content_analysis': analysis,
+            'visualization_data': visualization_data
+        })
+    except Exception as e:
+        logger.error(f"Error getting policy content analysis: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/policy-stats')
+@login_required
+def api_policy_stats():
+    """API endpoint for policy dashboard statistics."""
+    try:
+        from datetime import datetime, timedelta
+
+        total = PolicyAnalysis.query.count()
+
+        # Count new policies in the last 7 days
+        seven_days_ago = now_beijing() - timedelta(days=7)
+        new_this_week = PolicyAnalysis.query.filter(
+            PolicyAnalysis.created_at >= seven_days_ago
+        ).count()
+
+        # Count unique regions and industries
+        regions = db.session.query(PolicyAnalysis.classification_region).distinct().count()
+        industries = db.session.query(PolicyAnalysis.classification_industry).distinct().count()
+
+        return jsonify({
+            'total': total,
+            'newThisWeek': new_this_week,
+            'regionsCount': regions,
+            'industriesCount': industries
+        })
+    except Exception as e:
+        logger.error(f"Error getting policy stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/policies')
+@login_required
+def api_policies():
+    """API endpoint for policies list with filtering and pagination."""
+    try:
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
+        region = request.args.get('region', '')
+        industry = request.args.get('industry', '')
+        year = request.args.get('year', '')
+        type_ = request.args.get('type', '')
+        search = request.args.get('search', '')
+
+        # Build query
+        query = PolicyAnalysis.query
+
+        # Apply filters
+        if region:
+            query = query.filter(PolicyAnalysis.classification_region == region)
+        if industry:
+            query = query.filter(PolicyAnalysis.classification_industry == industry)
+        if year:
+            query = query.filter(PolicyAnalysis.classification_year == int(year))
+        if type_:
+            query = query.filter(PolicyAnalysis.classification_policy_type == type_)
+        if search:
+            query = query.filter(
+                db.or_(
+                    PolicyAnalysis.title.contains(search),
+                    PolicyAnalysis.content.contains(search),
+                    PolicyAnalysis.content_summary.contains(search)
+                )
+            )
+
+        # Get total count
+        total = query.count()
+
+        # Apply pagination
+        policies = query.order_by(PolicyAnalysis.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+
+        return jsonify({
+            'policies': [policy.to_dict() for policy in policies],
+            'total': total,
+            'page': page,
+            'limit': limit
+        })
+    except Exception as e:
+        logger.error(f"Error getting policies: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/policy/<int:policy_id>')
+@login_required
+def api_policy_detail(policy_id):
+    """API endpoint for policy detail."""
+    try:
+        policy = PolicyAnalysis.query.get_or_404(policy_id)
+        return jsonify(policy.to_dict())
+    except Exception as e:
+        logger.error(f"Error getting policy detail: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/check-email-policies', methods=['POST'])
+@login_required
+def api_check_email_policies():
+    """API endpoint to check email for new policy URLs and process them."""
+    try:
+        from src.utils.email_reader import EmailReader
+        from src.analysis.policy_analysis_integrator import PolicyAnalysisIntegrator
+
+        # Initialize email reader
+        email_reader = EmailReader()
+
+        # Get new emails with URLs
+        emails_with_urls = email_reader.get_unread_emails_with_urls()
+
+        new_policies_count = 0
+
+        if emails_with_urls:
+            # Initialize policy integrator
+            integrator = PolicyAnalysisIntegrator()
+
+            for email_info in emails_with_urls:
+                for url in email_info['urls']:
+                    try:
+                        # Analyze the policy from URL
+                        analysis_result = integrator.analyze_policy_from_url(url)
+
+                        if analysis_result.get('success'):
+                            # Extract classification info
+                            classification = analysis_result.get('classification', {})
+
+                            # Create PolicyAnalysis record
+                            policy_analysis = PolicyAnalysis(
+                                title=analysis_result.get('title', 'Unknown Title'),
+                                original_url=analysis_result.get('url'),
+                                source_type='email',
+                                content=analysis_result.get('content', ''),
+                                content_summary=analysis_result.get('content_summary', analysis_result.get('title', ''))[:500],  # Better summary
+                                analysis_result=analysis_result,
+                                classification_region=classification.get('region', [None])[0] if classification.get('region') else None,
+                                classification_industry=classification.get('industry', [None])[0] if classification.get('industry') else None,
+                                classification_year=classification.get('year'),
+                                classification_policy_type=classification.get('policy_type'),
+                                applicability_score=analysis_result.get('policy_analysis', {}).get('applicability', {}).get('score', 0) if analysis_result.get('policy_analysis', {}).get('applicability') else 0,
+                                entities=analysis_result.get('entities'),
+                                knowledge_graph=analysis_result.get('knowledge_graph'),
+                                llm_interpretation=analysis_result.get('llm_interpretation'),
+                                tags=','.join(classification.get('region', []) + classification.get('industry', [])),
+                                status='completed'
+                            )
+
+                            db.session.add(policy_analysis)
+                            db.session.commit()
+                            new_policies_count += 1
+
+                    except Exception as e:
+                        logger.error(f"Error processing policy from email {email_info['id']}, URL {url}: {e}")
+                        # Create failed record
+                        policy_analysis = PolicyAnalysis(
+                            title=f"分析失败 - {url}",
+                            original_url=url,
+                            source_type='email',
+                            status='failed',
+                            content_summary=f"分析失败: {str(e)}"
+                        )
+                        db.session.add(policy_analysis)
+                        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'new_policies': new_policies_count,
+            'message': f'检查完成，新增 {new_policies_count} 条政策'
+        })
+    except Exception as e:
+        logger.error(f"Error checking email policies: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+def make_json_serializable(obj):
+    """Recursively convert an object to be JSON serializable."""
+    if isinstance(obj, dict):
+        return {key: make_json_serializable(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [make_json_serializable(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(make_json_serializable(item) for item in obj)
+    elif callable(obj):
+        # Skip callable objects
+        return None
+    elif hasattr(obj, '__dict__'):
+        # Convert objects with __dict__ to dict, recursively
+        return make_json_serializable(obj.__dict__)
+    else:
+        # Try to convert to string as fallback for objects that can't be serialized
+        try:
+            # Test if it's already JSON serializable
+            import json
+            json.dumps(obj)
+            return obj
+        except (TypeError, ValueError):
+            # If not serializable, convert to string representation
+            return str(obj)
+
+
+@app.route('/api/add-policy-url', methods=['POST'])
+@login_required
+def api_add_policy_url():
+    """API endpoint to manually add a policy URL for analysis - non-blocking version."""
+    try:
+        from src.analysis.policy_analysis_integrator import PolicyAnalysisIntegrator
+        from threading import Thread
+
+        data = request.get_json()
+        url = data.get('url')
+
+        if not url:
+            return jsonify({'success': False, 'error': 'URL is required'}), 400
+
+        # Create a pending policy record first
+        pending_policy = PolicyAnalysis(
+            title="正在分析 - 政策",
+            original_url=url,
+            source_type='manual',
+            content="",
+            content_summary="政策正在后台分析中，稍后将更新详细内容...",
+            classification_region=None,
+            classification_industry=None,
+            classification_year=None,
+            classification_policy_type=None,
+            applicability_score=0,
+            entities={},
+            knowledge_graph={},
+            llm_interpretation={},
+            tags="",
+            status='processing'
+        )
+
+        db.session.add(pending_policy)
+        db.session.flush()  # Get the ID without committing
+        policy_id = pending_policy.id
+        db.session.commit()
+
+        # Start the analysis in a background thread
+        def analyze_policy_background(policy_id, url):
+            try:
+                # Create a new app context for the background thread
+                with app.app_context():
+                    integrator = PolicyAnalysisIntegrator()
+                    analysis_result = integrator.analyze_policy_from_url(url)
+
+                    if analysis_result.get('success'):
+                        # Extract classification info
+                        classification = analysis_result.get('classification', {})
+
+                        # Ensure JSON serializability
+                        clean_analysis_result = make_json_serializable(analysis_result)
+                        clean_entities = make_json_serializable(analysis_result.get('entities', {}))
+                        clean_knowledge_graph = make_json_serializable(analysis_result.get('knowledge_graph', {}))
+                        clean_llm_interpretation = make_json_serializable(analysis_result.get('llm_interpretation', {}))
+
+                        # Update the policy record
+                        policy = PolicyAnalysis.query.get(policy_id)
+                        if policy:
+                            policy.title = analysis_result.get('title', 'Unknown Title')
+                            policy.content = analysis_result.get('content', '')
+                            policy.content_summary = analysis_result.get('content_summary', analysis_result.get('title', ''))[:500]
+                            policy.analysis_result = clean_analysis_result
+                            policy.classification_region = classification.get('region', [None])[0] if classification.get('region') else None
+                            policy.classification_industry = classification.get('industry', [None])[0] if classification.get('industry') else None
+                            policy.classification_year = classification.get('year')
+                            policy.classification_policy_type = classification.get('policy_type')
+                            policy.applicability_score = analysis_result.get('policy_analysis', {}).get('applicability', {}).get('score', 0) if analysis_result.get('policy_analysis', {}).get('applicability') else 0
+                            policy.entities = clean_entities
+                            policy.knowledge_graph = clean_knowledge_graph
+                            policy.llm_interpretation = clean_llm_interpretation
+                            policy.tags = ','.join(classification.get('region', []) + classification.get('industry', []))
+                            policy.status = 'completed'
+
+                            db.session.commit()
+                    else:
+                        # Update the policy record with failure
+                        policy = PolicyAnalysis.query.get(policy_id)
+                        if policy:
+                            policy.title = f"分析失败 - {url}"
+                            policy.content_summary = f"分析失败: {analysis_result.get('error', 'Unknown error')}"
+                            policy.status = 'failed'
+                            db.session.commit()
+
+            except Exception as e:
+                logger.error(f"Error in background analysis: {e}")
+                # Update the policy record with failure
+                try:
+                    with app.app_context():
+                        policy = PolicyAnalysis.query.get(policy_id)
+                        if policy:
+                            policy.title = f"分析失败 - {url}"
+                            policy.content_summary = f"分析失败: {str(e)}"
+                            policy.status = 'failed'
+                            db.session.commit()
+                except Exception as update_e:
+                    logger.error(f"Error updating failed policy: {update_e}")
+
+        # Trigger the background task
+        Thread(target=analyze_policy_background, args=(policy_id, url), daemon=True).start()
+
+        return jsonify({
+            'success': True,
+            'message': '政策已添加，正在后台分析',
+            'policy_id': policy_id
+        })
+
+    except Exception as e:
+        logger.error(f"Error adding policy URL: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/policy-analysis/detail/<int:policy_id>/wechat')
+@login_required
+def policy_wechat_analysis_page(policy_id):
+    """Specialized page for analyzing WeChat policy articles with brain map visualization."""
+    try:
+        policy = PolicyAnalysis.query.get_or_404(policy_id)
+
+        # Get content-driven visualizations
+        from src.visualization.content_driven_viz_engine import ContentDrivenVisualizationEngine
+        viz_engine = ContentDrivenVisualizationEngine()
+
+        content = policy.content or policy.content_summary or policy.title
+        analysis = viz_engine.analyze_policy_content(content)
+        visualization_data = viz_engine.generate_visualization_data(analysis)
+
+        # Prepare classification data
+        classification = {
+            'region': policy.classification_region,
+            'industry': policy.classification_industry,
+            'year': policy.classification_year,
+            'policy_type': policy.classification_policy_type
+        }
+
+        return render_template('policy_wechat_analysis.html',
+                             policy=policy,
+                             content_analysis=analysis,
+                             visualization_data=visualization_data,
+                             classification=classification)
+    except Exception as e:
+        logger.error(f"Error loading WeChat policy analysis page: {e}")
+        flash('加载政策分析页面失败', 'error')
+        return redirect(url_for('policy_analysis_dashboard'))
+
+
+@app.route('/qwen-processing')
+@login_required
+def qwen_processing_page():
+    """Page for processing text with Qwen and viewing results."""
+    try:
+        # Get recent processing results for history
+        recent_results = QwenProcessingResult.query.order_by(
+            QwenProcessingResult.created_at.desc()
+        ).limit(10).all()
+
+        return render_template('qwen_processing.html', recent_results=recent_results)
+    except Exception as e:
+        logger.error(f"Error loading Qwen processing page: {e}")
+        flash('加载Qwen处理页面失败', 'error')
+        return redirect(url_for('index'))
+
+
+
+@app.route('/api/qwen-result/<int:result_id>')
+@login_required
+def api_qwen_result(result_id):
+    """API endpoint to get Qwen processing result."""
+    try:
+        result = QwenProcessingResult.query.get_or_404(result_id)
+        return jsonify({'success': True, 'result': result.to_dict()})
+    except Exception as e:
+        logger.error(f"Error getting Qwen result: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/qwen-history')
+@login_required
+def api_qwen_history_first():
+    """API endpoint to get Qwen processing history."""
+    try:
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 20))
+
+        results = QwenProcessingResult.query.order_by(
+            QwenProcessingResult.created_at.desc()
+        ).offset((page - 1) * limit).limit(limit).all()
+
+        total = QwenProcessingResult.query.count()
+
+        return jsonify({
+            'success': True,
+            'results': [result.to_dict() for result in results],
+            'total': total,
+            'page': page,
+            'limit': limit
+        })
+    except Exception as e:
+        logger.error(f"Error getting Qwen history: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/policy/<int:policy_id>', methods=['DELETE'])
+@login_required
+def delete_policy(policy_id):
+    """API endpoint to delete a policy."""
+    try:
+        policy = PolicyAnalysis.query.get_or_404(policy_id)
+
+        # Delete the policy
+        db.session.delete(policy)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': '政策删除成功'
+        })
+    except Exception as e:
+        logger.error(f"Error deleting policy: {e}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+
+
+@app.route('/api/policy/<int:policy_id>/reclassify', methods=['POST'])
+@login_required
+def api_reclassify_policy(policy_id):
+    """API endpoint to reclassify a policy."""
+    try:
+        policy = PolicyAnalysis.query.get_or_404(policy_id)
+
+        # Process with Qwen to get new classification
+        from src.ai.qwen_text_processor import QwenCodeTextProcessor
+        processor = QwenCodeTextProcessor()
+
+        content = policy.content or policy.content_summary or policy.title
+        result = processor.process_text(content, 'policy_classification')
+
+        if result.get('success', True):  # Using success as True for this mock since the processor handles it differently
+            # Update classification
+            classification = result.get('classification', {})
+
+            policy.classification_region = classification.get('region', [None])[0] if classification.get('region') else None
+            policy.classification_industry = classification.get('industry', [None])[0] if classification.get('industry') else None
+            policy.classification_year = classification.get('year')
+            policy.classification_policy_type = classification.get('policy_type')
+
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'message': '政策重新分类成功'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Reclassification failed')
+            })
+
+    except Exception as e:
+        logger.error(f"Error reclassifying policy: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/export-policies', methods=['POST'])
+@login_required
+def api_export_policies():
+    """API endpoint to export selected policies."""
+    try:
+        import json
+
+        data = request.get_json()
+        policy_ids = data.get('policy_ids', [])
+
+        if not policy_ids:
+            return jsonify({'success': False, 'error': 'No policy IDs provided'}), 400
+
+        # Get selected policies
+        policies = PolicyAnalysis.query.filter(PolicyAnalysis.id.in_(policy_ids)).all()
+
+        # Create export data
+        export_data = []
+        for policy in policies:
+            export_data.append({
+                'id': policy.id,
+                'title': policy.title,
+                'original_url': policy.original_url,
+                'content_summary': policy.content_summary,
+                'classification': {
+                    'region': policy.classification_region,
+                    'industry': policy.classification_industry,
+                    'year': policy.classification_year,
+                    'policy_type': policy.classification_policy_type
+                },
+                'applicability_score': policy.applicability_score,
+                'status': policy.status,
+                'created_at': policy.created_at.isoformat() if policy.created_at else None,
+                'analyzed_at': policy.analyzed_at.isoformat() if policy.analyzed_at else None
+            })
+
+        # Create response with proper headers for download
+        from flask import Response
+        json_data = json.dumps(export_data, ensure_ascii=False, indent=2)
+        return Response(
+            json_data,
+            mimetype='application/json',
+            headers={'Content-Disposition': f'attachment;filename=policies_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'}
+        )
+
+    except Exception as e:
+        logger.error(f"Error exporting policies: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/policy-visualizations')
+@login_required
+def api_policy_visualizations():
+    """API endpoint for policy visualizations data."""
+    try:
+        # Get region distribution
+        region_data = db.session.query(
+            PolicyAnalysis.classification_region,
+            db.func.count(PolicyAnalysis.id)
+        ).filter(
+            PolicyAnalysis.classification_region.isnot(None)
+        ).group_by(PolicyAnalysis.classification_region).all()
+
+        region_chart = {
+            'labels': [r[0] for r in region_data],
+            'values': [r[1] for r in region_data]
+        }
+
+        # Get industry distribution
+        industry_data = db.session.query(
+            PolicyAnalysis.classification_industry,
+            db.func.count(PolicyAnalysis.id)
+        ).filter(
+            PolicyAnalysis.classification_industry.isnot(None)
+        ).group_by(PolicyAnalysis.classification_industry).all()
+
+        industry_chart = {
+            'labels': [i[0] for i in industry_data],
+            'values': [i[1] for i in industry_data]
+        }
+
+        # Get year distribution
+        year_data = db.session.query(
+            PolicyAnalysis.classification_year,
+            db.func.count(PolicyAnalysis.id)
+        ).filter(
+            PolicyAnalysis.classification_year.isnot(None)
+        ).group_by(PolicyAnalysis.classification_year).order_by(PolicyAnalysis.classification_year).all()
+
+        year_chart = {
+            'labels': [str(y[0]) for y in year_data],
+            'values': [y[1] for y in year_data]
+        }
+
+        # Get policy type distribution
+        type_data = db.session.query(
+            PolicyAnalysis.classification_policy_type,
+            db.func.count(PolicyAnalysis.id)
+        ).filter(
+            PolicyAnalysis.classification_policy_type.isnot(None)
+        ).group_by(PolicyAnalysis.classification_policy_type).all()
+
+        type_chart = {
+            'labels': [t[0] for t in type_data],
+            'values': [t[1] for t in type_data]
+        }
+
+        return jsonify({
+            'region_chart': region_chart,
+            'industry_chart': industry_chart,
+            'year_chart': year_chart,
+            'type_chart': type_chart
+        })
+    except Exception as e:
+        logger.error(f"Error getting visualization data: {e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -513,7 +1264,7 @@ def task_status(task_id):
                 report = Report.query.filter_by(report_id=final_report_id).first()
                 if report:
                     report.status = 'completed'
-                    report.completed_at = datetime.now(timezone.utc)
+                    report.completed_at = beijing_now()
                     if isinstance(task_result, dict) and task_result.get('file_path'):
                         report.file_path = task_result.get('file_path')
                     db.session.commit()
@@ -690,11 +1441,97 @@ def view_report(report_id):
                     ],
                 )
             return content
-            
+
+        # Convert UTC times to Beijing time for display
+        def convert_report_times(obj):
+            """Recursively convert datetime strings to Beijing time in report data"""
+            if isinstance(obj, dict):
+                new_dict = {}
+                for key, value in obj.items():
+                    if key in ['created_at', 'updated_at', 'completed_at', 'generated_at', 'published_date', 'start_date', 'end_date', 'created_time', 'modified_time', 'timestamp', 'date_created', 'date_updated', 'published_at', 'modified_at']:
+                        # Convert UTC datetime to Beijing time
+                        if isinstance(value, (int, float)):  # Unix timestamp
+                            new_dict[key] = format_beijing_time(value, '%Y-%m-%d %H:%M:%S')
+                        elif isinstance(value, str):
+                            # Try to parse the date string, assuming it might be in ISO format
+                            try:
+                                # Handle various date formats
+                                import re
+                                # Look for date patterns like 2024-11-28T12:49:45 or 2024-11-28 12:49:45
+                                date_pattern = r'(\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d+)?)'
+                                match = re.search(date_pattern, value)
+                                if match:
+                                    dt_str = match.group(1)
+                                    if 'T' in dt_str:
+                                        date_part, time_part = dt_str.split('T')
+                                    else:
+                                        date_part, time_part = dt_str.split(' ')
+
+                                    # Split time into components (may have milliseconds)
+                                    time_components = time_part.split('.')
+                                    base_time = time_components[0]  # Get base time without milliseconds
+
+                                    # Parse the datetime from the extracted string
+                                    from datetime import datetime
+                                    parsed_dt = datetime.strptime(f"{date_part} {base_time}", '%Y-%m-%d %H:%M:%S')
+                                    # Assume this is UTC, convert to Beijing time
+                                    import pytz
+                                    utc_dt = pytz.UTC.localize(parsed_dt)
+                                    beijing_dt = utc_dt.astimezone(pytz.timezone('Asia/Shanghai'))
+                                    new_dict[key] = beijing_dt.strftime('%Y-%m-%d %H:%M:%S')
+                                else:
+                                    # If it doesn't match a recognized date pattern, keep as-is
+                                    new_dict[key] = value
+                            except Exception:
+                                # If parsing fails, keep original value
+                                new_dict[key] = value
+                        elif hasattr(value, 'strftime'):  # datetime object
+                            # This is likely already handled by the DB layer, but just in case
+                            if hasattr(value, 'astimezone'):
+                                # Convert to Beijing time if timezone-aware
+                                beijing_time = format_beijing_time(value, '%Y-%m-%d %H:%M:%S')
+                                new_dict[key] = beijing_time
+                            else:
+                                # Naive datetime - treat as UTC and convert to Beijing time
+                                import pytz
+                                if value.tzinfo is None:
+                                    # If datetime is naive, assume it's UTC
+                                    utc_dt = pytz.UTC.localize(value)
+                                else:
+                                    # If it has timezone info, convert to UTC first then to Beijing
+                                    utc_dt = value.astimezone(pytz.UTC)
+                                beijing_dt = utc_dt.astimezone(pytz.timezone('Asia/Shanghai'))
+                                new_dict[key] = beijing_dt.strftime('%Y-%m-%d %H:%M:%S')
+                        else:
+                            new_dict[key] = value  # Don't convert if not a time field
+                    else:
+                        new_dict[key] = convert_report_times(value)  # Recursively process nested structures
+                return new_dict
+            elif isinstance(obj, list):
+                return [convert_report_times(item) for item in obj]
+            else:
+                return obj
+
+        # Convert report and report_data times to Beijing time
+        converted_report_data = convert_report_times(report_data)
+
+        # Convert the report object attributes to Beijing time
+        if hasattr(report, 'created_at') and report.created_at:
+            try:
+                report.created_at_beijing = format_beijing_time(report.created_at, '%Y-%m-%d %H:%M:%S')
+            except:
+                report.created_at_beijing = str(report.created_at) if report.created_at else 'N/A'
+
+        if hasattr(report, 'completed_at') and report.completed_at:
+            try:
+                report.completed_at_beijing = format_beijing_time(report.completed_at, '%Y-%m-%d %H:%M:%S')
+            except:
+                report.completed_at_beijing = str(report.completed_at) if report.completed_at else 'N/A'
+
         # Add the function to the template context
-        return render_template(template, 
+        return render_template(template,
                              report=report,
-                             report_data=report_data,
+                             report_data=converted_report_data,
                              render_markdown=render_markdown)
         
     except json.JSONDecodeError as e:
@@ -727,7 +1564,7 @@ def upload_file():
             try:
                 # Save uploaded file
                 filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                timestamp = now_beijing().strftime('%Y%m%d_%H%M%S')
                 filename = f"{timestamp}_{filename}"
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 
@@ -763,7 +1600,7 @@ def upload_file():
                         file_path=output_path,
                         user_id=get_current_user_id(),
                         status='completed',
-                        completed_at=datetime.utcnow()
+                        completed_at=beijing_now()
                     )
                     db.session.add(report)
                     db.session.commit()
@@ -1512,7 +2349,7 @@ def get_leadership_data(region):
         return jsonify({
             'success': True,
             'data': leadership_data,
-            'timestamp': datetime.now().strftime('%Y年%m月%d日')
+            'timestamp': now_beijing().strftime('%Y年%m月%d日')
         })
     except Exception as e:
         logger.error(f"Error getting leadership data for region {region}: {e}")
@@ -1599,7 +2436,7 @@ def api_policy_search():
 
                 # Filter by time range
                 from datetime import datetime, timedelta
-                time_limit = datetime.now() - timedelta(days=years*365)
+                time_limit = now_beijing() - timedelta(days=years*365)
                 articles_query = articles_query.filter(
                     WeChatArticle.created_at >= time_limit
                 )
@@ -1688,7 +2525,7 @@ def api_policy_export():
             'title': title,
             'city': region,
             'industry': industry_tags[0] if industry_tags else '',
-            'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+            'generated_at': format_beijing_time(None, '%Y-%m-%d %H:%M'),
             'summary': {
                 'zh': f"共收录近{years}年政策 {agg.get('summary', {}).get('count', 0)} 条",
             },
@@ -1701,7 +2538,7 @@ def api_policy_export():
         }
 
         exporter = ReportExporter()
-        safe_name = f"policy_package_{region}_{industry_tags[0] if industry_tags else 'industry'}_{datetime.now().strftime('%Y%m%d')}"
+        safe_name = f"policy_package_{region}_{industry_tags[0] if industry_tags else 'industry'}_{now_beijing().strftime('%Y%m%d')}"
         pdf_path = exporter.export_to_pdf(report_data, safe_name)
         excel_path = exporter.export_to_excel(report_data, safe_name)
 
@@ -1769,7 +2606,7 @@ def api_data_sources():
                 'name': '国务院政策文件库',
                 'url': 'https://www.gov.cn/zhengce/',
                 'format': ['HTML'],
-                'last_update': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'last_update': format_beijing_time(None, '%Y-%m-%d %H:%M'),
                 'verified': True,
                 'quality': {'completeness': 0.95, 'accuracy': 0.97, 'freshness': 0.92},
                 'https': True
@@ -1779,7 +2616,7 @@ def api_data_sources():
                 'name': '发改委政策发布',
                 'url': 'https://www.ndrc.gov.cn/xxgk/ztzl/',
                 'format': ['HTML'],
-                'last_update': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'last_update': format_beijing_time(None, '%Y-%m-%d %H:%M'),
                 'verified': True,
                 'quality': {'completeness': 0.9, 'accuracy': 0.95, 'freshness': 0.9},
                 'https': True
@@ -1789,7 +2626,7 @@ def api_data_sources():
                 'name': '工信部政策发布',
                 'url': 'https://www.miit.gov.cn/gzcy/zcwj/',
                 'format': ['HTML'],
-                'last_update': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'last_update': format_beijing_time(None, '%Y-%m-%d %H:%M'),
                 'verified': True,
                 'quality': {'completeness': 0.88, 'accuracy': 0.94, 'freshness': 0.9},
                 'https': True
@@ -1799,7 +2636,7 @@ def api_data_sources():
                 'name': '四川省政府政策文件库',
                 'url': 'https://www.sc.gov.cn/zwgk/tzgg/',
                 'format': ['HTML'],
-                'last_update': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'last_update': format_beijing_time(None, '%Y-%m-%d %H:%M'),
                 'verified': True,
                 'quality': {'completeness': 0.92, 'accuracy': 0.94, 'freshness': 0.95},
                 'https': True
@@ -1809,7 +2646,7 @@ def api_data_sources():
                 'name': '四川省科技厅政策发布',
                 'url': 'http://kjt.sc.gov.cn/kjt/c100382/xxgk.shtml',
                 'format': ['HTML'],
-                'last_update': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'last_update': format_beijing_time(None, '%Y-%m-%d %H:%M'),
                 'verified': True,
                 'quality': {'completeness': 0.89, 'accuracy': 0.93, 'freshness': 0.96},
                 'https': True
@@ -2019,7 +2856,7 @@ def api_link_check():
         for it in items:
             url = (it.get('url') or '').strip()
             if not url:
-                results.append({'url': url, 'reachable': False, 'status': 'invalid', 'https': False, 'checked_at': datetime.now().isoformat()})
+                results.append({'url': url, 'reachable': False, 'status': 'invalid', 'https': False, 'checked_at': format_beijing_time(None, '%Y-%m-%dT%H:%M:%S')})
                 continue
             https = url.startswith('https://')
             status = 'error'
@@ -2032,7 +2869,7 @@ def api_link_check():
                 status = 'ok' if reachable else f'http_{r.status_code}'
             except Exception:
                 status = 'error'
-            results.append({'url': url, 'reachable': reachable, 'status': status, 'https': https, 'code': code, 'type': it.get('type'), 'importance': it.get('importance'), 'checked_at': datetime.now().isoformat()})
+            results.append({'url': url, 'reachable': reachable, 'status': status, 'https': https, 'code': code, 'type': it.get('type'), 'importance': it.get('importance'), 'checked_at': format_beijing_time(None, '%Y-%m-%dT%H:%M:%S')})
         return jsonify({'success': True, 'results': results})
     except Exception as e:
         logger.error(f"Error in link check: {e}")
@@ -2496,7 +3333,7 @@ def api_export_report(report_id, format):
                 filename = filename[:50]
             filename = filename.strip() or f'{safe_city}_{safe_industry}_报告'
         else:
-            filename = f"{safe_city}_{safe_industry}_报告_{datetime.now().strftime("%Y%m%d")}"
+            filename = f"{safe_city}_{safe_industry}_报告_{now_beijing().strftime("%Y%m%d")}"
         
         if format.lower() == 'pdf':
             export_path = exporter.export_to_pdf(report_data, filename)
@@ -2834,7 +3671,7 @@ def api_poi_search():
         cluster_data = processor.generate_cluster_data(pois)
 
         # Generate export paths
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = now_beijing().strftime('%Y%m%d_%H%M%S')
         search_id = f"poi_{timestamp}"
         base_path = Path('data/output/poi_search') / search_id
         base_path.mkdir(parents=True, exist_ok=True)
@@ -2944,7 +3781,7 @@ def api_poi_upload():
                             invalid_examples.append({'name': poi.get('name', ''), 'reason': '坐标解析异常'})
 
                 # Generate export paths
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                timestamp = now_beijing().strftime('%Y%m%d_%H%M%S')
                 upload_id = f"poi_upload_{timestamp}"
                 base_path = Path('data/output/poi_upload') / upload_id
                 base_path.mkdir(parents=True, exist_ok=True)
@@ -3055,6 +3892,7 @@ def main():
     # Register streaming blueprint
     app.register_blueprint(streaming_bp, url_prefix='/streaming')
     app.register_blueprint(report_gen_bp)
+    app.register_blueprint(report_generation_bp)
 
     # Fetch WeChat articles in the background when the app starts
     try:
