@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ policy.title }} - 政策详情</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar {
+            background: white;
+            border-right: 1px solid var(--border-color);
+            height: calc(100vh - 56px);
+            position: fixed;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: calc(100vh - 56px);
+        }
+        
+        .policy-card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .policy-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            margin: 2px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            background-color: #e9ecef;
+        }
+        
+        .region-tag { background-color: #d1ecf1; color: #0c5460; }
+        .industry-tag { background-color: #d4edda; color: #155724; }
+        .year-tag { background-color: #f8d7da; color: #721c24; }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            height: 400px;
+        }
+        
+        .section-title {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+        }
+        
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-align: center;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .metric-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .highlight-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .mindmap-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            height: 500px;
+            margin-bottom: 20px;
+        }
+        
+        .policy-content {
+            line-height: 1.8;
+            font-size: 1.1em;
+        }
+        
+        .back-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-chart-line me-2"></i>区域产业分析平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('generate_report') }}">报告生成</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('policy_analysis_dashboard') }}">政策解读</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('policy_detail_page', policy_id=policy.id) }}">政策详情</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>{{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <a href="{{ url_for('policy_analysis_dashboard') }}" class="btn btn-primary back-button">
+                    <i class="fas fa-arrow-left me-1"></i>返回列表
+                </a>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-file-contract me-2"></i>{{ policy.title }}</h2>
+                    <div>
+                        <button class="btn btn-danger me-2" onclick="deletePolicy({{ policy.id }})">
+                            <i class="fas fa-trash me-1"></i>删除
+                        </button>
+                        <a href="{{ policy.original_url }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>查看原文
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Policy Summary -->
+                <div class="summary-card">
+                    <h3>{{ policy.title }}</h3>
+                    <p class="mb-0">{{ policy.content_summary }}</p>
+                </div>
+                
+                <!-- Policy Metadata -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-number">{{ classification.region or '未知' }}</div>
+                            <div class="metric-label">区域</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-number">{{ classification.industry or '未知' }}</div>
+                            <div class="metric-label">行业</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-number">{{ classification.year or '未知' }}</div>
+                            <div class="metric-label">年份</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-number">{{ classification.policy_type or '未知' }}</div>
+                            <div class="metric-label">政策类型</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Classification Tags -->
+                <div class="highlight-section">
+                    <h5 class="section-title"><i class="fas fa-tags me-2"></i>分类标签</h5>
+                    <div>
+                        {% if classification.region %}
+                        <span class="policy-tag region-tag">{{ classification.region }}</span>
+                        {% endif %}
+                        {% if classification.industry %}
+                        <span class="policy-tag industry-tag">{{ classification.industry }}</span>
+                        {% endif %}
+                        {% if classification.year %}
+                        <span class="policy-tag year-tag">{{ classification.year }}年</span>
+                        {% endif %}
+                        {% if classification.policy_type %}
+                        <span class="policy-tag">{{ classification.policy_type }}</span>
+                        {% endif %}
+                        {% for tag in policy.tags.split(',') if policy.tags %}
+                        <span class="policy-tag">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Content-Driven Visualizations -->
+                <div class="row mb-4">
+                    <!-- Amounts/Financial Support Visualization -->
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h5 class="section-title"><i class="fas fa-dollar-sign me-2"></i>资金支持分布</h5>
+                            <div id="amountsChart"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline Visualization -->
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h5 class="section-title"><i class="fas fa-calendar-alt me-2"></i>政策时间轴</h5>
+                            <div id="timelineChart"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mind Map Visualization -->
+                <div class="mindmap-container">
+                    <h5 class="section-title"><i class="fas fa-project-diagram me-2"></i>政策关系脑图</h5>
+                    <div id="mindmapChart" style="height: 100%;"></div>
+                </div>
+                
+                <!-- Detailed Analysis Sections -->
+                <div class="row mb-4">
+                    <!-- Key Points -->
+                    <div class="col-md-6">
+                        <div class="highlight-section">
+                            <h5 class="section-title"><i class="fas fa-lightbulb me-2"></i>政策要点</h5>
+                            <ul id="keyPointsList">
+                                <!-- Will be populated by JS -->
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Support Measures -->
+                    <div class="col-md-6">
+                        <div class="highlight-section">
+                            <h5 class="section-title"><i class="fas fa-hands-helping me-2"></i>支持措施</h5>
+                            <ul id="supportMeasuresList">
+                                <!-- Will be populated by JS -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Policy Content -->
+                <div class="highlight-section">
+                    <h5 class="section-title"><i class="fas fa-align-left me-2"></i>政策全文</h5>
+                    <div class="policy-content" id="policyContent">
+                        {{ policy.content or '暂无详细内容' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    确定要删除此政策吗？此操作不可撤销。
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Data from backend
+        const policyData = {{ policy.analysis_result | tojson }};
+        const llmInterpretation = {{ policy.llm_interpretation | tojson }};
+        const entities = {{ policy.entities | tojson }};
+        const knowledgeGraph = {{ policy.knowledge_graph | tojson }};
+        const contentAnalysis = {{ content_analysis | tojson }};
+        const visualizationData = {{ visualization_data | tojson }};
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            renderVisualizations();
+            populateDetailSections();
+        });
+
+        function renderVisualizations() {
+            // Generate content-driven visualizations based on content analysis
+            if (visualizationData && visualizationData.charts) {
+                for (const [chartType, chartData] of Object.entries(visualizationData.charts)) {
+                    try {
+                        renderChart(chartType, chartData);
+                    } catch (error) {
+                        console.error(`Error rendering ${chartType} chart:`, error);
+                    }
+                }
+            } else {
+                // Fallback to old method if no content analysis available
+                generateAmountsChart();
+                generateTimelineChart();
+                generateMindMap();
+            }
+        }
+
+        function renderChart(chartType, chartData) {
+            let chartDom, myChart;
+
+            switch(chartType) {
+                case 'amounts_pie':
+                    chartDom = document.getElementById('amountsChart');
+                    myChart = echarts.init(chartDom);
+
+                    const pieOption = {
+                        title: {
+                            text: chartData.title,
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'item'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left'
+                        },
+                        series: [{
+                            name: '资金类型',
+                            type: 'pie',
+                            radius: '50%',
+                            data: chartData.data,
+                            emphasis: {
+                                itemStyle: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            }
+                        }]
+                    };
+
+                    myChart.setOption(pieOption);
+                    break;
+
+                case 'timeline':
+                    chartDom = document.getElementById('timelineChart');
+                    myChart = echarts.init(chartDom);
+
+                    const dates = chartData.data.map(item => item.date);
+                    const events = chartData.data.map((item, index) => index + 1);
+
+                    const timelineOption = {
+                        title: {
+                            text: chartData.title,
+                            left: 'center'
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: dates
+                        },
+                        yAxis: {
+                            type: 'value'
+                        },
+                        series: [{
+                            data: events,
+                            type: 'line',
+                            smooth: true,
+                            markPoint: {
+                                data: chartData.data.map(item => ({
+                                    name: item.event,
+                                    coord: [item.date, 0] // Will be positioned based on actual data
+                                }))
+                            }
+                        }]
+                    };
+
+                    myChart.setOption(timelineOption);
+                    break;
+
+                case 'industries':
+                    chartDom = document.getElementById('amountsChart');
+                    myChart = echarts.init(chartDom);
+
+                    const industryOption = {
+                        title: {
+                            text: chartData.title,
+                            left: 'center'
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
+                            }
+                        },
+                        xAxis: {
+                            type: 'value'
+                        },
+                        yAxis: {
+                            type: 'category',
+                            data: chartData.data.map(item => item.name)
+                        },
+                        series: [{
+                            data: chartData.data.map(item => item.value),
+                            type: 'bar',
+                            showBackground: true,
+                            backgroundStyle: {
+                                color: 'rgba(180, 180, 180, 0.2)'
+                            }
+                        }]
+                    };
+
+                    myChart.setOption(industryOption);
+                    break;
+
+                case 'organizations':
+                    // Handle organization list in a special way
+                    if (chartData.data && chartData.data.length > 0) {
+                        const orgList = document.createElement('ul');
+                        chartData.data.forEach(item => {
+                            const li = document.createElement('li');
+                            li.textContent = item.name;
+                            orgList.appendChild(li);
+                        });
+
+                        const orgContainer = document.querySelector('.highlight-section .card-body');
+                        if (orgContainer) {
+                            orgContainer.appendChild(orgList);
+                        }
+                    }
+                    break;
+            }
+        }
+
+        function generateAmountsChart() {
+            // Extract financial information from policy content
+            const amounts = extractAmountsFromPolicy();
+            const chartDom = document.getElementById('amountsChart');
+            if (chartDom) {
+                const myChart = echarts.init(chartDom);
+
+                const option = {
+                    title: {
+                        text: '资金支持分布',
+                        left: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'item'
+                    },
+                    legend: {
+                        orient: 'vertical',
+                        left: 'left'
+                    },
+                    series: [{
+                        name: '资金类型',
+                        type: 'pie',
+                        radius: '50%',
+                        data: amounts,
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }]
+                };
+
+                myChart.setOption(option);
+            }
+        }
+
+        function generateTimelineChart() {
+            // Extract timeline information from policy content
+            const timelineEvents = extractTimelineFromPolicy();
+            const chartDom = document.getElementById('timelineChart');
+            if (chartDom) {
+                const myChart = echarts.init(chartDom);
+
+                const option = {
+                    title: {
+                        text: '政策时间轴',
+                        left: 'center'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: timelineEvents.map(event => event.date)
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [{
+                        data: timelineEvents.map((event, index) => index + 1),
+                        type: 'line',
+                        smooth: true
+                    }]
+                };
+
+                myChart.setOption(option);
+            }
+        }
+
+        function generateMindMap() {
+            // Generate mind map based on knowledge graph or policy structure
+            const chartDom = document.getElementById('mindmapChart');
+            if (chartDom) {
+                const myChart = echarts.init(chartDom);
+
+                // Use policy knowledge graph if available, otherwise create from content analysis
+                if (knowledgeGraph && knowledgeGraph.echarts_config) {
+                    // Use existing knowledge graph configuration
+                    myChart.setOption(knowledgeGraph.echarts_config);
+                } else if (contentAnalysis && contentAnalysis.key_themes) {
+                    // Create mind map from content analysis
+                    const concepts = [
+                        { name: '{{ policy.title[:20] }}...', symbolSize: 60, itemStyle: { color: '#4361ee' }, category: 0 }
+                    ];
+
+                    // Add key themes as related concepts
+                    contentAnalysis.key_themes.slice(0, 10).forEach((theme, index) => {
+                        concepts.push({
+                            name: theme.substring(0, 20) + '...',
+                            symbolSize: 40,
+                            itemStyle: { color: '#3f37c9' },
+                            category: 1
+                        });
+
+                        concepts.push({
+                            source: 0,
+                            target: index + 1
+                        });
+                    });
+
+                    const option = {
+                        title: {
+                            text: '政策关系脑图',
+                            left: 'center'
+                        },
+                        tooltip: {},
+                        legend: [{
+                            data: ['政策核心', '关键主题']
+                        }],
+                        series: [{
+                            type: 'graph',
+                            layout: 'force',
+                            symbolSize: 50,
+                            roam: true,
+                            edgeSymbol: ['circle', 'arrow'],
+                            edgeSymbolSize: [4, 10],
+                            edgeLabel: {
+                                fontSize: 12
+                            },
+                            data: concepts.filter(item => !item.source), // Only nodes
+                            links: concepts.filter(item => item.source !== undefined), // Only links
+                            force: {
+                                repulsion: 1000,
+                                edgeLength: [100, 200]
+                            }
+                        }]
+                    };
+
+                    myChart.setOption(option);
+                } else {
+                    // Create mind map from policy structure
+                    const option = {
+                        series: [{
+                            type: 'graph',
+                            layout: 'force',
+                            data: [{
+                                name: '{{ policy.title[:20] }}...',
+                                symbolSize: 60,
+                                itemStyle: { color: '#4361ee' },
+                                label: { position: 'right', fontSize: 16 }
+                            }],
+                            links: [],
+                            roam: true,
+                            focusNodeAdjacency: true,
+                            force: { repulsion: 1000 }
+                        }]
+                    };
+
+                    // Add nodes based on extracted content
+                    addContentNodes(option, extractKeyElementsFromPolicy());
+
+                    myChart.setOption(option);
+                }
+            }
+        }
+
+        function extractAmountsFromPolicy() {
+            // Extract financial information from policy
+            // This would analyze the policy content to find amounts
+            const amounts = [];
+
+            // Sample data - in real implementation, this would parse the policy content
+            if (policyData && policyData.summary && policyData.summary.quantitative_data) {
+                const amountsData = policyData.summary.quantitative_data.amounts || [];
+                amountsData.forEach(amt => {
+                    amounts.push({
+                        value: parseFloat(amt.value) || 0,
+                        name: amt.unit || '金额'
+                    });
+                });
+            }
+
+            // If no amounts found, create from LLM interpretation
+            if (amounts.length === 0 && llmInterpretation) {
+                // Process LLM interpretation to extract financial info
+                if (llmInterpretation.support_measures) {
+                    llmInterpretation.support_measures.forEach(measure => {
+                        // Extract amounts from text descriptions
+                        const amountMatch = measure.match(/(\d+(?:\.\d+)?)[亿万千百]?[元万]/g);
+                        if (amountMatch) {
+                            amountMatch.forEach(match => {
+                                amounts.push({
+                                    value: parseFloat(match.match(/\d+(?:\.\d+)?/)[0]),
+                                    name: '资金支持'
+                                });
+                            });
+                        }
+                    });
+                }
+            }
+
+            // Use content analysis if available
+            if (amounts.length === 0 && contentAnalysis && contentAnalysis.amounts) {
+                contentAnalysis.amounts.forEach(amt => {
+                    amounts.push({
+                        value: typeof amt.value === 'number' ? amt.value : parseFloat(amt.value) || 0,
+                        name: amt.unit || '金额'
+                    });
+                });
+            }
+
+            // Default fallback
+            if (amounts.length === 0) {
+                amounts.push({value: 100, name: '一般支持'}, {value: 50, name: '专项支持'});
+            }
+
+            return amounts;
+        }
+
+        function extractTimelineFromPolicy() {
+            // Extract timeline information from policy
+            const timelineEvents = [];
+
+            // Use content analysis if available
+            if (contentAnalysis && contentAnalysis.dates) {
+                contentAnalysis.dates.forEach(date => {
+                    timelineEvents.push({
+                        date: date.date,
+                        event: date.context.substring(0, 30)
+                    });
+                });
+            }
+            // Sample data - in real implementation, this would parse the policy content
+            else if (policyData && policyData.summary && policyData.summary.timeline) {
+                policyData.summary.timeline.forEach(event => {
+                    timelineEvents.push({
+                        date: event.date,
+                        event: event.context.substring(0, 30)
+                    });
+                });
+            }
+
+            // If no timeline found, create from LLM interpretation
+            if (timelineEvents.length === 0 && llmInterpretation) {
+                if (llmInterpretation.timeline) {
+                    llmInterpretation.timeline.forEach(event => {
+                        timelineEvents.push({
+                            date: '日期',
+                            event: event.substring(0, 30)
+                        });
+                    });
+                }
+            }
+
+            // Default fallback
+            if (timelineEvents.length === 0) {
+                timelineEvents.push(
+                    {date: '发布日', event: '政策发布'},
+                    {date: '实施日', event: '政策实施'},
+                    {date: '截止日', event: '申报截止'}
+                );
+            }
+
+            return timelineEvents;
+        }
+
+        function addContentNodes(option, elements) {
+            // Add content nodes to the mind map
+            if (elements && elements.length > 0) {
+                elements.forEach((element, index) => {
+                    if (index < 5) { // Limit to prevent overcrowding
+                        option.series[0].data.push({
+                            name: element,
+                            symbolSize: 40,
+                            itemStyle: { color: '#3f37c9' },
+                            label: { position: 'right' }
+                        });
+
+                        option.series[0].links.push({
+                            source: 0,
+                            target: index + 1
+                        });
+                    }
+                });
+            }
+        }
+
+        function extractKeyElementsFromPolicy() {
+            // Extract key elements from policy for mind map
+            const elements = [];
+
+            // Add classification elements
+            if ('{{ classification.region }}') elements.push('{{ classification.region }}');
+            if ('{{ classification.industry }}') elements.push('{{ classification.industry }}');
+            if ('{{ classification.policy_type }}') elements.push('{{ classification.policy_type }}');
+
+            // Add from LLM interpretation if available
+            if (llmInterpretation) {
+                if (llmInterpretation.key_points) elements.push(...llmInterpretation.key_points.slice(0, 3));
+                if (llmInterpretation.support_measures) elements.push(...llmInterpretation.support_measures.slice(0, 2));
+            }
+
+            // Add from content analysis if available
+            if (contentAnalysis) {
+                if (contentAnalysis.key_themes) elements.push(...contentAnalysis.key_themes.slice(0, 3));
+                if (contentAnalysis.industries) elements.push(...contentAnalysis.industries.slice(0, 2));
+            }
+
+            return elements;
+        }
+
+        function populateDetailSections() {
+            // Populate key points section
+            const keyPointsList = document.getElementById('keyPointsList');
+            if (contentAnalysis && contentAnalysis.key_themes && contentAnalysis.key_themes.length > 0) {
+                contentAnalysis.key_themes.slice(0, 5).forEach(point => {
+                    const li = document.createElement('li');
+                    li.textContent = point;
+                    keyPointsList.appendChild(li);
+                });
+            } else if (llmInterpretation && llmInterpretation.key_points) {
+                llmInterpretation.key_points.forEach(point => {
+                    const li = document.createElement('li');
+                    li.textContent = point;
+                    keyPointsList.appendChild(li);
+                });
+            } else {
+                keyPointsList.innerHTML = '<li>暂无政策要点，需配置LLM服务后自动生成</li>';
+            }
+
+            // Populate support measures section
+            const supportMeasuresList = document.getElementById('supportMeasuresList');
+            if (contentAnalysis && contentAnalysis.action_items && contentAnalysis.action_items.length > 0) {
+                contentAnalysis.action_items.slice(0, 5).forEach(measure => {
+                    const li = document.createElement('li');
+                    li.textContent = measure;
+                    supportMeasuresList.appendChild(li);
+                });
+            } else if (llmInterpretation && llmInterpretation.support_measures) {
+                llmInterpretation.support_measures.forEach(measure => {
+                    const li = document.createElement('li');
+                    li.textContent = measure;
+                    supportMeasuresList.appendChild(li);
+                });
+            } else {
+                supportMeasuresList.innerHTML = '<li>暂无支持措施，需配置LLM服务后自动生成</li>';
+            }
+        }
+
+        function deletePolicy(policyId) {
+            // Show confirmation modal
+            const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+            modal.show();
+
+            // Handle confirmation
+            document.getElementById('confirmDeleteBtn').onclick = function() {
+                fetch(`/api/policy/${policyId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // Redirect back to policy list
+                        window.location.href = '/policy-analysis';
+                    } else {
+                        alert('删除失败: ' + result.error);
+                    }
+                    modal.hide();
+                })
+                .catch(error => {
+                    console.error('Error deleting policy:', error);
+                    alert('删除政策时发生错误');
+                    modal.hide();
+                });
+            };
+        }
+
+        function showNotification(message, type = 'info') {
+            // Simple notification - in production, you might want to use a proper notification library
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
