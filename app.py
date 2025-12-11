@@ -1412,12 +1412,90 @@ def view_report(report_id):
             except:
                 report.completed_at_beijing = str(report.completed_at) if report.completed_at else 'N/A'
 
-        # Add the function to the template context
+        # Add helper functions to the template context
+        # Note: json, re, and html are already imported at the top of the file
+
+        def format_json_content(content):
+            """Convert JSON content to human-readable format with proper formatting."""
+            if not content:
+                return content
+            if not isinstance(content, str):
+                return str(content)
+
+            # Try to parse as JSON to convert to readable format
+            content_str = content.strip()
+
+            # First check if the content is valid JSON
+            if content_str.startswith('{') or content_str.startswith('['):
+                try:
+                    import json as json_module  # Use alias to avoid scoping conflicts
+                    parsed_data = json_module.loads(content_str)
+                    return convert_json_to_readable_html(parsed_data)
+                except json_module.JSONDecodeError:
+                    # If not valid JSON, continue with string processing
+                    pass
+
+            # For string content that contains JSON-like data (e.g. from the text processor)
+            # Look for patterns that look like "key: value" and format them nicely
+            formatted_content = content_str
+            # Replace common JSON-like patterns with readable format
+            import re as re_module  # Use alias to avoid scoping conflicts
+            formatted_content = re_module.sub(r'"([^"]+)"\s*:\s*', r'<strong>\1:</strong> ', formatted_content)
+            # Remove quotes around values
+            formatted_content = re_module.sub(r':\s*"([^"]*)"', r': \1', formatted_content)
+            # Add line breaks for new JSON objects/arrays
+            formatted_content = formatted_content.replace('}, {', '},<br>{')
+            formatted_content = formatted_content.replace('], [', '],<br>[')
+            formatted_content = formatted_content.replace('\\n', '<br>')
+
+            return formatted_content
+
+        def convert_json_to_readable_html(data, level=0):
+            """Recursively convert JSON data to readable HTML format."""
+            indent = "&nbsp;" * (level * 4)  # 4 spaces per indentation level
+            import html as html_module  # Use alias to avoid scoping conflicts
+            if isinstance(data, dict):
+                items = []
+                for key, value in data.items():
+                    key_html = f'<strong>{html_module.escape(str(key))}:</strong>'
+                    if isinstance(value, (dict, list)):
+                        value_html = convert_json_to_readable_html(value, level + 1)
+                        items.append(f'{indent}{key_html}<br>{value_html}')
+                    else:
+                        value_html = html_module.escape(str(value))
+                        items.append(f'{indent}{key_html} {value_html}<br>')
+                return ''.join(items)
+            elif isinstance(data, list):
+                items = []
+                for i, item in enumerate(data):
+                    if isinstance(item, (dict, list)):
+                        item_html = convert_json_to_readable_html(item, level + 1)
+                        items.append(f'{indent}Item {i+1}:<br>{item_html}')
+                    else:
+                        item_html = html_module.escape(str(item))
+                        items.append(f'{indent}- {item_html}<br>')
+                return ''.join(items)
+            else:
+                return f'{indent}{html_module.escape(str(data))}'
+
+        def is_json_content(content):
+            """Check if content appears to be converted from JSON for special formatting."""
+            if not isinstance(content, str):
+                return False
+            content = content.strip()
+            # Check if it contains patterns that look like converted JSON (key: value format)
+            has_key_value_pattern = ':' in content and any(indicator in content.lower() for indicator in
+                                                         ['name:', 'location:', 'type:', 'data:', 'address:', 'results:', 'poi_data:', 'item'])
+            starts_with_json = content.startswith('{') or content.startswith('[')
+            return has_key_value_pattern or starts_with_json
+
         return render_template(template,
                              report=report,
                              report_data=converted_report_data,
-                             render_markdown=render_markdown)
-        
+                             render_markdown=render_markdown,
+                             format_json_content=format_json_content,
+                             is_json_content=is_json_content)
+
     except json.JSONDecodeError as e:
         logger.error(f"JSON decode error: {e}")
         flash('报告文件格式错误', 'error')

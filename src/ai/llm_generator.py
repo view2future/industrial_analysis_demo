@@ -295,16 +295,55 @@ class LLMReportGenerator:
                     sections = self._parse_report_sections(report_content)
                     logger.info(f"✓ 解析完成，共 {len(sections)} 个章节: {list(sections.keys())}")
                     
+                    # Generate summary and SWOT analysis
+                    summary_zh = self.generate_summary(report_content, 'zh')
+                    summary_en = self.generate_summary(report_content, 'en')
+
+                    swot_analysis = self.generate_swot_analysis(report_content)
+
+                    # Generate dashboard data for visualizations
+                    from src.visualization.dashboard_generator import DashboardGenerator
+                    dashboard_gen = DashboardGenerator()
+
+                    # Create a temporary analysis result structure for dashboard generation
+                    analysis_result = {
+                        'categories': sections,
+                        'full_content': report_content,
+                        'key_insights': [],
+                        'ai_opportunities': {},
+                        'statistics': {
+                            'total_words': len(report_content.split()),
+                            'total_characters': len(report_content),
+                            'reading_time_minutes': max(1, len(report_content.split()) // 300)
+                        },
+                        'sentiment_analysis': {},
+                        'metadata': {
+                            'source_file': f"{city}_{industry}_analysis.txt",
+                            'model_used': self.model_name,
+                            'provider': service_name
+                        }
+                    }
+
+                    dashboard_data = dashboard_gen.generate_dashboard_data(analysis_result)
+
                     logger.info("="*60)
                     logger.info("✅ 报告生成成功！")
                     logger.info("="*60)
-                    
+
                     return {
                         'success': True,
                         'city': city,
                         'industry': industry,
                         'full_content': report_content,
                         'sections': sections,
+                        'summary': {
+                            'zh': summary_zh,
+                            'en': summary_en,
+                            'word_count': len(report_content.split()),
+                            'reading_time_minutes': max(1, len(report_content.split()) // 300)
+                        },
+                        'swot_analysis': swot_analysis,
+                        'dashboard_data': dashboard_data,
                         'metadata': {
                             'generated_at': None,
                             'model': self.model_name,

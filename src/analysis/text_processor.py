@@ -147,24 +147,77 @@ class TextProcessor:
             return None
     
     def _extract_text_from_json(self, data: Any) -> str:
-        """Extract text content from JSON data."""
+        """Extract text content from JSON data in human-readable format without JSON syntax."""
         text_parts = []
-        
+
         if isinstance(data, dict):
             for key, value in data.items():
+                key_label = self._format_key_label(key)
                 if isinstance(value, str):
-                    text_parts.append(f"{key}: {value}")
-                elif isinstance(value, (list, dict)):
-                    text_parts.append(self._extract_text_from_json(value))
-        
+                    # Format key-value pairs in readable format
+                    text_parts.append(f"{key_label}: {value}")
+                elif isinstance(value, list):
+                    text_parts.append(f"{key_label}:")
+                    for i, item in enumerate(value):
+                        if isinstance(item, (dict, list)):
+                            text_parts.append(f"  - Item {i+1}:")
+                            sub_parts = self._extract_text_from_json(item).split('\n')
+                            for sub_part in sub_parts:
+                                if sub_part.strip():
+                                    text_parts.append(f"    {sub_part}")
+                        else:
+                            text_parts.append(f"  - {item}")
+                elif isinstance(value, dict):
+                    text_parts.append(f"{key_label}:")
+                    sub_parts = self._extract_text_from_json(value).split('\n')
+                    for sub_part in sub_parts:
+                        if sub_part.strip():
+                            text_parts.append(f"  {sub_part}")
+                else:
+                    text_parts.append(f"{key_label}: {value}")
+
         elif isinstance(data, list):
-            for item in data:
-                text_parts.append(self._extract_text_from_json(item))
-        
+            for i, item in enumerate(data):
+                if isinstance(item, (dict, list)):
+                    text_parts.append(f"Item {i+1}:")
+                    sub_parts = self._extract_text_from_json(item).split('\n')
+                    for sub_part in sub_parts:
+                        if sub_part.strip():
+                            text_parts.append(f"  {sub_part}")
+                else:
+                    text_parts.append(f"- {item}")
+
         elif isinstance(data, str):
             text_parts.append(data)
-        
+
         return '\n'.join(filter(None, text_parts))
+
+    def _format_key_label(self, key: str) -> str:
+        """Format key names to be more readable."""
+        # Convert camelCase to "Camel Case" or snake_case to "Snake Case"
+        if '_' in key:
+            # snake_case to "Snake Case"
+            formatted = key.replace('_', ' ').title()
+        elif key and key[0].islower() and any(c.isupper() for c in key):
+            # camelCase to "Camel Case"
+            formatted = re.sub('([a-z0-9])([A-Z])', r'\1 \2', key).title()
+        else:
+            # Already in title format or simple word
+            formatted = key.replace('_', ' ').replace('-', ' ').title()
+
+        # Special common terms correction
+        corrections = {
+            'Id': 'ID',
+            'Url': 'URL',
+            'Ai': 'AI',
+            'Poi': 'POI',
+            'Gps': 'GPS'
+        }
+
+        for original, corrected in corrections.items():
+            formatted = re.sub(r'\b' + original + r'\b', corrected, formatted)
+
+        return formatted
     
     def _analyze_text(self, content: str) -> Dict[str, Any]:
         """Analyze text content and categorize information."""

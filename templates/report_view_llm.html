@@ -56,7 +56,7 @@
                 <h3 class="text-3xl font-semibold">{{ report_data.industry }}产业深度分析</h3>
             </div>
             <div class="flex gap-8 text-lg">
-                <span><i class="fas fa-robot mr-2"></i>{{ (report_data.metadata.model if report_data.metadata and report_data.metadata.model) or (report_data.metadata.llm_service|upper if report_data.metadata and report_data.metadata.llm_service) or 'AI' }} 生成</span>
+                <span><i class="fas fa-robot mr-2"></i>AI驱动报告</span>
                 <span><i class="fas fa-clock mr-2"></i><span id="beijing-time">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span></span>
                 <span><i class="fas fa-file-word mr-2"></i>{{ report_data.full_content | length }} 字</span>
             </div>

@@ -79,7 +79,7 @@
                 <h3 class="text-3xl font-semibold">{{ report_data.industry }}产业深度分析报告</h3>
             </div>
             <div class="flex gap-8 text-lg">
-                <span><i class="fas fa-robot mr-2"></i>{{ (report_data.metadata.model if report_data.metadata and report_data.metadata.model) or (report_data.metadata.llm_service|upper if report_data.metadata and report_data.metadata.llm_service) or 'AI' }} 生成</span>
+                <span><i class="fas fa-robot mr-2"></i>AI驱动报告</span>
                 <span><i class="fas fa-clock mr-2"></i><span id="beijing-time">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span></span>
                 <span><i class="fas fa-file-word mr-2"></i>{{ report_data.full_content | length if report_data.full_content else (report_data.summary.word_count if report_data.summary and report_data.summary.word_count else 0) }} 字</span>
             </div>
@@ -136,44 +136,50 @@
         </div>
         {% endif %}
 
-        <!-- Visualization Section -->
-        {% if report_data.charts %}
+        <!-- Dashboard Data Visualizations -->
+        {% if report_data.dashboard_data %}
         <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
             <h3 class="text-3xl font-bold gradient-text mb-6 flex items-center">
-                <i class="fas fa-chart-bar mr-3"></i>数据分析与可视化
+                <i class="fas fa-chart-network mr-3"></i>数据洞察与分析
             </h3>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Category Distribution Chart -->
+                {% if report_data.dashboard_data.charts and report_data.dashboard_data.charts.category_distribution and report_data.dashboard_data.charts.category_distribution.data %}
                 <div class="section-card bg-gray-50 rounded-lg p-6 shadow-sm">
                     <h4 class="text-xl font-semibold mb-4 flex items-center">
-                        <i class="fas fa-chart-pie text-indigo-600 mr-2"></i>产业类别分析
+                        <i class="fas fa-chart-pie text-indigo-600 mr-2"></i>内容分布分析
                     </h4>
-                    <div id="categoryChart" style="height: 400px;"></div>
+                    <div id="categoryDistributionChart" style="height: 400px;"></div>
                 </div>
-                
-                <!-- AI Opportunities Chart -->
+                {% endif %}
+
+                <!-- Statistics Overview Chart -->
+                {% if report_data.dashboard_data.charts and report_data.dashboard_data.charts.statistics_overview and report_data.dashboard_data.charts.statistics_overview.data %}
+                <div class="section-card bg-gray-50 rounded-lg p-6 shadow-sm">
+                    <h4 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-chart-bar text-indigo-600 mr-2"></i>统计概览
+                    </h4>
+                    <div id="statisticsChart" style="height: 400px;"></div>
+                </div>
+                {% endif %}
+
+                <!-- AI Opportunities Radar Chart -->
+                {% if report_data.dashboard_data.charts and report_data.dashboard_data.charts.ai_opportunities and report_data.dashboard_data.charts.ai_opportunities.data %}
                 <div class="section-card bg-gray-50 rounded-lg p-6 shadow-sm">
                     <h4 class="text-xl font-semibold mb-4 flex items-center">
                         <i class="fas fa-rocket text-indigo-600 mr-2"></i>AI融合潜力
                     </h4>
-                    <div id="aiChart" style="height: 400px;"></div>
+                    <div id="aiRadarChart" style="height: 400px;"></div>
                 </div>
-                
-                <!-- Keyword Frequency Chart -->
+                {% endif %}
+
+                <!-- Sentiment Analysis Chart -->
+                {% if report_data.dashboard_data.charts and report_data.dashboard_data.charts.sentiment_analysis and report_data.dashboard_data.charts.sentiment_analysis.data %}
                 <div class="section-card bg-gray-50 rounded-lg p-6 shadow-sm">
                     <h4 class="text-xl font-semibold mb-4 flex items-center">
-                        <i class="fas fa-tags text-indigo-600 mr-2"></i>关键词热度
+                        <i class="fas fa-chart-line text-indigo-600 mr-2"></i>情感分析
                     </h4>
-                    <div id="keywordChart" style="height: 300px;"></div>
-                </div>
-                
-                <!-- Timeline Chart -->
-                {% if report_data.timeline %}
-                <div class="section-card bg-gray-50 rounded-lg p-6 shadow-sm">
-                    <h4 class="text-xl font-semibold mb-4 flex items-center">
-                        <i class="fas fa-timeline text-indigo-600 mr-2"></i>时间轴
-                    </h4>
-                    <div id="timelineChart" style="height: 300px;"></div>
+                    <div id="sentimentChart" style="height: 400px;"></div>
                 </div>
                 {% endif %}
             </div>
@@ -464,17 +470,17 @@
             }
         }
 
-        // Chart rendering
+        // Dashboard Chart rendering
         document.addEventListener('DOMContentLoaded', function() {
-            {% if report_data.charts and report_data.charts.category_distribution %}
+            {% if report_data.dashboard_data and report_data.dashboard_data.charts and report_data.dashboard_data.charts.category_distribution %}
             // Category Distribution Chart
-            const categoryChart = echarts.init(document.getElementById('categoryChart'));
-            const categoryData = {{ report_data.charts.category_distribution.data[0].labels if report_data.charts.category_distribution.data and report_data.charts.category_distribution.data[0].labels else [] | tojson }};
-            const categoryValues = {{ report_data.charts.category_distribution.data[0].chart_values if report_data.charts.category_distribution.data and report_data.charts.category_distribution.data[0].chart_values else [] | tojson }};
-            
+            const categoryChart = echarts.init(document.getElementById('categoryDistributionChart'));
+            const categoryData = {{ report_data.dashboard_data.charts.category_distribution.data[0].labels if report_data.dashboard_data.charts.category_distribution.data and report_data.dashboard_data.charts.category_distribution.data[0].labels else [] | tojson }};
+            const categoryValues = {{ report_data.dashboard_data.charts.category_distribution.data[0].chart_values if report_data.dashboard_data.charts.category_distribution.data and report_data.dashboard_data.charts.category_distribution.data[0].chart_values else [] | tojson }};
+
             const categoryOption = {
                 title: {
-                    text: '产业类别分布',
+                    text: '内容分布分析',
                     left: 'center'
                 },
                 tooltip: {
@@ -486,7 +492,7 @@
                     left: 'left'
                 },
                 series: [{
-                    name: '类别分析',
+                    name: '内容类别',
                     type: 'pie',
                     radius: '50%',
                     data: categoryData.map((label, index) => ({
@@ -505,13 +511,56 @@
             categoryChart.setOption(categoryOption);
             {% endif %}
 
-            {% if report_data.charts and report_data.charts.ai_opportunities %}
-            // AI Opportunities Chart
-            const aiChart = echarts.init(document.getElementById('aiChart'));
-            const aiLabels = {{ report_data.charts.ai_opportunities.data[0].theta if report_data.charts.ai_opportunities.data and report_data.charts.ai_opportunities.data[0].theta else [] | tojson }};
-            const aiScores = {{ report_data.charts.ai_opportunities.data[0].r if report_data.charts.ai_opportunities.data and report_data.charts.ai_opportunities.data[0].r else [] | tojson }};
-            
-            const aiOption = {
+            {% if report_data.dashboard_data and report_data.dashboard_data.charts and report_data.dashboard_data.charts.statistics_overview %}
+            // Statistics Overview Chart
+            const statisticsChart = echarts.init(document.getElementById('statisticsChart'));
+            const statsLabels = {{ report_data.dashboard_data.charts.statistics_overview.data[0].labels if report_data.dashboard_data.charts.statistics_overview.data and report_data.dashboard_data.charts.statistics_overview.data[0].labels else [] | tojson }};
+            const statsValues = {{ report_data.dashboard_data.charts.statistics_overview.data[0].values if report_data.dashboard_data.charts.statistics_overview.data and report_data.dashboard_data.charts.statistics_overview.data[0].values else [] | tojson }};
+
+            const statsOption = {
+                title: {
+                    text: '统计概览',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: statsLabels,
+                    axisLabel: {
+                        rotate: 45,
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [{
+                    data: statsValues,
+                    type: 'bar',
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#83bff6' },
+                            { offset: 0.5, color: '#188df0' },
+                            { offset: 1, color: '#188df0' }
+                        ])
+                    }
+                }]
+            };
+            statisticsChart.setOption(statsOption);
+            {% endif %}
+
+            {% if report_data.dashboard_data and report_data.dashboard_data.charts and report_data.dashboard_data.charts.ai_opportunities %}
+            // AI Opportunities Radar Chart
+            const aiRadarChart = echarts.init(document.getElementById('aiRadarChart'));
+            const aiLabels = {{ report_data.dashboard_data.charts.ai_opportunities.data[0].theta if report_data.dashboard_data.charts.ai_opportunities.data and report_data.dashboard_data.charts.ai_opportunities.data[0].theta else [] | tojson }};
+            const aiScores = {{ report_data.dashboard_data.charts.ai_opportunities.data[0].r if report_data.dashboard_data.charts.ai_opportunities.data and report_data.dashboard_data.charts.ai_opportunities.data[0].r else [] | tojson }};
+
+            const aiRadarOption = {
                 title: {
                     text: 'AI融合潜力雷达图',
                     left: 'center'
@@ -529,82 +578,55 @@
                     }]
                 }]
             };
-            aiChart.setOption(aiOption);
+            aiRadarChart.setOption(aiRadarOption);
             {% endif %}
 
-            {% if report_data.charts and report_data.charts.keyword_frequency %}
-            // Keyword Frequency Chart
-            const keywordChart = echarts.init(document.getElementById('keywordChart'));
-            const keywords = {{ report_data.charts.keyword_frequency.data[0].x if report_data.charts.keyword_frequency.data and report_data.charts.keyword_frequency.data[0].x else [] | tojson }};
-            const frequencies = {{ report_data.charts.keyword_frequency.data[0].y if report_data.charts.keyword_frequency.data and report_data.charts.keyword_frequency.data[0].y else [] | tojson }};
-            
-            const keywordOption = {
+            {% if report_data.dashboard_data and report_data.dashboard_data.charts and report_data.dashboard_data.charts.sentiment_analysis %}
+            // Sentiment Analysis Chart
+            const sentimentChart = echarts.init(document.getElementById('sentimentChart'));
+            const sentimentLabels = {{ report_data.dashboard_data.charts.sentiment_analysis.data[0].x if report_data.dashboard_data.charts.sentiment_analysis.data and report_data.dashboard_data.charts.sentiment_analysis.data[0].x else ["积极", "中性", "消极"] | tojson }};
+            const sentimentValues = {{ report_data.dashboard_data.charts.sentiment_analysis.data[0].y if report_data.dashboard_data.charts.sentiment_analysis.data and report_data.dashboard_data.charts.sentiment_analysis.data[0].y else [0, 0, 0] | tojson }};
+
+            const sentimentOption = {
                 title: {
-                    text: '关键词热度',
+                    text: '情感分析分布',
                     left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
                 },
                 xAxis: {
                     type: 'category',
-                    data: keywords
+                    data: sentimentLabels
                 },
                 yAxis: {
                     type: 'value'
                 },
-                tooltip: {
-                    trigger: 'axis'
-                },
                 series: [{
-                    data: frequencies,
-                    type: 'bar'
+                    data: sentimentValues,
+                    type: 'bar',
+                    itemStyle: {
+                        color: function(params) {
+                            var colorList = ['#059669', '#0891b2', '#dc2626']; // 绿色, 蓝色, 红色
+                            return colorList[params.dataIndex] || '#6b7280';
+                        }
+                    }
                 }]
             };
-            keywordChart.setOption(keywordOption);
-            {% endif %}
-
-            {% if report_data.timeline %}
-            // Timeline Chart
-            const timelineChart = echarts.init(document.getElementById('timelineChart'));
-            const timelineDates = {{ report_data.timeline | selectattr('date') | map(attribute='date') | list | tojson }};
-            const timelineTitles = {{ report_data.timeline | selectattr('title') | map(attribute='title') | list | tojson }};
-            
-            const timelineOption = {
-                title: {
-                    text: '关键事件时间轴',
-                    left: 'center'
-                },
-                xAxis: {
-                    type: 'category',
-                    data: timelineDates
-                },
-                yAxis: {
-                    type: 'value'
-                },
-                tooltip: {
-                    trigger: 'axis'
-                },
-                series: [{
-                    name: '事件',
-                    data: Array(timelineDates.length).fill(10), // dummy values
-                    type: 'line',
-                    smooth: true
-                }],
-                dataZoom: [{
-                    type: 'slider',
-                    start: 0,
-                    end: 100
-                }]
-            };
-            timelineChart.setOption(timelineOption);
+            sentimentChart.setOption(sentimentOption);
             {% endif %}
         });
         
         // Handle window resize for charts
         window.addEventListener('resize', function() {
             setTimeout(() => {
-                {% if report_data.charts and report_data.charts.category_distribution %}categoryChart.resize();{% endif %}
-                {% if report_data.charts and report_data.charts.ai_opportunities %}aiChart.resize();{% endif %}
-                {% if report_data.charts and report_data.charts.keyword_frequency %}keywordChart.resize();{% endif %}
-                {% if report_data.timeline %}timelineChart.resize();{% endif %}
+                {% if report_data.dashboard_data and report_data.dashboard_data.charts and report_data.dashboard_data.charts.category_distribution %}categoryChart.resize();{% endif %}
+                {% if report_data.dashboard_data and report_data.dashboard_data.charts and report_data.dashboard_data.charts.statistics_overview %}statisticsChart.resize();{% endif %}
+                {% if report_data.dashboard_data and report_data.dashboard_data.charts and report_data.dashboard_data.charts.ai_opportunities %}aiRadarChart.resize();{% endif %}
+                {% if report_data.dashboard_data and report_data.dashboard_data.charts and report_data.dashboard_data.charts.sentiment_analysis %}sentimentChart.resize();{% endif %}
             }, 100);
         });
     </script>
@@ -613,29 +635,81 @@
         // Enhance readability for content sections
         document.addEventListener('DOMContentLoaded', function() {
             // Process all content blocks for better readability
-            const blocks = document.querySelectorAll('.section-content');
+            const blocks = document.querySelectorAll('.content-section, .summary-content, [class*="content"]');
+
             blocks.forEach(b => {
+                if (!b || !b.textContent) return;
+
                 const raw = b.textContent || '';
+                if (!raw.trim()) return;
+
+                // Improved content processor
                 const lines = raw.split(/\n+/).map(l => l.trim()).filter(Boolean);
                 if (!lines.length) return;
-                const ul = document.createElement('ul');
-                ul.className = 'list-disc pl-6 space-y-1';
-                let isList = false;
+
+                // Create a container for processed content
+                const container = document.createElement('div');
+                container.className = 'processed-content';
+
+                let currentElement = null;
+                let currentList = null;
+
                 lines.forEach(line => {
-                    if (/^[-•*\d+\.\)（）\d]/.test(line)) {
+                    // Check if line is a header (starts with digits and dots, or common headers)
+                    if (/^(##?#?|\d+[\.\d\s]+|第[一二三四五六七八九十\d]+|一、|二、|三、|四、|五、|六、|七、|八、|九、|十、|1\.|2\.|3\.|4\.|5\.|6\.|7\.|8\.|9\.|10\.)/.test(line)) {
+                        // Close any open elements
+                        if (currentList) {
+                            container.appendChild(currentList);
+                            currentList = null;
+                        }
+
+                        const headerLevel = line.startsWith('###') ? 3 :
+                                          line.startsWith('##') ? 2 :
+                                          line.startsWith('#') ? 1 :
+                                          3; // default
+
+                        const header = document.createElement(`h${headerLevel}`);
+                        header.textContent = line.replace(/^[#\d.一二三四五六七八九十\s\-]+/, '').trim();
+                        header.className = `text-${Math.max(4-headerLevel, 2)}xl font-bold mb-4 text-gray-800 mt-6 border-b pb-2`;
+                        container.appendChild(header);
+                    }
+                    // Check if line is a list item
+                    else if (/^[-•*\d+\.\)）\]\d\s]/.test(line)) {
+                        if (!currentList) {
+                            currentList = document.createElement('ul');
+                            currentList.className = 'list-disc pl-6 space-y-2 mb-4';
+                        }
+
                         const li = document.createElement('li');
-                        li.textContent = line.replace(/^[-•*\d+\.\)（）]+\s*/, '');
-                        ul.appendChild(li);
-                        isList = true;
+                        li.className = 'leading-relaxed text-gray-700';
+                        li.textContent = line.replace(/^[-•*\d+\.\)）\]\s]+\s*/, '').trim();
+                        currentList.appendChild(li);
+                    }
+                    // Regular paragraph
+                    else {
+                        // Close list if we were in one
+                        if (currentList) {
+                            container.appendChild(currentList);
+                            currentList = null;
+                        }
+
+                        const p = document.createElement('p');
+                        p.className = 'mb-4 leading-relaxed text-gray-700';
+                        p.innerHTML = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Bold formatting
+                                        .replace(/\*(.*?)\*/g, '<em>$1</em>')              // Italic formatting
+                                        .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>'); // Code formatting
+                        container.appendChild(p);
                     }
                 });
-                if (isList && ul.children.length >= 2) {
-                    b.innerHTML = '';
-                    b.appendChild(ul);
-                } else {
-                    // fallback: split into paragraphs
-                    b.innerHTML = lines.map(p => `<p class="mb-2">${p}</p>`).join('');
+
+                // Close any remaining elements
+                if (currentList) {
+                    container.appendChild(currentList);
                 }
+
+                // Replace the original content with the processed content
+                b.innerHTML = '';
+                b.appendChild(container);
             });
         });
     </script>

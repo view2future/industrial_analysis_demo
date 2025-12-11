@@ -212,13 +212,25 @@
                     {% if category_data.top_content %}
                     <div class="bg-gray-50 p-4 rounded-lg space-y-3">
                         {% for content in category_data.top_content %}
-                        <p class="text-gray-800 leading-relaxed pb-3 border-b last:border-b-0" style="word-break: break-word; overflow-wrap: anywhere;">{{ content }}</p>
+                        <div class="text-gray-800 leading-relaxed pb-3 border-b last:border-b-0" style="word-break: break-word; overflow-wrap: anywhere;">
+                            {% if is_json_content(content) %}
+                                <div class="bg-white p-3 rounded border-l-4 border-blue-500">{{ format_json_content(content) | safe }}</div>
+                            {% else %}
+                                {{ content }}
+                            {% endif %}
+                        </div>
                         {% endfor %}
                     </div>
                     {% elif category_data.key_points %}
                     <div class="bg-gray-50 p-4 rounded-lg space-y-3">
                         {% for point in category_data.key_points %}
-                        <p class="text-gray-800 leading-relaxed pb-3 border-b last:border-b-0" style="word-break: break-word; overflow-wrap: anywhere;">{{ point }}</p>
+                        <div class="text-gray-800 leading-relaxed pb-3 border-b last:border-b-0" style="word-break: break-word; overflow-wrap: anywhere;">
+                            {% if is_json_content(point) %}
+                                <div class="bg-white p-3 rounded border-l-4 border-blue-500">{{ format_json_content(point) | safe }}</div>
+                            {% else %}
+                                {{ point }}
+                            {% endif %}
+                        </div>
                         {% endfor %}
                     </div>
                     {% endif %}
@@ -378,9 +390,13 @@
                     {% if report_data.full_content %}
                         {{ render_markdown(report_data.full_content) | safe }}
                     {% elif report.original_content %}
-                        <div style="white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;">
-                            {{ report.original_content }}
-                        </div>
+                        {% if is_json_content(report.original_content) %}
+                            <div class="bg-gray-50 p-4 rounded">{{ format_json_content(report.original_content) | safe }}</div>
+                        {% else %}
+                            <div style="white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;">
+                                {{ report.original_content }}
+                            </div>
+                        {% endif %}
                     {% else %}
                         <p class="text-gray-500">原文内容不可用</p>
                     {% endif %}
