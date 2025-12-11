@@ -155,17 +155,6 @@
                     </div>
                 </div>
                 
-                <div class="glass-card p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-gray-500 mb-1">LLM 服务</p>
-                            <p class="text-lg font-bold text-gray-800">{{ llm_service|upper }}</p>
-                        </div>
-                        <div class="text-3xl text-purple-500">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Progress Bar -->
@@ -242,7 +231,6 @@ try {
 const taskId = "{{ task_id }}";
 const city = "{{ city }}";
 const industry = "{{ industry }}";
-const llmService = "{{ llm_service }}";
 
 let startTime = Date.now();
 let timerInterval = null;
@@ -312,7 +300,7 @@ function updateProgress(percent, text) {
 
 // Start streaming
 async function startStreaming() {
-    console.log('Starting streaming with parameters:', {city, industry, llmService, taskId});
+    console.log('Starting streaming with parameters:', {city, industry, taskId});
     startTimer();
     updateStage(2);
     updateProgress(10, '正在连接 AI 服务...');
@@ -326,7 +314,6 @@ async function startStreaming() {
             body: JSON.stringify({
                 city: city,
                 industry: industry,
-                llm_service: llmService,
                 additional_context: '',
                 task_id: taskId
             })

@@ -2084,8 +2084,7 @@ def stream_report_page(task_id):
         # Get parameters from query string or form
         city = request.args.get('city', '')
         industry = request.args.get('industry', '')
-        llm_service = request.args.get('llm_service', 'kimi')
-        
+
         # If parameters not in query string, try to get from database
         if not city or not industry:
             # Try to find report by task_id (this is a best-effort fallback)
@@ -2093,12 +2092,11 @@ def stream_report_page(task_id):
             logger.warning(f"Missing city/industry for task {task_id}, using defaults")
             city = city or '未知城市'
             industry = industry or '未知行业'
-        
+
         return render_template('stream_report.html',
                              task_id=task_id,
                              city=city,
-                             industry=industry,
-                             llm_service=llm_service)
+                             industry=industry)
     except Exception as e:
         logger.error(f"Error loading stream report page: {e}")
         flash('无法加载报告生成页面', 'error')

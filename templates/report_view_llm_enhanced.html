@@ -87,8 +87,53 @@
     </div>
 
     <div class="container mx-auto px-6 py-8">
-        <!-- Key Performance Indicators -->
-        {% if report_data.statistics or report_data.summary %}
+        <!-- Key Insights Cards -->
+        {% if report_data.summary and report_data.summary.key_highlights %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {% for highlight in report_data.summary.key_highlights[:3] %}
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+                <div class="flex items-center">
+                    <i class="fas fa-lightbulb text-3xl text-yellow-500 mr-4"></i>
+                    <div>
+                        <p class="text-gray-600 text-sm">关键发现 {{ loop.index }}</p>
+                        <p class="text-lg font-semibold text-gray-800">{{ highlight }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Statistics Overview -->
+        {% if report_data.summary %}
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>统计概览
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <i class="fas fa-layer-group text-3xl text-blue-600 mb-2"></i>
+                    <p class="text-sm text-gray-600">分析类别</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ (report_data.summary.categories_analyzed if report_data.summary and report_data.summary.categories_analyzed) or (report_data.sections | length if report_data.sections) or 0 }}</p>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <i class="fas fa-robot text-3xl text-green-600 mb-2"></i>
+                    <p class="text-sm text-gray-600">AI应用机会</p>
+                    <p class="text-3xl font-bold text-green-600">{{ (report_data.summary.ai_opportunities if report_data.summary and report_data.summary.ai_opportunities) or 0 }}</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <i class="fas fa-star text-3xl text-purple-600 mb-2"></i>
+                    <p class="text-sm text-gray-600">高优先级AI</p>
+                    <p class="text-3xl font-bold text-purple-600">{{ (report_data.summary.high_priority_ai if report_data.summary and report_data.summary.high_priority_ai) or 0 }}</p>
+                </div>
+                <div class="text-center p-4 bg-orange-50 rounded-lg">
+                    <i class="fas fa-file-alt text-3xl text-orange-600 mb-2"></i>
+                    <p class="text-sm text-gray-600">总字数</p>
+                    <p class="text-3xl font-bold text-orange-600">{{ (report_data.summary.word_count if report_data.summary and report_data.summary.word_count) or (report_data.full_content | length) or 0 }}</p>
+                </div>
+            </div>
+        </div>
+        {% elif report_data.statistics %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 stat-card">
                 <div class="flex items-center justify-between">
@@ -100,7 +145,7 @@
                     <i class="fas fa-chart-line text-4xl opacity-50"></i>
                 </div>
             </div>
-            
+
             <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-6 stat-card">
                 <div class="flex items-center justify-between">
                     <div>
@@ -111,7 +156,7 @@
                     <i class="fas fa-building text-4xl opacity-50"></i>
                 </div>
             </div>
-            
+
             <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-6 stat-card">
                 <div class="flex items-center justify-between">
                     <div>
@@ -122,7 +167,7 @@
                     <i class="fas fa-robot text-4xl opacity-50"></i>
                 </div>
             </div>
-            
+
             <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-6 stat-card">
                 <div class="flex items-center justify-between">
                     <div>
@@ -410,8 +455,8 @@
             <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                 <i class="fas fa-file-alt mr-2 text-indigo-600"></i>详细报告内容
             </h3>
-            <div class="prose max-w-none">
-                <div class="text-gray-700 leading-relaxed" style="white-space: pre-wrap; word-break: break-word;">{{ render_markdown(report_data.full_content) | safe }}</div>
+            <div class="prose max-w-none markdown-content">
+                <div class="text-gray-700 leading-relaxed content-section" style="white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;">{{ render_markdown(report_data.full_content) | safe }}</div>
             </div>
         </div>
         {% endif %}
