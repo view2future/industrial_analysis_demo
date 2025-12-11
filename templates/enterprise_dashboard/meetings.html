@@ -1,0 +1,729 @@
+{% extends "enterprise_dashboard/base_enterprise.html" %}
+
+{% block enterprise_content %}
+<div class="dashboard-header text-center mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8 mx-auto">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-calendar-alt me-3"></i>会议记录
+                </h1>
+                <p class="lead">记录内外部会议，追踪会议结果并同步到企业进展</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-pills nav-fill bg-light rounded p-1" id="enterpriseTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                        <i class="fas fa-tachometer-alt me-2"></i>数据概览
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="enterprises-tab" data-bs-toggle="tab" data-bs-target="#enterprises" type="button" role="tab">
+                        <i class="fas fa-building me-2"></i>企业管理
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="meetings-tab" data-bs-toggle="tab" data-bs-target="#meetings" type="button" role="tab">
+                        <i class="fas fa-calendar-alt me-2"></i>会议记录
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                        <i class="fas fa-chart-bar me-2"></i>数据报告
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Search and Add Button -->
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control search-bar" id="searchInput" placeholder="搜索会议主题或企业名称...">
+                <select class="form-select" id="meetingTypeFilter">
+                    <option value="">所有会议类型</option>
+                    <option value="外部会议">外部会议</option>
+                    <option value="内部会议">内部会议</option>
+                </select>
+                <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                    <i class="fas fa-filter"></i> 筛选
+                </button>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addMeetingModal">
+                <i class="fas fa-plus me-2"></i>添加会议
+            </button>
+        </div>
+    </div>
+
+    <!-- Meetings Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>会议列表</h5>
+                </div>
+                <div class="col-auto">
+                    <small class="text-muted" id="meetingCount">加载中...</small>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 3%;">#</th>
+                            <th style="width: 10%;">会议类型</th>
+                            <th style="width: 15%;">参会企业</th>
+                            <th style="width: 15%;">参会人员</th>
+                            <th style="width: 10%;">会议时间</th>
+                            <th style="width: 15%;">会议地点</th>
+                            <th style="width: 25%;">会议纪要</th>
+                            <th style="width: 7%;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meetingsTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">加载中...</span>
+                                </div>
+                                <p class="mt-2 mb-0">正在加载会议数据...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <nav aria-label="Page navigation">
+                <ul class="pagination" id="pagination">
+                    <!-- Pagination will be populated by JavaScript -->
+                </ul>
+            </nav>
+        </div>
+        <div class="col-md-6 text-end">
+            <select class="form-select d-inline w-auto me-2" id="itemsPerPage">
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+                <option value="100">100 条/页</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Meeting Modal -->
+<div class="modal fade" id="addMeetingModal" tabindex="-1" aria-labelledby="addMeetingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addMeetingModalLabel">添加会议</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="meetingForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="meetingType" class="form-label">会议类型 *</label>
+                            <select class="form-select" id="meetingType" required>
+                                <option value="">请选择</option>
+                                <option value="外部会议">外部会议</option>
+                                <option value="内部会议">内部会议</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3" id="enterpriseSelectContainer" style="display: none;">
+                            <label for="meetingEnterprise" class="form-label">参会企业</label>
+                            <select class="form-select" id="meetingEnterprise">
+                                <option value="">选择已有企业或添加新企业</option>
+                            </select>
+                            <small class="form-text text-muted">或输入新企业名称</small>
+                            <input type="text" class="form-control mt-2" id="newEnterpriseName" placeholder="输入新企业名称">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="meetingAttendees" class="form-label">参会人员 *</label>
+                        <input type="text" class="form-control" id="meetingAttendees" placeholder="用逗号分隔，如: 张总,李经理,王总监">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="meetingTime" class="form-label">会议时间 *</label>
+                            <input type="datetime-local" class="form-control" id="meetingTime" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="meetingLocation" class="form-label">会议地点</label>
+                            <input type="text" class="form-control" id="meetingLocation" placeholder="如: 公司会议室A, 客户现场, 线上会议等">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="meetingSummary" class="form-label">会议纪要 *</label>
+                        <textarea class="form-control" id="meetingSummary" rows="5" required placeholder="详细记录会议讨论内容、决策、待办事项等..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="syncProgress">
+                            <label class="form-check-label" for="syncProgress">
+                                <strong class="text-primary">AI同步进展</strong> - 将会议纪要同步到相关企业进展记录
+                            </label>
+                        </div>
+                        <div id="syncProgressDetails" class="mt-2" style="display: none;">
+                            <label for="progressSummary" class="form-label">进展摘要</label>
+                            <textarea class="form-control" id="progressSummary" rows="2" placeholder="AI将从会议纪要中提取关键进展信息"></textarea>
+                            <div class="form-text">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                我们的AI助手将自动分析会议纪要，提取关键进展信息并更新到相关企业记录
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveMeetingBtn">保存会议</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+const itemsPerPage = 20;
+
+// Load meetings with pagination
+function loadMeetings(page = 1) {
+    const search = document.getElementById('searchInput').value;
+    const meetingType = document.getElementById('meetingTypeFilter').value;
+
+    let url = `/enterprise/api/meetings?page=${page}&limit=${itemsPerPage}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (meetingType) url += `&meeting_type=${encodeURIComponent(meetingType)}`;
+
+    fetch(url)
+        .then(response => {
+            if (response.status === 302 || response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tableBody = document.getElementById('meetingsTableBody');
+            tableBody.innerHTML = '';
+
+            if (data.meetings.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="fas fa-search fa-2x mb-3"></i>
+                            <p class="mb-0">未找到匹配的会议</p>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('meetingCount').textContent = '0 项';
+                return;
+            }
+
+            data.meetings.forEach((meeting, index) => {
+                // Format meeting type with badge
+                const typeBadge = meeting.meeting_type === '外部会议'
+                    ? '<span class="badge bg-success">外部</span>'
+                    : '<span class="badge bg-info">内部</span>';
+
+                // Format attendees
+                const attendees = meeting.attendees || 'N/A';
+
+                // Format date
+                const meetingDate = meeting.meeting_time ? new Date(meeting.meeting_time).toLocaleString('zh-CN') : '未设定';
+
+                // Format location
+                const location = meeting.meeting_location || '未指定';
+
+                // Format summary (truncate for table view)
+                const summary = meeting.meeting_summary ? meeting.meeting_summary.substring(0, 60) + (meeting.meeting_summary.length > 60 ? '...' : '') : '';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${(page - 1) * itemsPerPage + index + 1}</td>
+                    <td>${typeBadge}</td>
+                    <td><strong>${meeting.enterprise_name || 'N/A'}</strong></td>
+                    <td><small>${attendees}</small></td>
+                    <td>${meetingDate}</td>
+                    <td>${location}</td>
+                    <td><small>${summary}</small></td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary btn-sm" title="查看会议详情" onclick="viewMeeting(${meeting.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" title="编辑会议" onclick="editMeeting(${meeting.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" title="删除会议" onclick="deleteMeeting(${meeting.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Update meeting count
+            document.getElementById('meetingCount').textContent = `${data.total} 项`;
+
+            // Update pagination
+            updatePagination(data.page, data.pages, data.total);
+        })
+        .catch(error => {
+            console.error('Error loading meetings:', error);
+            const tableBody = document.getElementById('meetingsTableBody');
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                        <p class="mb-0">加载会议数据失败，请稍后重试</p>
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+// Update pagination controls
+function updatePagination(currentPage, totalPages, totalItems) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+
+    // Previous button
+    const prevItem = document.createElement('li');
+    prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevItem.innerHTML = `<a class="page-link" href="#" onclick="loadMeetings(${Math.max(1, currentPage - 1)}); return false;">上一页</a>`;
+    pagination.appendChild(prevItem);
+
+    // Pages
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    if (startPage > 1) {
+        const firstPage = document.createElement('li');
+        firstPage.className = 'page-item';
+        firstPage.innerHTML = `<a class="page-link" href="#" onclick="loadMeetings(1); return false;">1</a>`;
+        pagination.appendChild(firstPage);
+        
+        if (startPage > 2) {
+            const ellipsis = document.createElement('li');
+            ellipsis.className = 'page-item disabled';
+            ellipsis.innerHTML = '<a class="page-link" href="#">...</a>';
+            pagination.appendChild(ellipsis);
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const pageItem = document.createElement('li');
+        pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        pageItem.innerHTML = `<a class="page-link" href="#" onclick="loadMeetings(${i}); return false;">${i}</a>`;
+        pagination.appendChild(pageItem);
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsis = document.createElement('li');
+            ellipsis.className = 'page-item disabled';
+            ellipsis.innerHTML = '<a class="page-link" href="#">...</a>';
+            pagination.appendChild(ellipsis);
+        }
+        
+        const lastPage = document.createElement('li');
+        lastPage.className = 'page-item';
+        lastPage.innerHTML = `<a class="page-link" href="#" onclick="loadMeetings(${totalPages}); return false;">${totalPages}</a>`;
+        pagination.appendChild(lastPage);
+    }
+
+    // Next button
+    const nextItem = document.createElement('li');
+    nextItem.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextItem.innerHTML = `<a class="page-link" href="#" onclick="loadMeetings(${Math.min(totalPages, currentPage + 1)}); return false;">下一页</a>`;
+    pagination.appendChild(nextItem);
+}
+
+// Toggle enterprise selection based on meeting type
+document.getElementById('meetingType').addEventListener('change', function() {
+    const enterpriseContainer = document.getElementById('enterpriseSelectContainer');
+    if (this.value === '外部会议') {
+        enterpriseContainer.style.display = 'block';
+    } else {
+        enterpriseContainer.style.display = 'none';
+    }
+});
+
+// Toggle AI sync progress details
+document.getElementById('syncProgress').addEventListener('change', function() {
+    const detailsContainer = document.getElementById('syncProgressDetails');
+    if (this.checked) {
+        detailsContainer.style.display = 'block';
+        // Simulate AI extracting progress from meeting summary
+        const summary = document.getElementById('meetingSummary').value;
+        if (summary) {
+            document.getElementById('progressSummary').value = `AI提取关键进展: ${summary.substring(0, 50)}...`;
+        }
+    } else {
+        detailsContainer.style.display = 'none';
+    }
+});
+
+// Simulate AI extraction when meeting summary changes
+document.getElementById('meetingSummary').addEventListener('input', function() {
+    if (document.getElementById('syncProgress').checked) {
+        const summary = this.value;
+        if (summary.length > 10) {
+            document.getElementById('progressSummary').value = `AI提取关键进展: ${summary.substring(0, 50)}...`;
+        }
+    }
+});
+
+// View meeting
+function viewMeeting(meetingId) {
+    fetch(`/enterprise/api/meetings/${meetingId}`)
+        .then(response => {
+            if (response.status === 302 || response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const meeting = data.meeting;
+            alert(`会议详情:\\n类型: ${meeting.meeting_type}\\n企业: ${meeting.enterprise_name || 'N/A'}\\n参会人: ${meeting.attendees}\\n时间: ${meeting.meeting_time}\\n地点: ${meeting.meeting_location}\\n纪要: ${meeting.meeting_summary}`);
+        })
+        .catch(error => console.error('Error loading meeting:', error));
+}
+
+// Edit meeting
+function editMeeting(meetingId) {
+    fetch(`/enterprise/api/meetings/${meetingId}`)
+        .then(response => {
+            if (response.status === 302 || response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const meeting = data.meeting;
+            if (meeting) {
+                // Populate the form with existing data
+                document.getElementById('meetingType').value = meeting.meeting_type;
+                
+                if (meeting.meeting_type === '外部会议') {
+                    document.getElementById('enterpriseSelectContainer').style.display = 'block';
+                    document.getElementById('newEnterpriseName').value = meeting.enterprise_name;
+                }
+                
+                document.getElementById('meetingAttendees').value = meeting.attendees || '';
+                
+                // Format datetime for input
+                if (meeting.meeting_time) {
+                    const date = new Date(meeting.meeting_time);
+                    const formattedDate = date.toISOString().slice(0, 16);
+                    document.getElementById('meetingTime').value = formattedDate;
+                }
+                
+                document.getElementById('meetingLocation').value = meeting.meeting_location || '';
+                document.getElementById('meetingSummary').value = meeting.meeting_summary || '';
+                
+                // Change modal title
+                document.getElementById('addMeetingModalLabel').textContent = '编辑会议';
+                
+                // Change save button text and add data attribute
+                const saveBtn = document.getElementById('saveMeetingBtn');
+                saveBtn.textContent = '更新会议';
+                saveBtn.setAttribute('data-id', meetingId);
+                saveBtn.onclick = () => updateMeeting(meetingId);
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('addMeetingModal'));
+                modal.show();
+            }
+        })
+        .catch(error => console.error('Error loading meeting for edit:', error));
+}
+
+// Update meeting
+function updateMeeting(meetingId) {
+    const meetingData = {
+        meeting_type: document.getElementById('meetingType').value,
+        enterprise_name: document.getElementById('newEnterpriseName').value || 
+                        (document.getElementById('meetingEnterprise').value ? document.getElementById('meetingEnterprise').options[document.getElementById('meetingEnterprise').selectedIndex].text : ''),
+        attendees: document.getElementById('meetingAttendees').value,
+        meeting_time: document.getElementById('meetingTime').value,
+        meeting_location: document.getElementById('meetingLocation').value,
+        meeting_summary: document.getElementById('meetingSummary').value,
+        sync_progress: document.getElementById('syncProgress').checked,
+        progress_summary: document.getElementById('syncProgress').checked ? document.getElementById('progressSummary').value : ''
+    };
+    
+    fetch(`/enterprise/api/meetings/${meetingId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(meetingData)
+    })
+    .then(response => {
+        if (response.status === 302 || response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert('会议信息已更新！');
+        
+        // Reset the form
+        document.getElementById('meetingForm').reset();
+        document.getElementById('syncProgressDetails').style.display = 'none';
+        document.getElementById('addMeetingModalLabel').textContent = '添加会议';
+        document.getElementById('saveMeetingBtn').textContent = '保存会议';
+        document.getElementById('saveMeetingBtn').removeAttribute('data-id');
+        document.getElementById('saveMeetingBtn').onclick = saveMeeting;
+        
+        // Close modal and reload data
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addMeetingModal'));
+        modal.hide();
+        loadMeetings(currentPage);
+    })
+    .catch(error => {
+        console.error('Error updating meeting:', error);
+        alert('更新会议失败：' + error.message);
+    });
+}
+
+// Save meeting
+function saveMeeting() {
+    const meetingData = {
+        meeting_type: document.getElementById('meetingType').value,
+        enterprise_name: document.getElementById('newEnterpriseName').value || 
+                        (document.getElementById('meetingEnterprise').value ? document.getElementById('meetingEnterprise').options[document.getElementById('meetingEnterprise').selectedIndex].text : ''),
+        attendees: document.getElementById('meetingAttendees').value,
+        meeting_time: document.getElementById('meetingTime').value,
+        meeting_location: document.getElementById('meetingLocation').value,
+        meeting_summary: document.getElementById('meetingSummary').value,
+        sync_progress: document.getElementById('syncProgress').checked,
+        progress_summary: document.getElementById('syncProgress').checked ? document.getElementById('progressSummary').value : ''
+    };
+    
+    fetch('/enterprise/api/meetings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(meetingData)
+    })
+    .then(response => {
+        if (response.status === 302 || response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert(`会议已保存！${meetingData.sync_progress ? 'AI同步进展功能已启用' : ''}`);
+        
+        // Reset the form
+        document.getElementById('meetingForm').reset();
+        document.getElementById('syncProgressDetails').style.display = 'none';
+        
+        // Close modal and reload data
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addMeetingModal'));
+        modal.hide();
+        loadMeetings(currentPage);
+    })
+    .catch(error => {
+        console.error('Error saving meeting:', error);
+        alert('保存会议失败：' + error.message);
+    });
+}
+
+// Delete meeting
+function deleteMeeting(meetingId) {
+    if (confirm('确定要删除这个会议记录吗？此操作不可逆。')) {
+        fetch(`/enterprise/api/meetings/${meetingId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.status === 302 || response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('会议已删除！');
+            loadMeetings(currentPage);
+        })
+        .catch(error => {
+            console.error('Error deleting meeting:', error);
+            alert('删除会议失败：' + error.message);
+        });
+    }
+}
+
+// Search functionality
+document.getElementById('searchButton').addEventListener('click', function() {
+    loadMeetings(1);
+});
+
+document.getElementById('searchInput').addEventListener('input', function() {
+    loadMeetings(1);
+});
+
+document.getElementById('meetingTypeFilter').addEventListener('change', function() {
+    loadMeetings(1);
+});
+
+// Change items per page
+document.getElementById('itemsPerPage').addEventListener('change', function() {
+    loadMeetings(1);
+});
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    loadMeetings(1);
+    
+    // Add event listener to the save button
+    document.getElementById('saveMeetingBtn').addEventListener('click', saveMeeting);
+    
+    // Add floating animation to the header
+    document.querySelector('.dashboard-header').classList.add('floating-element');
+    
+    // Add interactive effects
+    document.querySelectorAll('.table tr').forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(102, 126, 234, 0.05)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+    
+    // Add AI button effect
+    document.querySelectorAll('.ai-sync-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+
+<style>
+.dashboard-header {
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(79, 172, 254, 0.3);
+}
+
+.nav-pills .nav-link {
+    border: none;
+    transition: all 0.3s;
+    font-weight: 600;
+    padding: 12px 24px;
+    color: #6c757d;
+    background-color: transparent;
+    border-radius: 0.5rem !important;
+}
+
+.nav-pills .nav-link.active {
+    color: white;
+    background: linear-gradient(35deg, #4facfe 0, #00f2fe 100%);
+}
+
+.nav-pills .nav-link:hover:not(.active) {
+    background-color: #e9ecef;
+}
+
+.card {
+    border-radius: 1rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem 1.5rem;
+}
+
+.table th {
+    border-top: none;
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(79, 172, 254, 0.05);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+.pagination {
+    margin-bottom: 0;
+}
+
+.pagination .page-link {
+    color: #4facfe;
+    border-radius: 0.5rem;
+    margin: 0 3px;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #4facfe;
+    border-color: #4facfe;
+}
+</style>
+{% endblock %}

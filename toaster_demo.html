@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>烤吐司机动画特效演示 - AI产业分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+        
+        .main-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Toaster button styling */
+        .toaster-container {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 10000;
+        }
+        
+        .toaster-button {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #d6d6d6, #f0f0f0);
+            border: 2px solid #a0a0a0;
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .toaster-button:hover {
+            box-shadow: 0 14px 32px rgba(0,0,0,0.25);
+            transform: scale(1.05);
+        }
+        
+        .toaster-button:active {
+            transform: scale(0.97);
+        }
+        
+        .toaster-slot {
+            position: absolute;
+            top: 6px;
+            width: 20px;
+            height: 18px;
+            background: linear-gradient(145deg, #f5f5f5, #e0e0e0);
+            border-radius: 2px;
+            border: 1px solid #ccc;
+        }
+        
+        .toaster-slot.first {
+            left: 8px;
+        }
+        
+        .toaster-slot.second {
+            right: 8px;
+        }
+        
+        .toaster-base {
+            position: absolute;
+            bottom: 0;
+            width: 56px;
+            height: 8px;
+            background: linear-gradient(145deg, #a0a0a0, #c0c0c0);
+            border-radius: 0 0 6px 6px;
+            border: 2px solid #808080;
+            border-top: none;
+        }
+        
+        .task-counter {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        }
+        
+        /* Toast animation styling */
+        .toast-animation {
+            position: fixed;
+            width: 40px;
+            height: 25px;
+            background: linear-gradient(135deg, #f9d423, #ff4e50);
+            border-radius: 3px;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid #e6b800;
+        }
+
+        .toast-animation::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            border: 1px solid #ffdd57;
+            border-radius: 2px;
+            opacity: 0.7;
+        }
+
+        .toast-animation::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 12px 0 rgba(255, 255, 255, 0.8),
+                        0 8px rgba(255, 255, 255, 0.8),
+                        12px 8px rgba(255, 255, 255, 0.8);
+        }
+        
+        .toast-pop-up {
+            animation: toastPopUp 2s ease-in-out forwards;
+        }
+        
+        @keyframes toastPopUp {
+            0% {
+                transform: translateY(0) rotate(0deg) scale(1);
+                opacity: 1;
+                bottom: 84px; /* Start from bottom of toaster */
+                right: 24px;   /* Right position aligned with toaster */
+            }
+            15% {
+                transform: translateY(-60px) rotate(90deg) scale(1.2);
+                opacity: 1;
+                bottom: 144px;
+                right: 24px;
+            }
+            30% {
+                transform: translateY(-100px) rotate(180deg) scale(1.3);
+                opacity: 1;
+                bottom: 184px;
+                right: 24px;
+            }
+            60% {
+                transform: translateY(-80px) rotate(270deg) scale(1.2);
+                opacity: 1;
+                bottom: 164px;
+                right: 24px;
+            }
+            100% {
+                transform: translateY(0) rotate(360deg) scale(1);
+                opacity: 0;
+                bottom: 84px;  /* Return to original position */
+                right: 24px;
+            }
+        }
+        
+        .control-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .task-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .task-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-processing {
+            background: rgba(255, 193, 7, 0.2);
+            color: #fcba03;
+        }
+        
+        .status-completed {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        
+        .status-pending {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+        }
+        
+        .progress-bar-demo {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .animation-preview {
+            background: #f8f9fa;
+            height: 400px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.1); backdrop-filter: blur(10px); margin-bottom: 20px;">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-bread-slice"></i> 烤吐司机动特效演示
+            </a>
+            <div class="ms-auto">
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-home"></i> 返回首页
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="demo-container">
+        <h1 class="main-title mb-4">烤吐司机动画特效演示</h1>
+        
+        <div class="demo-section">
+            <h3 class="mb-4"><i class="fas fa-magic"></i> 动画特效演示</h3>
+            <p class="text-muted mb-4">右侧下方的浮动按钮已替换为复古烤吐司机样式。当后台任务完成时，会从吐司机中弹出一片金黄的吐司片，旋转着飞向空中，再缓缓降落！</p>
+            
+            <div class="animation-preview position-relative" id="animationPreview">
+                <div class="text-center">
+                    <p class="text-muted">动画演示区域</p>
+                    <p class="small text-muted">请使用下方的控制按钮测试动画效果</p>
+                </div>
+                
+                <!-- Toaster Button -->
+                <div class="position-absolute" style="bottom: 20px; right: 20px;">
+                    <div class="toaster-container">
+                        <div class="toaster-button" id="toasterButton" title="点击查看任务">
+                            <div class="toaster-slot first"></div>
+                            <div class="toaster-slot second"></div>
+                            <div class="toaster-base"></div>
+                            <div class="task-counter" id="taskCounter">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h3 class="mb-4"><i class="fas fa-sliders-h"></i> 控制面板</h3>
+            <div class="control-panel">
+                <button class="control-btn" id="singleToastBtn">
+                    <i class="fas fa-bread-slice"></i> 单个吐司动画
+                </button>
+                <button class="control-btn" id="multiToastBtn">
+                    <i class="fas fa-cookie-bite"></i> 连续多个吐司
+                </button>
+                <button class="control-btn" id="batchToastBtn">
+                    <i class="fas fa-layer-group"></i> 批量吐司效果
+                </button>
+                <button class="control-btn btn-outline-secondary" id="clearAnimBtn">
+                    <i class="fas fa-broom"></i> 清空动画
+                </button>
+            </div>
+            
+            <div class="mt-4">
+                <h4 class="mb-3"><i class="fas fa-list"></i> 任务演示</h4>
+                <div id="taskList">
+                    <div class="task-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">成都市 - 人工智能</h6>
+                                <small class="text-muted">Kimi 服务 | 2025-01-28 15:30</small>
+                                <div class="mt-2">
+                                    <div class="progress-bar-demo">
+                                        <div class="progress-fill" style="width: 100%"></div>
+                                    </div>
+                                    <small class="text-muted">进度: 100% (已完成)</small>
+                                </div>
+                            </div>
+                            <span class="task-status status-completed">已完成</span>
+                        </div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">深圳市 - 新能源</h6>
+                                <small class="text-muted">Google Gemini 服务 | 2025-01-28 15:25</small>
+                                <div class="mt-2">
+                                    <div class="progress-bar-demo">
+                                        <div class="progress-fill" style="width: 78%"></div>
+                                    </div>
+                                    <small class="text-muted">进度: 78% (生成中)</small>
+                                </div>
+                            </div>
+                            <span class="task-status status-processing">生成中</span>
+                        </div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">上海市 - 生物医药</h6>
+                                <small class="text-muted">百度ERNIE Bot 服务 | 2025-01-28 15:20</small>
+                                <div class="mt-2">
+                                    <div class="progress-bar-demo">
+                                        <div class="progress-fill" style="width: 45%"></div>
+                                    </div>
+                                    <small class="text-muted">进度: 45% (生成中)</small>
+                                </div>
+                            </div>
+                            <span class="task-status status-processing">生成中</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary mt-3" id="simulateCompletionBtn">
+                    <i class="fas fa-magic"></i> 模拟任务完成（触发吐司动画）
+                </button>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h3 class="mb-4"><i class="fas fa-star"></i> 动画特性</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h5 class="feature-title"><i class="fas fa-toaster text-primary"></i> 烤吐司机外观</h5>
+                        <p>复古金属质感，双槽设计，逼真的烤吐司机外观，替代原有的任务图标</p>
+                        <p><strong>细节特征：</strong>凹槽、金属光泽、品牌标识</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h5 class="feature-title"><i class="fas fa-cookie-bite text-warning"></i> 吐司动画</h5>
+                        <p>金黄色面包片弹出、旋转、上升、下降的完整动画序列，生动有趣</p>
+                        <p><strong>动画序列：</strong>弹出→上升→旋转→下降→完成</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h5 class="feature-title"><i class="fas fa-clock text-info"></i> 智能触发</h5>
+                        <p>仅在后台任务完成时触发，不影响正常操作</p>
+                        <p><strong>触发机制：</strong>任务状态变更检测</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h5 class="feature-title"><i class="fas fa-layer-group text-success"></i> 并发处理</h5>
+                        <p>多任务并发完成时，吐司依次弹出，避免冲突</p>
+                        <p><strong>队列管理：</strong>先进先出，流畅衔接</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="highlight-box">
+            <h4 class="mb-3"><i class="fas fa-check-circle"></i> 完整功能概述</h4>
+            <p class="mb-0">当用户在后台运行报告生成任务时，系统会在右下角显示烤吐司机状态按钮。每当有报告生成任务完成时，会从吐司机中弹出一片金黄色的吐司片，旋转着飞向空中再缓缓降落回吐司机中，直观地告知用户任务已完成。</p>
+        </div>
+    </div>
+
+    <!-- Animation container -->
+    <div id="animationContainer" style="position: fixed; pointer-events: none; z-index: 9998; bottom: 0; right: 0; width: 100%; height: 100%; overflow: visible;"></div>
+
+    <script>
+        // Global variables
+        let animationQueue = [];
+        let isAnimating = false;
+        let toastCounter = 0;
+        let taskCounter = 0;
+        let tasks = [
+            { id: 'task1', city: '成都市', industry: '人工智能', status: 'completed', progress: 100, createdAt: new Date() },
+            { id: 'task2', city: '深圳市', industry: '新能源', status: 'processing', progress: 78, createdAt: new Date() },
+            { id: 'task3', city: '上海市', industry: '生物医药', status: 'processing', progress: 45, createdAt: new Date() }
+        ];
+
+        // DOM elements
+        const toasterButton = document.getElementById('toasterButton');
+        const taskCounterEl = document.getElementById('taskCounter');
+        const animationContainer = document.getElementById('animationContainer');
+        const taskList = document.getElementById('taskList');
+        const singleToastBtn = document.getElementById('singleToastBtn');
+        const multiToastBtn = document.getElementById('multiToastBtn');
+        const batchToastBtn = document.getElementById('batchToastBtn');
+        const clearAnimBtn = document.getElementById('clearAnimBtn');
+        const simulateCompletionBtn = document.getElementById('simulateCompletionBtn');
+
+        // Event listeners
+        toasterButton.addEventListener('click', toggleTaskPanel);
+        singleToastBtn.addEventListener('click', triggerSingleToast);
+        multiToastBtn.addEventListener('click', triggerMultiToast);
+        batchToastBtn.addEventListener('click', triggerBatchToast);
+        clearAnimBtn.addEventListener('click', clearAnimations);
+        simulateCompletionBtn.addEventListener('click', simulateTaskCompletion);
+
+        // Trigger single toast animation
+        function triggerSingleToast() {
+            triggerToastAnimation();
+        }
+
+        // Trigger multiple toast animations
+        function triggerMultiToast() {
+            for(let i = 0; i < 3; i++) {
+                setTimeout(() => triggerToastAnimation(), i * 800);
+            }
+        }
+
+        // Trigger batch of toast animations
+        function triggerBatchToast() {
+            for(let i = 0; i < 5; i++) {
+                setTimeout(() => triggerToastAnimation(), i * 600);
+            }
+        }
+
+        // Trigger toast animation
+        function triggerToastAnimation() {
+            // Add to queue to ensure sequential playback
+            animationQueue.push({
+                id: 'toast_' + Date.now(),
+                timestamp: Date.now()
+            });
+            
+            // Update task counter
+            taskCounter++;
+            taskCounterEl.textContent = taskCounter;
+            taskCounterEl.style.display = 'flex';
+            
+            // Process animation if not currently animating
+            if (!isAnimating) {
+                processAnimationQueue();
+            }
+        }
+
+        // Process animation queue
+        function processAnimationQueue() {
+            if (isAnimating || animationQueue.length === 0) {
+                return;
+            }
+            
+            isAnimating = true;
+            const toastData = animationQueue.shift();
+            
+            // Get toaster button position
+            const rect = toasterButton.getBoundingClientRect();
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = 'toast-animation toast-pop-up';
+            
+            // Position at toaster location
+            toast.style.right = (rect.right - document.documentElement.clientWidth + 24) + 'px'; // Align with toaster
+            toast.style.bottom = '84px'; // Start from bottom of toaster
+            toast.style.position = 'fixed';
+            toast.style.zIndex = '10000';
+            
+            // Add to animation container
+            animationContainer.appendChild(toast);
+            
+            // Remove element after animation completes
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+                isAnimating = false;
+                
+                // Process next in queue if available
+                if (animationQueue.length > 0) {
+                    setTimeout(processAnimationQueue, 300);
+                }
+            }, 2000); // 2 seconds animation duration
+        }
+
+        // Clear all animations
+        function clearAnimations() {
+            // Clear animation queue
+            animationQueue = [];
+            isAnimating = false;
+            
+            // Remove all existing toast elements
+            while(animationContainer.firstChild) {
+                animationContainer.removeChild(animationContainer.firstChild);
+            }
+            
+            // Reset counters
+            toastCounter = 0;
+            taskCounter = 0;
+            taskCounterEl.style.display = 'none';
+        }
+
+        // Simulate task completion
+        function simulateTaskCompletion() {
+            // Find a processing task to complete
+            const processingTasks = tasks.filter(t => t.status === 'processing');
+            if (processingTasks.length > 0) {
+                // Complete a random processing task
+                const randomTask = processingTasks[Math.floor(Math.random() * processingTasks.length)];
+                const taskIndex = tasks.findIndex(t => t.id === randomTask.id);
+                
+                if (taskIndex !== -1) {
+                    tasks[taskIndex].status = 'completed';
+                    tasks[taskIndex].progress = 100;
+                    
+                    // Show notification
+                    showNotification(`${tasks[taskIndex].city} - ${tasks[taskIndex].industry} 报告已生成完成`);
+                    
+                    // Update task list display
+                    updateTaskListDisplay();
+                    
+                    // Trigger toast animation for this completion
+                    triggerToastAnimation();
+                }
+            } else {
+                // If no processing tasks, create a new task and complete it immediately
+                const newTask = {
+                    id: 'task_' + Date.now(),
+                    city: '广州市',
+                    industry: '新材料',  
+                    status: 'processing',
+                    progress: 85,
+                    createdAt: new Date()
+                };
+                tasks.push(newTask);
+                
+                // Update display
+                updateTaskListDisplay();
+                
+                // Complete the task after a short delay
+                setTimeout(() => {
+                    const idx = tasks.findIndex(t => t.id === newTask.id);
+                    if (idx !== -1) {
+                        tasks[idx].status = 'completed';
+                        tasks[idx].progress = 100;
+                        
+                        // Show notification
+                        showNotification(`${tasks[idx].city} - ${tasks[idx].industry} 报告已生成完成`);
+                        
+                        // Update task list display
+                        updateTaskListDisplay();
+                        
+                        // Trigger toast animation
+                        triggerToastAnimation();
+                    }
+                }, 1500);
+            }
+        }
+
+        // Update task list display
+        function updateTaskListDisplay() {
+            let html = '';
+            tasks.forEach(task => {
+                const statusClass = task.status === 'completed' ? 'status-completed' :
+                                  task.status === 'processing' ? 'status-processing' : 'status-pending';
+                const statusText = task.status === 'completed' ? '已完成' :
+                                 task.status === 'processing' ? '生成中' : '待处理';
+                
+                html += `
+                <div class="task-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">${task.city} - ${task.industry}</h6>
+                            <small class="text-muted">Kimi 服务 | ${task.createdAt.toLocaleString('zh-CN')}</small>
+                            ${task.status === 'processing' ? `
+                            <div class="mt-2">
+                                <div class="progress-bar-demo">
+                                    <div class="progress-fill" style="width: ${task.progress}%"></div>
+                                </div>
+                                <small class="text-muted">进度: ${task.progress}%</small>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <span class="task-status ${statusClass}">${statusText}</span>
+                    </div>
+                </div>`;
+            });
+            taskList.innerHTML = html;
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Create a simple notification
+            const notification = document.createElement('div');
+            notification.className = 'notification position-fixed';
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 10001; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 8px; padding: 12px 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 300px; max-width: 500px;';
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    <div>${message}</div>
+                    <button class="btn-close ms-auto" type="button" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        // Toggle task panel (simulated)
+        function toggleTaskPanel() {
+            alert('点击了烤吐司机按钮！实际集成中这里会显示后台任务管理面板。');
+        }
+
+        // Initialize
+        updateTaskListDisplay();
+
+        // Auto-trigger some animations for demo
+        setTimeout(() => {
+            triggerToastAnimation();
+            setTimeout(triggerToastAnimation, 1000);
+        }, 2000);
+    </script>
+</body>
+</html>

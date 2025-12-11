@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI产业分析报告生成 - 区域产业分析小工作台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --tertiary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --accent-color: #667eea;
+            --background-light: #f8f9fa;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --glow-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .card-glow {
+            box-shadow: var(--glow-shadow);
+        }
+        
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid rgba(102, 126, 234, 0.3) !important;
+            border-radius: 12px !important;
+            padding: 12px 16px !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 1) !important;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25) !important;
+            border-color: rgba(102, 126, 234, 0.5) !important;
+        }
+        
+        .btn-gradient {
+            background: var(--primary-gradient) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 12px 24px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+            position: relative !important;
+            overflow: hidden !important;
+            color: white !important;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+        }
+        
+        .btn-gradient:active {
+            transform: translateY(0) !important;
+        }
+        
+        .progress-container {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            padding: 16px !important;
+            backdrop-filter: blur(5px) !important;
+        }
+        
+        .progress-bar-custom {
+            height: 12px !important;
+            border-radius: 6px !important;
+            background: var(--primary-gradient) !important;
+            transition: width 0.3s ease !important;
+        }
+        
+        /* Toaster button styling */
+        /* High specificity toaster styles to override all conflicts */
+        body .toaster-container,
+        .toaster-container {
+            position: fixed !important;
+            left: 24px !important;
+            top: 24px !important;
+            z-index: 10000 !important;
+            width: 60px !important;
+            height: 60px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        body .toaster-button,
+        .toaster-button {
+            width: 60px !important;
+            height: 60px !important;
+            background: linear-gradient(145deg, #d6d6d6, #f0f0f0) !important;
+            border: 2px solid #a0a0a0 !important;
+            border-radius: 8px 8px 0 0 !important;
+            position: relative !important;
+            cursor: pointer !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        body .toaster-button:hover,
+        .toaster-button:hover {
+            box-shadow: 0 14px 32px rgba(0,0,0,0.25) !important;
+            transform: scale(1.05) !important;
+        }
+
+        body .toaster-button:active,
+        .toaster-button:active {
+            transform: scale(0.97) !important;
+        }
+
+        body .toaster-slot,
+        .toaster-slot {
+            position: absolute !important;
+            top: 6px !important;
+            width: 20px !important;
+            height: 18px !important;
+            background: linear-gradient(145deg, #f5f5f5, #e0e0e0) !important;
+            border-radius: 2px !important;
+            border: 1px solid #ccc !important;
+            display: block !important;
+        }
+
+        body .toaster-slot.first,
+        .toaster-slot.first {
+            left: 8px !important;
+        }
+
+        body .toaster-slot.second,
+        .toaster-slot.second {
+            right: 8px !important;
+        }
+
+        body .toaster-base,
+        .toaster-base {
+            position: absolute !important;
+            bottom: 0 !important;
+            width: 56px !important;
+            height: 8px !important;
+            background: linear-gradient(145deg, #a0a0a0, #c0c0c0) !important;
+            border-radius: 0 0 6px 6px !important;
+            border: 2px solid #808080 !important;
+            border-top: none !important;
+        }
+
+        body .task-counter,
+        .task-counter {
+            position: absolute !important;
+            top: -8px !important;  /* Adjusted for top-left position */
+            right: -8px !important;
+            background: #ff4757 !important;
+            color: white !important;
+            border-radius: 50% !important;
+            width: 20px !important;
+            height: 20px !important;
+            display: none !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.75rem !important;
+            font-weight: bold !important;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2) !important;
+            z-index: 10001 !important;
+            margin: 0 !important;
+        }
+        
+        /* Toast animation styling */
+        .toast-animation {
+            position: fixed;
+            width: 40px;
+            height: 25px;
+            background: linear-gradient(135deg, #f9d423, #ff4e50);
+            border-radius: 3px;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid #e6b800;
+        }
+
+        .toast-animation::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            border: 1px solid #ffdd57;
+            border-radius: 2px;
+            opacity: 0.7;
+        }
+
+        .toast-animation::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 12px 0 rgba(255, 255, 255, 0.8),
+                        0 8px rgba(255, 255, 255, 0.8),
+                        12px 8px rgba(255, 255, 255, 0.8);
+        }
+        
+        .toast-pop-up {
+            animation: toastPopUp 2s ease-in-out forwards;
+        }
+
+        @keyframes toastPopUp {
+            0% {
+                transform: translateY(0) rotate(0deg) scale(1);
+                opacity: 1;
+                top: 84px; /* Start from top of toaster */
+                left: 24px;   /* Left position aligned with toaster */
+            }
+            15% {
+                transform: translateY(-60px) rotate(90deg) scale(1.2);
+                opacity: 1;
+                top: 144px;
+                left: 24px;
+            }
+            30% {
+                transform: translateY(-100px) rotate(180deg) scale(1.3);
+                opacity: 1;
+                top: 184px;
+                left: 24px;
+            }
+            60% {
+                transform: translateY(-80px) rotate(270deg) scale(1.2);
+                opacity: 1;
+                top: 164px;
+                left: 24px;
+            }
+            100% {
+                transform: translateY(0) rotate(360deg) scale(1);
+                opacity: 0;
+                top: 84px;  /* Return to original position */
+                left: 24px;
+            }
+        }
+        
+        .report-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 400px;
+            max-height: 60vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        
+        .report-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .report-section:last-child {
+            border-bottom: none;
+        }
+        
+        .report-section h2 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .status-indicator {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+        }
+        
+        .status-processing {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        
+        .status-completed {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        
+        .status-error {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
+        .streaming-paragraph {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .floating-tasks-panel {
+            position: fixed;
+            right: 20px;
+            bottom: 80px;
+            width: 400px;
+            max-height: 500px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+            z-index: 9999;
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .floating-tasks-panel.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .task-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .task-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .task-meta {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .task-actions button {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+        
+        .visualization-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .chart-container {
+            height: 400px;
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .floating-task-toggle {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 10001;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .floating-task-toggle:hover, .floating-task-toggle.active {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .task-counter-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        .section-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            color: white;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10002;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 12px 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            min-width: 300px;
+            max-width: 500px;
+            display: none;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .floating-tasks-panel {
+                width: calc(100% - 40px);
+                right: 20px;
+                left: 20px;
+            }
+            
+            .container {
+                padding: 0 15px;
+            }
+            
+            .report-content {
+                max-height: 50vh;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.1); backdrop-filter: blur(10px); margin-bottom: 20px;">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-bread-slice"></i> AI产业分析报告生成
+            </a>
+            <div class="ms-auto">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-home"></i> 返回首页
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Main Form Section -->
+                <div class="glass-card card-glow p-4 mb-4">
+                    <h2 class="text-center mb-4 text-white">
+                        <i class="fas fa-robot"></i> AI产业分析报告生成
+                    </h2>
+                    
+                    <form id="reportForm">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="citySelect" class="form-label text-white">选择城市</label>
+                                <select class="form-select" id="citySelect">
+                                    <option value="成都市" selected>成都市</option>
+                                    <option value="北京市">北京市</option>
+                                    <option value="上海市">上海市</option>
+                                    <option value="深圳市">深圳市</option>
+                                    <option value="广州市">广州市</option>
+                                    <option value="杭州市">杭州市</option>
+                                    <option value="南京市">南京市</option>
+                                    <option value="武汉市">武汉市</option>
+                                    <option value="西安市">西安市</option>
+                                    <option value="重庆市">重庆市</option>
+                                    <option value="天津市">天津市</option>
+                                    <option value="苏州市">苏州市</option>
+                                    <option value="东莞市">东莞市</option>
+                                    <option value="佛山市">佛山市</option>
+                                    <option value="济南市">济南市</option>
+                                    <option value="青岛市">青岛市</option>
+                                    <option value="大连市">大连市</option>
+                                    <option value="宁波市">宁波市</option>
+                                    <option value="厦门市">厦门市</option>
+                                    <option value="福州市">福州市</option>
+                                    <option value="合肥市">合肥市</option>
+                                    <option value="长春市">长春市</option>
+                                    <option value="哈尔滨市">哈尔滨市</option>
+                                    <option value="石家庄市">石家庄市</option>
+                                    <option value="郑州市">郑州市</option>
+                                    <option value="长沙市">长沙市</option>
+                                    <option value="南昌市">南昌市</option>
+                                    <option value="沈阳市">沈阳市</option>
+                                    <option value="昆明市">昆明市</option>
+                                    <option value="兰州市">兰州市</option>
+                                    <option value="银川市">银川市</option>
+                                    <option value="西宁市">西宁市</option>
+                                    <option value="海口市">海口市</option>
+                                    <option value="贵阳市">贵阳市</option>
+                                    <option value="南宁市">南宁市</option>
+                                    <option value="乌鲁木齐市">乌鲁木齐市</option>
+                                    <option value="呼和浩特市">呼和浩特市</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="industrySelect" class="form-label text-white">选择重点产业</label>
+                                <select class="form-select" id="industrySelect">
+                                    <option value="人工智能" selected>人工智能</option>
+                                    <option value="新能源">新能源</option>
+                                    <option value="生物医药">生物医药</option>
+                                    <option value="新材料">新材料</option>
+                                    <option value="数字经济">数字经济</option>
+                                    <option value="高端装备制造">高端装备制造</option>
+                                    <option value="集成电路">集成电路</option>
+                                    <option value="新一代信息技术">新一代信息技术</option>
+                                    <option value="节能环保">节能环保</option>
+                                    <option value="新能源汽车">新能源汽车</option>
+                                    <option value="航空航天">航空航天</option>
+                                    <option value="海洋工程">海洋工程</option>
+                                    <option value="生物农业">生物农业</option>
+                                    <option value="智能制造">智能制造</option>
+                                    <option value="5G技术">5G技术</option>
+                                    <option value="区块链">区块链</option>
+                                    <option value="虚拟现实">虚拟现实</option>
+                                    <option value="增强现实">增强现实</option>
+                                    <option value="大数据">大数据</option>
+                                    <option value="云计算">云计算</option>
+                                    <option value="物联网">物联网</option>
+                                    <option value="工业互联网">工业互联网</option>
+                                    <option value="量子计算">量子计算</option>
+                                    <option value="自动驾驶">自动驾驶</option>
+                                    <option value="机器人技术">机器人技术</option>
+                                    <option value="半导体">半导体</option>
+                                    <option value="电子竞技">电子竞技</option>
+                                    <option value="数字文创">数字文创</option>
+                                    <option value="智能交通">智能交通</option>
+                                    <option value="智慧城市">智慧城市</option>
+                                    <option value="碳中和">碳中和</option>
+                                    <option value="氢能技术">氢能技术</option>
+                                    <option value="储能技术">储能技术</option>
+                                    <option value="基因编辑">基因编辑</option>
+                                    <option value="合成生物学">合成生物学</option>
+                                    <option value="脑机接口">脑机接口</option>
+                                    <option value="量子通信">量子通信</option>
+                                    <option value="元宇宙">元宇宙</option>
+                                    <option value="空间计算">空间计算</option>
+                                    <option value="数字孪生">数字孪生</option>
+                                    <option value="边缘计算">边缘计算</option>
+                                    <option value="网络安全">网络安全</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="llmSelect" class="form-label text-white">选择LLM</label>
+                                <select class="form-select" id="llmSelect">
+                                    <option value="kimi" selected>Kimi (Moonshot)</option>
+                                    <option value="gemini">Google Gemini</option>
+                                    <option value="ernie">百度ERNIE Bot</option>
+                                    <option value="doubao">字节豆包</option>
+                                    <option value="qwen">通义千问</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-8">
+                                <label for="contextInput" class="form-label text-white">补充要求（可选）</label>
+                                <input type="text" class="form-control" id="contextInput" placeholder="例如：重点关注政策环境、投资机会、技术发展趋势等...">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-white">&nbsp;</label>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-gradient btn-lg" id="generateBtn">
+                                        <i class="fas fa-magic"></i> 开始生成报告
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Progress Section -->
+                <div id="progressSection" class="glass-card p-4 mb-4" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="text-white mb-0">
+                            <i class="bi bi-file-earmark-text"></i> 报告生成进度
+                        </h4>
+                        <span id="statusIndicator" class="status-indicator status-pending">准备中...</span>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress mb-2" style="height: 12px; background: rgba(255,255,255,0.2);">
+                            <div id="progressBar" class="progress-bar-custom" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="text-center text-white">
+                            <small id="progressText">准备开始生成...</small>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">生成阶段</h6>
+                                        <p id="stageText" class="card-text">准备中...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">已生成字数</h6>
+                                        <p id="charCount" class="card-text">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Content Section -->
+                <div id="reportSection" class="glass-card p-4" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="text-white mb-0">
+                            <i class="bi bi-journal-text"></i> 生成的报告内容
+                        </h4>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-light" id="downloadBtn" style="display: none;">
+                                <i class="fas fa-download"></i> 下载PDF
+                            </button>
+                            <button class="btn btn-sm btn-outline-light" id="shareBtn" style="display: none;">
+                                <i class="fas fa-share"></i> 分享
+                            </button>
+                            <button class="btn btn-sm btn-outline-light" id="exportWordBtn" style="display: none;">
+                                <i class="fas fa-file-word"></i> 导出Word
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="reportContent" class="report-content">
+                        <div class="text-center text-muted">
+                            <p><i class="fas fa-bread-slice fa-2x mb-3"></i></p>
+                            <p>正在生成报告内容...</p>
+                            <p class="small">选择城市和产业后点击"开始生成报告"</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Section -->
+                    <div id="summarySection" class="mt-4" style="display: none;">
+                        <h5 class="text-white mb-3">
+                            <i class="bi bi-stars"></i> 执行摘要
+                        </h5>
+                        <div id="summaryContent" class="bg-light p-4 rounded"></div>
+                    </div>
+                    
+                    <!-- SWOT Analysis Section -->
+                    <div id="swotSection" class="mt-4" style="display: none;">
+                        <h5 class="text-white mb-3">
+                            <i class="bi bi-diagram-3"></i> SWOT分析
+                        </h5>
+                        <div id="swotContent" class="bg-light p-4 rounded">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="bg-success bg-opacity-10 border-start border-success border-3 p-3">
+                                        <h6 class="text-success">优势 (Strengths)</h6>
+                                        <div id="swotStrengths"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="bg-warning bg-opacity-10 border-start border-warning border-3 p-3">
+                                        <h6 class="text-warning">劣势 (Weaknesses)</h6>
+                                        <div id="swotWeaknesses"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="bg-info bg-opacity-10 border-start border-info border-3 p-3">
+                                        <h6 class="text-info">机遇 (Opportunities)</h6>
+                                        <div id="swotOpportunities"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="bg-danger bg-opacity-10 border-start border-danger border-3 p-3">
+                                        <h6 class="text-danger">威胁 (Threats)</h6>
+                                        <div id="swotThreats"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Visualization Section -->
+                    <div id="visualizationSection" class="mt-4" style="display: none;">
+                        <h5 class="text-white mb-3">
+                            <i class="bi bi-pie-chart"></i> 数据可视化分析
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="visualization-container">
+                                    <h6>产业类别分布</h6>
+                                    <div id="categoryChart" class="chart-container"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="visualization-container">
+                                    <h6>AI融合潜力评估</h6>
+                                    <div id="aiOpportunityChart" class="chart-container"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="visualization-container">
+                                    <h6>关键词频率分析</h6>
+                                    <div id="keywordChart" class="chart-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toaster Animation Button (Always visible at top-left) -->
+    <div class="toaster-container">
+        <div class="toaster-button" id="toasterButton" title="后台任务管理">
+            <div class="toaster-slot first"></div>
+            <div class="toaster-slot second"></div>
+            <div class="toaster-base"></div>
+            <div class="task-counter" id="toasterTaskCounter" style="display: none;">0</div>
+        </div>
+    </div>
+
+    <!-- Toast Animation Container -->
+    <div id="animationContainer" style="position: fixed; pointer-events: none; z-index: 9998; bottom: 0; right: 0; width: 100%; height: 100%; overflow: visible;"></div>
+
+    <!-- Notification Area -->
+    <div id="notificationArea"></div>
+
+    <script>
+        // Global variables for task management
+        let eventSource = null;
+        let accumulatedContent = "";
+        let chunkCount = 0;
+        let currentTaskId = null;
+        let activeTasks = [];
+        let animationQueue = [];
+        let isAnimating = false;
+        let taskCounter = 0;
+        let totalChars = 0;
+
+        // DOM elements
+        const reportForm = document.getElementById('reportForm');
+        const progressSection = document.getElementById('progressSection');
+        const reportSection = document.getElementById('reportSection');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const reportContent = document.getElementById('reportContent');
+        const stageText = document.getElementById('stageText');
+        const charCount = document.getElementById('charCount');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        const exportWordBtn = document.getElementById('exportWordBtn');
+        const summaryContent = document.getElementById('summaryContent');
+        const swotContent = document.getElementById('swotContent');
+        const summarySection = document.getElementById('summarySection');
+        const swotSection = document.getElementById('swotSection');
+        const visualizationSection = document.getElementById('visualizationSection');
+        const animationContainer = document.getElementById('animationContainer');
+        const generateBtn = document.getElementById('generateBtn');
+
+        // Get existing toaster elements from HTML template
+        const toasterButton = document.getElementById('toasterButton');
+        const toasterTaskCounter = document.getElementById('toasterTaskCounter');
+
+        // Event listeners
+        reportForm.addEventListener('submit', startStreamingReport);
+        toasterButton.addEventListener('click', toggleTaskPanel);
+
+        // Start streaming report generation
+        async function startStreamingReport(e) {
+            e.preventDefault();
+            
+            const city = document.getElementById('citySelect').value;
+            const industry = document.getElementById('industrySelect').value;
+            const llmService = document.getElementById('llmSelect').value;
+            const additionalContext = document.getElementById('contextInput').value;
+
+            // Show progress section
+            progressSection.style.display = 'block';
+            reportSection.style.display = 'block';
+            
+            // Clear previous content
+            reportContent.innerHTML = '<div class="text-center text-muted"><i class="fas fa-spin fa-robot fa-2x mb-3"></i><p>正在连接AI服务...</p></div>';
+            summaryContent.innerHTML = '';
+            swotContent.innerHTML = '';
+            summarySection.style.display = 'none';
+            swotSection.style.display = 'none';
+            visualizationSection.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            shareBtn.style.display = 'none';
+            exportWordBtn.style.display = 'none';
+            
+            // Reset counters
+            accumulatedContent = '';
+            chunkCount = 0;
+            totalChars = 0;
+            charCount.textContent = '0';
+
+            // Update UI
+            statusIndicator.className = 'status-indicator status-processing';
+            statusIndicator.textContent = '生成中';
+            progressText.textContent = '正在连接AI服务...';
+            stageText.textContent = '准备中';
+
+            try {
+                // Send request to start streaming
+                const response = await fetch('/api/stream/generate-report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
+                    },
+                    body: JSON.stringify({
+                        city: city,
+                        industry: industry,
+                        llm_service: llmService,
+                        additional_context: additionalContext
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Set up SSE streaming
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                function readStream() {
+                    reader.read().then(({ done, value }) => {
+                        if (done) {
+                            console.log('Stream complete');
+                            return;
+                        }
+
+                        // Decode chunk
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\\n');
+
+                        lines.forEach(line => {
+                            if (line.trim().startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.substring(6));
+                                    processEvent(data);
+                                } catch (e) {
+                                    console.error('Error parsing event data:', e, line);
+                                }
+                            }
+                        });
+
+                        readStream(); // Continue reading
+                    }).catch(error => {
+                        console.error('Stream reading error:', error);
+                        handleStreamError(error);
+                    });
+                }
+
+                readStream();
+
+            } catch (error) {
+                console.error('Error starting streaming report:', error);
+                statusIndicator.className = 'status-indicator status-error';
+                statusIndicator.textContent = '连接失败';
+                progressText.textContent = '连接AI服务失败: ' + error.message;
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-magic"></i> 开始生成报告';
+            }
+        }
+
+        // Process streaming events
+        function processEvent(eventData) {
+            const { type, data, timestamp } = eventData;
+
+            switch (type) {
+                case 'connection_established':
+                    statusIndicator.className = 'status-indicator status-processing';
+                    statusIndicator.textContent = '已连接';
+                    progressText.textContent = '连接已建立，开始生成...';
+                    stageText.textContent = '初始化';
+                    break;
+
+                case 'generation_start':
+                    statusIndicator.className = 'status-indicator status-processing';
+                    statusIndicator.textContent = '生成中';
+                    progressText.textContent = data.message || '开始生成报告...';
+                    stageText.textContent = '内容生成';
+                    break;
+
+                case 'report_chunk':
+                    // Add content to report
+                    const paragraph = document.createElement('div');
+                    paragraph.className = 'streaming-paragraph';
+                    paragraph.textContent = data.content;
+                    reportContent.appendChild(paragraph);
+
+                    // Update accumulated content
+                    accumulatedContent += data.content;
+                    totalChars += data.content.length;
+                    chunkCount++;
+
+                    // Update progress
+                    const progress = Math.min(chunkCount * 2, 70); // Cap at 70% for main content
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = `生成中... (${data.chunk_index} 个分块, ${totalChars} 字)`;
+                    charCount.textContent = totalChars;
+
+                    // Auto-scroll to latest content
+                    reportContent.scrollTop = reportContent.scrollHeight;
+                    break;
+
+                case 'report_complete':
+                    statusIndicator.className = 'status-indicator status-processing';
+                    statusIndicator.textContent = '分析中';
+                    progressText.textContent = '主要内容生成完成，正在分析数据...';
+                    stageText.textContent = '数据分析';
+                    progressBar.style.width = '80%';
+                    break;
+
+                case 'summary_complete':
+                    summarySection.style.display = 'block';
+                    summaryContent.innerHTML = `<p>${data.content || '摘要生成完成'}</p>`;
+                    progressText.textContent = '摘要生成完成，正在生成SWOT分析...';
+                    stageText.textContent = 'SWOT分析';
+                    progressBar.style.width = '90%';
+                    break;
+
+                case 'swot_complete':
+                    swotSection.style.display = 'block';
+                    progressText.textContent = 'SWOT分析生成完成，正在生成可视化图表...';
+                    stageText.textContent = '数据可视化';
+                    progressBar.style.width = '95%';
+                    break;
+
+                case 'visualization_complete':
+                    visualizationSection.style.display = 'block';
+                    initializeVisualizations(data.visualization_data);
+                    break;
+
+                case 'final_complete':
+                    statusIndicator.className = 'status-indicator status-completed';
+                    statusIndicator.textContent = '完成';
+                    progressText.textContent = '报告生成完成！';
+                    stageText.textContent = '已完成';
+                    progressBar.style.width = '100%';
+
+                    // Show action buttons
+                    downloadBtn.style.display = 'inline-block';
+                    shareBtn.style.display = 'inline-block';
+                    exportWordBtn.style.display = 'inline-block';
+
+                    // Add to task list
+                    if (data.report_id) {
+                        const newTask = {
+                            id: data.task_id,
+                            report_id: data.report_id,
+                            city: document.getElementById('citySelect').value,
+                            industry: document.getElementById('industrySelect').value,
+                            status: 'completed',
+                            completed_at: new Date(data.timestamp || Date.now()).toISOString(),
+                            created_at: new Date().toISOString(),
+                            duration: data.duration
+                        };
+                        activeTasks.unshift(newTask);
+                        updateFloatingTaskCounter();
+                    }
+                    
+                    // Enable generate button
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="fas fa-magic"></i> 重新生成';
+                    break;
+
+                case 'error':
+                    statusIndicator.className = 'status-indicator status-error';
+                    statusIndicator.textContent = '错误';
+                    progressText.textContent = `错误: ${data.error || '未知错误'}`;
+                    stageText.textContent = '发生错误';
+                    
+                    // Enable generate button
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="fas fa-magic"></i> 重新生成';
+                    break;
+            }
+        }
+
+        // Handle stream errors
+        function handleStreamError(error) {
+            console.error('Stream error:', error);
+            statusIndicator.className = 'status-indicator status-error';
+            statusIndicator.textContent = '连接错误';
+            progressText.textContent = '流式连接失败: ' + error.message;
+        }
+
+        // Initialize visualizations
+        function initializeVisualizations(visualizationData) {
+            try {
+                // Initialize category distribution chart if available
+                if (visualizationData && visualizationData.category_distribution) {
+                    const categoryChartDom = document.getElementById('categoryChart');
+                    if (categoryChartDom) {
+                        const categoryChart = echarts.init(categoryChartDom);
+                        const categoryOption = {
+                            title: {
+                                text: '产业类别分布',
+                                left: 'center'
+                            },
+                            tooltip: {
+                                trigger: 'item'
+                            },
+                            legend: {
+                                top: '5%',
+                                left: 'center'
+                            },
+                            series: [{
+                                name: '类别分布',
+                                type: 'pie',
+                                radius: ['40%', '70%'],
+                                avoidLabelOverlap: false,
+                                itemStyle: {
+                                    borderRadius: 10,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                },
+                                label: {
+                                    show: true,
+                                    formatter: '{b}: {c}%'
+                                },
+                                emphasis: {
+                                    label: {
+                                        show: true,
+                                        fontSize: '18',
+                                        fontWeight: 'bold'
+                                    }
+                                },
+                                data: visualizationData.category_distribution.data[0].labels.map((label, index) => ({
+                                    value: visualizationData.category_distribution.data[0].values[index] || 10,
+                                    name: label
+                                }))
+                            }]
+                        };
+                        categoryChart.setOption(categoryOption);
+                    }
+                }
+
+                // Initialize AI opportunity chart if available
+                if (visualizationData && visualizationData.ai_opportunities) {
+                    const aiChartDom = document.getElementById('aiOpportunityChart');
+                    if (aiChartDom) {
+                        const aiChart = echarts.init(aiChartDom);
+                        const aiOption = {
+                            title: {
+                                text: 'AI融合潜力评估',
+                                left: 'center'
+                            },
+                            radar: {
+                                indicator: [
+                                    { name: '计算机视觉', max: 100 },
+                                    { name: '自然语言处理', max: 100 },
+                                    { name: '语音识别', max: 100 },
+                                    { name: '机器人技术', max: 100 },
+                                    { name: '自动化程度', max: 100 }
+                                ]
+                            },
+                            series: [{
+                                name: 'AI潜力',
+                                type: 'radar',
+                                data: [{
+                                    value: visualizationData.ai_opportunities.values || [80, 75, 70, 65, 85],
+                                    name: '潜力评估'
+                                }]
+                            }]
+                        };
+                        aiChart.setOption(aiOption);
+                    }
+                }
+
+                // Initialize keyword frequency chart if available
+                if (visualizationData && visualizationData.keyword_frequency) {
+                    const keywordChartDom = document.getElementById('keywordChart');
+                    if (keywordChartDom) {
+                        const keywordChart = echarts.init(keywordChartDom);
+                        const keywordOption = {
+                            title: {
+                                text: '关键词热度分析',
+                                left: 'center'
+                            },
+                            xAxis: {
+                                type: 'category',
+                                data: visualizationData.keyword_frequency.labels || ['人工智能', '政策支持', '产业发展', '市场分析', '投资机会']
+                            },
+                            yAxis: {
+                                type: 'value'
+                            },
+                            series: [{
+                                data: visualizationData.keyword_frequency.values || [45, 38, 32, 28, 25],
+                                type: 'bar'
+                            }]
+                        };
+                        keywordChart.setOption(keywordOption);
+                    }
+                }
+            } catch (e) {
+                console.error('Error initializing visualizations:', e);
+            }
+        }
+
+        // Trigger toast animation for task completion
+        function triggerToastAnimation() {
+            // Add to queue to ensure sequential playback
+            animationQueue.push({
+                id: 'toast_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                timestamp: Date.now()
+            });
+
+            // Show task counter badge if not already visible
+            if (toasterTaskCounter) {
+                toasterTaskCounter.style.display = 'flex';
+                taskCounter++;
+                toasterTaskCounter.textContent = taskCounter;
+            }
+
+            // Process animation if not currently animating
+            if (!isAnimating) {
+                processAnimationQueue();
+            }
+        }
+
+        // Process animation queue
+        function processAnimationQueue() {
+            if (isAnimating || animationQueue.length === 0) {
+                return;
+            }
+
+            isAnimating = true;
+            const toastData = animationQueue.shift();
+
+            const toasterBtn = document.getElementById('toasterButton');
+            if (!toasterBtn) {
+                console.error('Toaster button not found');
+                isAnimating = false;
+                return;
+            }
+
+            // Get toaster button position
+            const rect = toasterBtn.getBoundingClientRect();
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = 'toast-animation toast-pop-up';
+            toast.style.position = 'fixed';
+            toast.style.left = (rect.left) + 'px'; // Align with toaster on left side
+            toast.style.top = (rect.top + rect.height + 10) + 'px'; // Start below toaster with small offset
+            toast.style.zIndex = '10000';
+
+            // Add to animation container
+            animationContainer.appendChild(toast);
+
+            // Remove element after animation completes
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+                isAnimating = false;
+
+                // Process next in queue if available
+                if (animationQueue.length > 0) {
+                    setTimeout(processAnimationQueue, 300);
+                }
+            }, 2000); // Animation duration: 2 seconds
+        }
+
+        // Update floating task counter display
+        function updateFloatingTaskCounter() {
+            if (toasterTaskCounter) {
+                if (activeTasks.length > 0) {
+                    toasterTaskCounter.style.display = 'flex';
+                    toasterTaskCounter.textContent = activeTasks.length;
+                } else {
+                    toasterTaskCounter.style.display = 'none';
+                }
+            }
+        }
+
+        // Initialize demo with automatic toast animation when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Automatic demo: start toast animation after page loads
+            setTimeout(() => {
+                // Trigger a demo toast animation to show the effect immediately
+                triggerDemoToast();
+
+                // Follow with more animations for demonstration
+                setTimeout(triggerDemoToast, 2000);
+                setTimeout(triggerDemoToast, 4000);
+            }, 1000); // Start 1 second after page loads
+        });
+
+        // Trigger demo toast animation for immediate visualization
+        function triggerDemoToast() {
+            // Create a demo toast element
+            const toast = document.createElement('div');
+            toast.className = 'toast-animation toast-pop-up';
+
+            // Find the toaster button position
+            const toasterBtn = document.getElementById('toasterButton');
+            if (toasterBtn) {
+                const rect = toasterBtn.getBoundingClientRect();
+                toast.style.position = 'fixed';
+                toast.style.left = (rect.left) + 'px'; // Align with toaster on left side
+                toast.style.top = (rect.top + rect.height + 10) + 'px'; // Start below toaster with small offset
+                toast.style.zIndex = '10000';
+
+                // Add to animation container
+                document.getElementById('animationContainer').appendChild(toast);
+
+                // Remove element after animation completes
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 2000); // Match animation duration
+            }
+        }
+
+        // Toggle task panel (for demo purposes)
+        function toggleTaskPanel() {
+            alert('点击了烤吐司机按钮！实际集成中这里会显示后台任务管理面板。');
+        }
+
+        // Update task list display
+        function updateTaskListDisplay() {
+            const tasksList = document.getElementById('tasksList');
+            if (!tasksList) {
+                console.error('Tasks list element not found');
+                return;
+            }
+
+            if (activeTasks.length === 0) {
+                tasksList.innerHTML = '<div class="text-center text-muted p-4">暂无后台任务</div>';
+                return;
+            }
+
+            let html = '';
+            activeTasks.forEach(task => {
+                const statusClass = task.status === 'completed' ? 'status-completed' :
+                                  task.status === 'processing' ? 'status-processing' : 'status-pending';
+                const statusText = task.status === 'completed' ? '已完成' :
+                                 task.status === 'processing' ? '生成中' : '待处理';
+
+                html += `
+                <div class="task-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="task-title">${task.city} - ${task.industry}</div>
+                            <div class="task-meta">${task.created_at ? new Date(task.created_at).toLocaleString('zh-CN') : 'N/A'}</div>
+                            <div class="progress-bar-demo mt-2">
+                                <div class="progress-fill" style="width: ${task.status === 'completed' ? '100%' : task.status === 'processing' ? '75%' : '25%'}"></div>
+                            </div>
+                            <div class="text-muted small">进度: ${task.status === 'completed' ? '100%' : task.status === 'processing' ? '75%' : '25%'}</div>
+                        </div>
+                        <span class="task-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="task-actions">
+                        <button class="action-btn btn-sm" onclick="viewTask('${task.id || task.task_id}')">
+                            <i class="fas fa-eye"></i> 查看
+                        </button>
+                        <button class="action-btn btn-sm btn-outline-danger" onclick="removeTask('${task.id || task.task_id}')">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </div>
+                </div>`;
+            });
+
+            tasksList.innerHTML = html;
+        }
+
+        // View task functionality
+        function viewTask(taskId) {
+            if (taskId) {
+                // In actual implementation, navigate to the report analysis page
+                window.location.href = `/report/${taskId}`;
+            } else {
+                alert('任务仍在生成中，请稍后再查看...');
+            }
+        }
+
+        // Remove task functionality
+        function removeTask(taskId) {
+            if (confirm('确定要删除这个任务吗？')) {
+                activeTasks = activeTasks.filter(task => (task.id || task.task_id) !== taskId);
+                updateTaskListDisplay();
+                updateFloatingTaskCounter();
+            }
+        }
+
+        // Load existing tasks
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/tasks');
+                if (response.ok) {
+                    const data = await response.json();
+                    activeTasks = data.tasks || [];
+                    updateFloatingTaskCounter();
+                }
+            } catch (e) {
+                console.error('Error loading tasks:', e);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTasks();
+        });
+
+        // Handle window resize for charts
+        window.addEventListener('resize', function() {
+            setTimeout(() => {
+                if (window.echarts) {
+                    const charts = document.querySelectorAll('[id$="Chart"]');
+                    charts.forEach(chart => {
+                        if (window.echarts.getInstanceByDom(chart)) {
+                            window.echarts.getInstanceByDom(chart).resize();
+                        }
+                    });
+                }
+            }, 100);
+        });
+
+        // Show demo notification for task completion
+        function showTaskCompletionNotification(city, industry) {
+            const notification = document.createElement('div');
+            notification.className = 'notification show';
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-bread-slice text-warning me-2"></i>
+                    <div>
+                        <strong>${city} - ${industry}</strong><br>
+                        <small>产业分析报告已生成完成</small>
+                    </div>
+                    <button class="btn-close ms-auto" type="button" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            
+            document.getElementById('notificationArea').appendChild(notification);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

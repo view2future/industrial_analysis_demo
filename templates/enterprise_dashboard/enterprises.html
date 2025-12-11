@@ -1,0 +1,897 @@
+{% extends "enterprise_dashboard/base_enterprise.html" %}
+
+{% block enterprise_content %}
+<div class="dashboard-header text-center mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8 mx-auto">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-building me-3"></i>企业管理
+                </h1>
+                <p class="lead">管理您的合作企业信息，跟踪合作进展</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-pills nav-fill bg-light rounded p-1" id="enterpriseTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                        <i class="fas fa-tachometer-alt me-2"></i>数据概览
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="enterprises-tab" data-bs-toggle="tab" data-bs-target="#enterprises" type="button" role="tab">
+                        <i class="fas fa-building me-2"></i>企业管理
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="meetings-tab" data-bs-toggle="tab" data-bs-target="#meetings" type="button" role="tab">
+                        <i class="fas fa-calendar-alt me-2"></i>会议记录
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                        <i class="fas fa-chart-bar me-2"></i>数据报告
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control search-bar" id="searchInput" placeholder="搜索企业名称、基础位置...">
+                <select class="form-select" id="priorityFilter">
+                    <option value="">所有优先级</option>
+                    <option value="P0">P0 - 最高优先级</option>
+                    <option value="P1">P1 - 高优先级</option>
+                    <option value="P2">P2 - 普通优先级</option>
+                </select>
+                <select class="form-select" id="platformFilter">
+                    <option value="">所有平台</option>
+                    <option value="飞桨">飞桨</option>
+                    <option value="文心">文心</option>
+                </select>
+                <button class="btn btn-outline-secondary" type="button" id="filterButton">
+                    <i class="fas fa-filter"></i> 筛选
+                </button>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addEnterpriseModal">
+                <i class="fas fa-plus me-2"></i>添加企业
+            </button>
+        </div>
+    </div>
+
+    <!-- Enterprise Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>企业列表</h5>
+                </div>
+                <div class="col-auto">
+                    <small class="text-muted" id="enterpriseCount">加载中...</small>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 3%;">#</th>
+                            <th style="width: 18%;">企业名称</th>
+                            <th style="width: 8%;">AI平台</th>
+                            <th style="width: 8%;">优先级</th>
+                            <th style="width: 10%;">合作伙伴等级</th>
+                            <th style="width: 12%;">基础位置</th>
+                            <th style="width: 8%;">注册资本(万)</th>
+                            <th style="width: 7%;">参保人数</th>
+                            <th style="width: 12%;">行业</th>
+                            <th style="width: 12%;">最近进展</th>
+                            <th style="width: 12%;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="enterpriseTableBody">
+                        <tr>
+                            <td colspan="11" class="text-center text-muted py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">加载中...</span>
+                                </div>
+                                <p class="mt-2 mb-0">正在加载企业数据...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <nav aria-label="Page navigation">
+                <ul class="pagination" id="pagination">
+                    <!-- Pagination will be populated by JavaScript -->
+                </ul>
+            </nav>
+        </div>
+        <div class="col-md-6 text-end">
+            <select class="form-select d-inline w-auto me-2" id="itemsPerPage">
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+                <option value="100">100 条/页</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Enterprise Modal -->
+<div class="modal fade" id="addEnterpriseModal" tabindex="-1" aria-labelledby="addEnterpriseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEnterpriseModalLabel">添加企业</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="enterpriseForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="enterpriseName" class="form-label">企业名称 *</label>
+                            <input type="text" class="form-control" id="enterpriseName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="aiPlatform" class="form-label">AI平台 *</label>
+                            <select class="form-select" id="aiPlatform" required>
+                                <option value="">请选择</option>
+                                <option value="飞桨">飞桨</option>
+                                <option value="文心">文心</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="leadInboundTime" class="form-label">线索入库时间 *</label>
+                            <select class="form-select" id="leadInboundTime" required>
+                                <option value="">请选择季度</option>
+                                <option value="2024Q1">2024Q1</option>
+                                <option value="2024Q2">2024Q2</option>
+                                <option value="2024Q3">2024Q3</option>
+                                <option value="2024Q4">2024Q4</option>
+                                <option value="2025Q1">2025Q1</option>
+                                <option value="2025Q2">2025Q2</option>
+                                <option value="2025Q3">2025Q3</option>
+                                <option value="2025Q4">2025Q4</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="partnerLevel" class="form-label">合作伙伴等级</label>
+                            <select class="form-select" id="partnerLevel">
+                                <option value="">请选择</option>
+                                <option value="认证级">认证级</option>
+                                <option value="优选级">优选级</option>
+                                <option value="无">无</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="priority" class="form-label">优先级 *</label>
+                            <select class="form-select" id="priority" required>
+                                <option value="">请选择</option>
+                                <option value="P0">P0 - 最高优先级</option>
+                                <option value="P1">P1 - 高优先级</option>
+                                <option value="P2">P2 - 普通优先级</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="baseLocation" class="form-label">基础位置</label>
+                            <input type="text" class="form-control" id="baseLocation">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="registeredCapital" class="form-label">注册资本 (万元)</label>
+                            <input type="number" class="form-control" id="registeredCapital">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="employeeCount" class="form-label">参保人数</label>
+                            <input type="number" class="form-control" id="employeeCount">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="industry" class="form-label">行业 (可多选)</label>
+                            <input type="text" class="form-control" id="industry" placeholder="用逗号分隔，如: 人工智能,智能制造">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="taskDirection" class="form-label">任务方向</label>
+                            <input type="text" class="form-control" id="taskDirection" placeholder="如: 智能问答,OCR,目标检测">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="contactInfo" class="form-label">联系人信息</label>
+                        <textarea class="form-control" id="contactInfo" rows="2" placeholder="如: 张三(产品总监) 13800138000"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="enterpriseBackground" class="form-label">企业背景</label>
+                        <textarea class="form-control" id="enterpriseBackground" rows="2" placeholder="企业核心业务与合作基础 (50-100字)"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="usageScenario" class="form-label">使用场景</label>
+                        <textarea class="form-control" id="usageScenario" rows="3" placeholder="企业使用飞桨/文心的核心业务场景"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="aiProducts" class="form-label">生态AI产品</label>
+                        <input type="text" class="form-control" id="aiProducts" placeholder="如: 2025-10 智能客服产品">
+                    </div>
+                    <div class="mb-3">
+                        <label for="progress" class="form-label">最新进展</label>
+                        <textarea class="form-control" id="progress" rows="2" placeholder="记录最新跟进情况"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveEnterpriseBtn">保存企业</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Timeline Modal -->
+<div class="modal fade" id="progressTimelineModal" tabindex="-1" aria-labelledby="progressTimelineModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="progressTimelineModalLabel">企业进展时间线</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="progressTimelineContent">
+                    <!-- Progress timeline will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+const itemsPerPage = 20;
+
+// Load enterprises with pagination
+function loadEnterprises(page = 1) {
+    const search = document.getElementById('searchInput').value;
+    const priority = document.getElementById('priorityFilter').value;
+    const platform = document.getElementById('platformFilter').value;
+
+    let url = `/enterprise/api/enterprises?page=${page}&limit=${itemsPerPage}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (priority) url += `&priority=${encodeURIComponent(priority)}`;
+    if (platform) url += `&ai_platform=${encodeURIComponent(platform)}`;
+
+    fetch(url)
+        .then(response => {
+            if (response.status === 302 || response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tableBody = document.getElementById('enterpriseTableBody');
+            tableBody.innerHTML = '';
+
+            if (data.enterprises.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-5">
+                            <i class="fas fa-search fa-2x mb-3"></i>
+                            <p class="mb-0">未找到匹配的企业</p>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('enterpriseCount').textContent = '0 项';
+                return;
+            }
+
+            data.enterprises.forEach((enterprise, index) => {
+                // Format the progress text to display the latest progress
+                let latestProgress = '';
+                let previousProgress = '';
+                
+                if (enterprise.progress && enterprise.progress.length > 0) {
+                    latestProgress = enterprise.progress[0] ? enterprise.progress[0].content : '';
+                    if (enterprise.progress.length > 1) {
+                        previousProgress = enterprise.progress[1] ? enterprise.progress[1].content : '';
+                    }
+                }
+                
+                // Format registered capital
+                const capitalText = enterprise.registered_capital ? `${enterprise.registered_capital}万` : '-';
+                
+                // Format employee count
+                const employeeText = enterprise.employee_count ? `${enterprise.employee_count}人` : '-';
+                
+                // Format industry tags
+                const industryText = enterprise.industry && enterprise.industry.length > 0 
+                    ? enterprise.industry.split(',').join(', ')  // Convert from comma-separated string to readable format
+                    : '-';
+                
+                // Format base location
+                const baseText = enterprise.base_location || '-';
+                
+                // Priority badge
+                let priorityBadge = '';
+                switch(enterprise.priority) {
+                    case 'P0':
+                        priorityBadge = '<span class="badge bg-danger">P0</span>';
+                        break;
+                    case 'P1':
+                        priorityBadge = '<span class="badge bg-warning text-dark">P1</span>';
+                        break;
+                    case 'P2':
+                        priorityBadge = '<span class="badge bg-secondary">P2</span>';
+                        break;
+                    default:
+                        priorityBadge = '<span class="badge bg-secondary">N/A</span>';
+                }
+                
+                // AI Platform badge
+                let platformBadge = '';
+                switch(enterprise.ai_platform) {
+                    case '飞桨':
+                        platformBadge = '<span class="badge bg-primary">飞桨</span>';
+                        break;
+                    case '文心':
+                        platformBadge = '<span class="badge bg-success">文心</span>';
+                        break;
+                    default:
+                        platformBadge = '<span class="badge bg-secondary">N/A</span>';
+                }
+                
+                // Partner level badge
+                let partnerBadge = '';
+                switch(enterprise.partner_level) {
+                    case '认证级':
+                        partnerBadge = '<span class="badge bg-info">认证级</span>';
+                        break;
+                    case '优选级':
+                        partnerBadge = '<span class="badge bg-success">优选级</span>';
+                        break;
+                    default:
+                        partnerBadge = '<span class="badge bg-secondary">无</span>';
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${(page - 1) * itemsPerPage + index + 1}</td>
+                    <td>
+                        <strong>${enterprise.enterprise_name}</strong><br>
+                        <small class="text-muted">${enterprise.lead_inbound_time}</small>
+                    </td>
+                    <td>${platformBadge}</td>
+                    <td>${priorityBadge}</td>
+                    <td>${partnerBadge}</td>
+                    <td>${baseText}</td>
+                    <td>${capitalText}</td>
+                    <td>${employeeText}</td>
+                    <td><small>${industryText}</small></td>
+                    <td>
+                        <div class="progress-timeline-item">
+                            <div class="fw-bold text-success small">${latestProgress ? '本周: ' + latestProgress.substring(0, 40) + (latestProgress.length > 40 ? '...' : '') : '无进展'}</div>
+                            ${previousProgress ? `<div class="text-muted x-small">上周: ${previousProgress.substring(0, 40) + (previousProgress.length > 40 ? '...' : '')}</div>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary btn-sm" title="查看进展时间线" onclick="viewProgressTimeline(${enterprise.id})">
+                                <i class="fas fa-history"></i>
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" title="编辑企业" onclick="editEnterprise(${enterprise.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" title="删除企业" onclick="deleteEnterprise(${enterprise.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Update enterprise count
+            document.getElementById('enterpriseCount').textContent = `${data.total} 项`;
+
+            // Update pagination
+            updatePagination(data.page, data.pages, data.total);
+        })
+        .catch(error => {
+            console.error('Error loading enterprises:', error);
+            const tableBody = document.getElementById('enterpriseTableBody');
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="11" class="text-center text-muted py-5">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                        <p class="mb-0">加载企业数据失败，请稍后重试</p>
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+// Update pagination controls
+function updatePagination(currentPage, totalPages, totalItems) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+
+    // Previous button
+    const prevItem = document.createElement('li');
+    prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevItem.innerHTML = `<a class="page-link" href="#" onclick="loadEnterprises(${Math.max(1, currentPage - 1)}); return false;">上一页</a>`;
+    pagination.appendChild(prevItem);
+
+    // Pages
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    if (startPage > 1) {
+        const firstPage = document.createElement('li');
+        firstPage.className = 'page-item';
+        firstPage.innerHTML = `<a class="page-link" href="#" onclick="loadEnterprises(1); return false;">1</a>`;
+        pagination.appendChild(firstPage);
+        
+        if (startPage > 2) {
+            const ellipsis = document.createElement('li');
+            ellipsis.className = 'page-item disabled';
+            ellipsis.innerHTML = '<a class="page-link" href="#">...</a>';
+            pagination.appendChild(ellipsis);
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const pageItem = document.createElement('li');
+        pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        pageItem.innerHTML = `<a class="page-link" href="#" onclick="loadEnterprises(${i}); return false;">${i}</a>`;
+        pagination.appendChild(pageItem);
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsis = document.createElement('li');
+            ellipsis.className = 'page-item disabled';
+            ellipsis.innerHTML = '<a class="page-link" href="#">...</a>';
+            pagination.appendChild(ellipsis);
+        }
+        
+        const lastPage = document.createElement('li');
+        lastPage.className = 'page-item';
+        lastPage.innerHTML = `<a class="page-link" href="#" onclick="loadEnterprises(${totalPages}); return false;">${totalPages}</a>`;
+        pagination.appendChild(lastPage);
+    }
+
+    // Next button
+    const nextItem = document.createElement('li');
+    nextItem.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextItem.innerHTML = `<a class="page-link" href="#" onclick="loadEnterprises(${Math.min(totalPages, currentPage + 1)}); return false;">下一页</a>`;
+    pagination.appendChild(nextItem);
+}
+
+// View progress timeline
+function viewProgressTimeline(enterpriseId) {
+    fetch(`/enterprise/api/enterprises/${enterpriseId}`)
+        .then(response => {
+            if (response.status === 302 || response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const enterprise = data.enterprise;
+            const timelineContainer = document.getElementById('progressTimelineContent');
+            
+            let timelineHtml = `<h5 class="mb-3">${enterprise.enterprise_name} 的进展时间线</h5>`;
+            
+            if (enterprise.progress && enterprise.progress.length > 0) {
+                timelineHtml += '<div class="timeline">';
+                enterprise.progress.forEach((progress, index) => {
+                    const date = new Date(progress.updateTime).toLocaleString('zh-CN');
+                    const statusColor = index === 0 ? 'success' : (index === 1 ? 'primary' : 'secondary');
+                    
+                    timelineHtml += `
+                        <div class="timeline-item mb-3">
+                            <div class="timeline-badge">
+                                <i class="fas fa-${index === 0 ? 'star' : 'check'} text-${statusColor}"></i>
+                            </div>
+                            <div class="timeline-content ps-3">
+                                <div class="fw-bold">${progress.content}</div>
+                                <small class="text-muted">${date}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                timelineHtml += '</div>';
+            } else {
+                timelineHtml += '<div class="text-muted">暂无进展记录</div>';
+            }
+            
+            timelineContainer.innerHTML = timelineHtml;
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('progressTimelineModal'));
+            modal.show();
+        })
+        .catch(error => console.error('Error loading progress timeline:', error));
+}
+
+// Edit enterprise (for demo, just populate the form)
+function editEnterprise(enterpriseId) {
+    fetch(`/enterprise/api/enterprises/${enterpriseId}`)
+        .then(response => {
+            if (response.status === 302 || response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const enterprise = data.enterprise;
+            
+            // Populate the form with existing data
+            document.getElementById('enterpriseName').value = enterprise.enterprise_name;
+            document.getElementById('aiPlatform').value = enterprise.ai_platform;
+            document.getElementById('leadInboundTime').value = enterprise.lead_inbound_time;
+            document.getElementById('partnerLevel').value = enterprise.partner_level || '';
+            document.getElementById('priority').value = enterprise.priority;
+            document.getElementById('baseLocation').value = enterprise.base_location || '';
+            document.getElementById('registeredCapital').value = enterprise.registered_capital || '';
+            document.getElementById('employeeCount').value = enterprise.employee_count || '';
+            document.getElementById('industry').value = enterprise.industry || '';
+            document.getElementById('taskDirection').value = enterprise.task_direction || '';
+            document.getElementById('contactInfo').value = enterprise.contact_info || '';
+            document.getElementById('enterpriseBackground').value = enterprise.enterprise_background || '';
+            document.getElementById('usageScenario').value = enterprise.usage_scenario || '';
+            document.getElementById('aiProducts').value = enterprise.ai_products || '';
+            document.getElementById('progress').value = '';
+            
+            // Change modal title
+            document.getElementById('addEnterpriseModalLabel').textContent = '编辑企业';
+            
+            // Change save button text and add data attribute
+            const saveBtn = document.getElementById('saveEnterpriseBtn');
+            saveBtn.textContent = '更新企业';
+            saveBtn.setAttribute('data-id', enterpriseId);
+            saveBtn.onclick = () => updateEnterprise(enterpriseId);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addEnterpriseModal'));
+            modal.show();
+        })
+        .catch(error => console.error('Error loading enterprise for edit:', error));
+}
+
+// Update enterprise (demo implementation)
+function updateEnterprise(enterpriseId) {
+    const enterpriseData = {
+        enterprise_name: document.getElementById('enterpriseName').value,
+        ai_platform: document.getElementById('aiPlatform').value,
+        lead_inbound_time: document.getElementById('leadInboundTime').value,
+        partner_level: document.getElementById('partnerLevel').value,
+        priority: document.getElementById('priority').value,
+        base_location: document.getElementById('baseLocation').value,
+        registered_capital: document.getElementById('registeredCapital').value,
+        employee_count: document.getElementById('employeeCount').value,
+        enterprise_background: document.getElementById('enterpriseBackground').value,
+        industry: document.getElementById('industry').value,
+        task_direction: document.getElementById('taskDirection').value,
+        contact_info: document.getElementById('contactInfo').value,
+        usage_scenario: document.getElementById('usageScenario').value,
+        ai_products: document.getElementById('aiProducts').value,
+        progress: document.getElementById('progress').value ? [{
+            content: document.getElementById('progress').value,
+            updateTime: new Date().toISOString()
+        }] : []
+    };
+    
+    fetch(`/enterprise/api/enterprises/${enterpriseId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(enterpriseData)
+    })
+    .then(response => {
+        if (response.status === 302 || response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert('企业信息已更新！');
+        
+        // Reset the form and close modal
+        document.getElementById('enterpriseForm').reset();
+        document.getElementById('addEnterpriseModalLabel').textContent = '添加企业';
+        document.getElementById('saveEnterpriseBtn').textContent = '保存企业';
+        document.getElementById('saveEnterpriseBtn').removeAttribute('data-id');
+        document.getElementById('saveEnterpriseBtn').onclick = saveEnterprise;
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addEnterpriseModal'));
+        modal.hide();
+        
+        // Reload data
+        loadEnterprises(currentPage);
+    })
+    .catch(error => {
+        console.error('Error updating enterprise:', error);
+        alert('更新企业失败：' + error.message);
+    });
+}
+
+// Delete enterprise
+function deleteEnterprise(enterpriseId) {
+    if (confirm('确定要删除这个企业吗？此操作不可逆。')) {
+        fetch(`/enterprise/api/enterprises/${enterpriseId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.status === 302 || response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('企业已删除！');
+            loadEnterprises(currentPage);
+        })
+        .catch(error => {
+            console.error('Error deleting enterprise:', error);
+            alert('删除企业失败：' + error.message);
+        });
+    }
+}
+
+// Save enterprise
+function saveEnterprise() {
+    const enterpriseData = {
+        enterprise_name: document.getElementById('enterpriseName').value,
+        ai_platform: document.getElementById('aiPlatform').value,
+        lead_inbound_time: document.getElementById('leadInboundTime').value,
+        partner_level: document.getElementById('partnerLevel').value,
+        priority: document.getElementById('priority').value,
+        base_location: document.getElementById('baseLocation').value,
+        registered_capital: document.getElementById('registeredCapital').value,
+        employee_count: document.getElementById('employeeCount').value,
+        enterprise_background: document.getElementById('enterpriseBackground').value,
+        industry: document.getElementById('industry').value,
+        task_direction: document.getElementById('taskDirection').value,
+        contact_info: document.getElementById('contactInfo').value,
+        usage_scenario: document.getElementById('usageScenario').value,
+        ai_products: document.getElementById('aiProducts').value,
+        progress: document.getElementById('progress').value ? [{
+            content: document.getElementById('progress').value,
+            updateTime: new Date().toISOString()
+        }] : []
+    };
+    
+    fetch('/enterprise/api/enterprises', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(enterpriseData)
+    })
+    .then(response => {
+        if (response.status === 302 || response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert('企业已保存！');
+        
+        // Reset the form
+        document.getElementById('enterpriseForm').reset();
+        
+        // Close modal and reload data
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addEnterpriseModal'));
+        modal.hide();
+        loadEnterprises(currentPage);
+    })
+    .catch(error => {
+        console.error('Error saving enterprise:', error);
+        alert('保存企业失败：' + error.message);
+    });
+}
+
+// Filter enterprises when filter button is clicked
+document.getElementById('filterButton').addEventListener('click', function() {
+    loadEnterprises(1);
+});
+
+// Search when user types in search input
+document.getElementById('searchInput').addEventListener('input', function() {
+    loadEnterprises(1);
+});
+
+// Filter when priority or platform is changed
+document.getElementById('priorityFilter').addEventListener('change', function() {
+    loadEnterprises(1);
+});
+
+document.getElementById('platformFilter').addEventListener('change', function() {
+    loadEnterprises(1);
+});
+
+// Change items per page
+document.getElementById('itemsPerPage').addEventListener('change', function() {
+    loadEnterprises(1);
+});
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    loadEnterprises(1);
+    
+    // Add event listener to the save button
+    document.getElementById('saveEnterpriseBtn').addEventListener('click', saveEnterprise);
+    
+    // Add floating animation to the header
+    document.querySelector('.dashboard-header').classList.add('floating-element');
+    
+    // Add some interactive effects
+    document.querySelectorAll('.table tr').forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(102, 126, 234, 0.05)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+});
+</script>
+
+<style>
+.dashboard-header {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+}
+
+.nav-pills .nav-link {
+    border: none;
+    transition: all 0.3s;
+    font-weight: 600;
+    padding: 12px 24px;
+    color: #6c757d;
+    background-color: transparent;
+    border-radius: 0.5rem !important;
+}
+
+.nav-pills .nav-link.active {
+    color: white;
+    background: linear-gradient(35deg, #667eea 0, #764ba2 100%);
+}
+
+.nav-pills .nav-link:hover:not(.active) {
+    background-color: #e9ecef;
+}
+
+.card {
+    border-radius: 1rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem 1.5rem;
+}
+
+.table th {
+    border-top: none;
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.timeline-item {
+    display: flex;
+    align-items: flex-start;
+}
+
+.timeline-badge {
+    margin-right: 15px;
+    z-index: 1;
+}
+
+.timeline-content {
+    flex: 1;
+    position: relative;
+    padding-left: 15px;
+    border-left: 2px dashed #dee2e6;
+}
+
+.timeline-content::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #667eea;
+    border: 2px solid white;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.progress-timeline-item {
+    min-height: 40px;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+.pagination {
+    margin-bottom: 0;
+}
+
+.pagination .page-link {
+    color: #667eea;
+    border-radius: 0.5rem;
+    margin: 0 3px;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+</style>
+{% endblock %}

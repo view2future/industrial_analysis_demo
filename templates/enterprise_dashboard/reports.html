@@ -1,0 +1,960 @@
+{% extends "enterprise_dashboard/base_enterprise.html" %}
+
+{% block enterprise_content %}
+<div class="dashboard-header text-center mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8 mx-auto">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-chart-bar me-3"></i>数据报告
+                </h1>
+                <p class="lead">深度分析企业数据，生成可视化报告辅助决策</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-pills nav-fill bg-light rounded p-1" id="enterpriseTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                        <i class="fas fa-tachometer-alt me-2"></i>数据概览
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="enterprises-tab" data-bs-toggle="tab" data-bs-target="#enterprises" type="button" role="tab">
+                        <i class="fas fa-building me-2"></i>企业管理
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="meetings-tab" data-bs-toggle="tab" data-bs-target="#meetings" type="button" role="tab">
+                        <i class="fas fa-calendar-alt me-2"></i>会议记录
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                        <i class="fas fa-chart-bar me-2"></i>数据报告
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Export Controls -->
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                <select class="form-select" id="reportTimeRange">
+                    <option>最近7天</option>
+                    <option selected>最近30天</option>
+                    <option>最近90天</option>
+                    <option>本季度</option>
+                    <option>本年度</option>
+                </select>
+                <select class="form-select" id="reportTypeFilter">
+                    <option value="">所有报告类型</option>
+                    <option value="P0">P0高优企业</option>
+                    <option value="progress">进展分析</option>
+                    <option value="products">生态产品</option>
+                    <option value="meetings">会议分析</option>
+                </select>
+                <input type="text" class="form-control" id="reportSearch" placeholder="搜索报告...">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="btn-group w-100" role="group">
+                <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-2"></i>导出
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="exportReport('excel')"><i class="fas fa-file-excel me-2"></i>导出Excel</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportReport('pdf')"><i class="fas fa-file-pdf me-2"></i>导出PDF</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportReport('charts')"><i class="fas fa-chart-line me-2"></i>导出图表</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportReport('all')"><i class="fas fa-box-open me-2"></i>完整报告包</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-5">
+        <div class="col-xl-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <h6 class="mb-0"><i class="fas fa-project-diagram me-2"></i>企业综合分析仪表板</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button class="btn btn-outline-primary btn-sm">查看详细</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div id="comprehensiveAnalysisChart" style="height: 400px;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="progressStatusChart" style="height: 400px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <div class="row mb-3">
+                        <div class="col-8">
+                            <h6 class="mb-0"><i class="fas fa-robot me-2"></i>AI智能分析洞察</h6>
+                        </div>
+                        <div class="col-4 text-end">
+                            <button class="btn btn-outline-primary btn-sm">刷新</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="ai-insight">
+                        <div class="alert alert-info mb-3">
+                            <h6 class="alert-heading"><i class="fas fa-bullseye me-2"></i>重点关注</h6>
+                            <p class="mb-0">P0优先级企业转化率较高，建议加大投入。飞桨平台合作企业进展更快。</p>
+                        </div>
+                        <div class="alert alert-warning mb-3">
+                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>风险提示</h6>
+                            <p class="mb-0">Q3新入库企业跟进效率下降15%，需要优化跟进流程。</p>
+                        </div>
+                        <div class="alert alert-success mb-0">
+                            <h6 class="alert-heading"><i class="fas fa-lightbulb me-2"></i>机会建议</h6>
+                            <p class="mb-0">智能制造行业需求增长显著，建议拓展相关领域合作。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Analysis Charts -->
+    <div class="row mb-5">
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <h6 class="mb-0"><i class="fas fa-user-tie me-2"></i>企业优先级与合作伙伴等级分布</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button class="btn btn-outline-primary btn-sm">查看详细</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div id="priorityPartnerChart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>企业进展趋势分析</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button class="btn btn-outline-primary btn-sm">查看详细</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div id="progressTrendChart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <h6 class="mb-0"><i class="fas fa-industry me-2"></i>行业与AI平台综合分析</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button class="btn btn-outline-primary btn-sm">查看详细</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div id="industryAiPlatformChart" style="height: 400px;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="capitalEmployeeChart" style="height: 400px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary and Recommendations -->
+    <div class="row">
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>本周工作总结</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button class="btn btn-outline-primary btn-sm">查看全部</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">新入库企业</div>
+                                本周新增 3 家合作企业
+                            </div>
+                            <span class="badge bg-primary rounded-pill">3</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">会议安排</div>
+                                本周完成 5 场重要会议
+                            </div>
+                            <span class="badge bg-success rounded-pill">5</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">进展更新</div>
+                                12 家企业更新了合作进展
+                            </div>
+                            <span class="badge bg-info rounded-pill">12</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">生态产品提报</div>
+                                完成 4 个生态产品的提报工作
+                            </div>
+                            <span class="badge bg-warning text-dark rounded-pill">4</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <h6 class="mb-0"><i class="fas fa-bullhorn me-2"></i>下周工作计划</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button class="btn btn-outline-primary btn-sm">查看全部</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="alert alert-info" role="alert">
+                        <h6><i class="fas fa-calendar-check me-2"></i>关键任务</h6>
+                        <ul class="mb-0">
+                            <li>跟进3家P0优先级企业的技术方案确认</li>
+                            <li>安排与视觉识别技术有限公司的二次会面</li>
+                            <li>完成Q3合作企业满意度调研</li>
+                            <li>准备月度合作进展汇报材料</li>
+                        </ul>
+                    </div>
+                    <div class="alert alert-secondary" role="alert">
+                        <h6><i class="fas fa-exclamation-circle me-2"></i>待处理事项</h6>
+                        <ul class="mb-0">
+                            <li>2家企业信息需要更新联系人</li>
+                            <li>1家企业的合同签署待跟进</li>
+                            <li>合作伙伴等级评估待完成</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load comprehensive analysis chart
+function loadComprehensiveAnalysisChart() {
+    fetch('/enterprise/api/enterprise/charts/ai-platform')
+        .then(response => response.json())
+        .then(data => {
+            // Get priority distribution data
+            fetch('/enterprise/api/enterprise/charts/progress')
+                .then(response => response.json())
+                .then(priorityData => {
+                    // Create grouped bar chart with AI platform and priority data
+                    const platforms = data.labels;
+                    const p0Counts = priorityData.values[0] || 0;
+                    const p1Counts = priorityData.values[1] || 0;
+                    const p2Counts = priorityData.values[2] || 0;
+                    
+                    const trace1 = {
+                        x: platforms,
+                        y: [p0Counts, p0Counts * 0.7], // Approximate for second platform
+                        name: 'P0企业',
+                        type: 'bar',
+                        marker: {color: 'rgba(255, 107, 107, 0.7)'}
+                    };
+                    
+                    const trace2 = {
+                        x: platforms,
+                        y: [p1Counts, p1Counts * 0.8],
+                        name: 'P1企业',
+                        type: 'bar',
+                        marker: {color: 'rgba(255, 217, 61, 0.7)'}
+                    };
+                    
+                    const trace3 = {
+                        x: platforms,
+                        y: [p2Counts, p2Counts * 0.9],
+                        name: 'P2企业',
+                        type: 'bar',
+                        marker: {color: 'rgba(116, 198, 157, 0.7)'}
+                    };
+                    
+                    const layout = {
+                        title: 'AI平台与企业优先级综合分析',
+                        barmode: 'group',
+                        height: 400,
+                        xaxis: {title: 'AI平台'},
+                        yaxis: {title: '企业数量'},
+                        margin: { t: 50, l: 50, r: 50, b: 50 }
+                    };
+                    
+                    Plotly.newPlot('comprehensiveAnalysisChart', [trace1, trace2, trace3], layout);
+                })
+                .catch(error => console.error('Error loading priority data:', error));
+        })
+        .catch(error => console.error('Error loading platform data:', error));
+}
+
+// Load progress status chart
+function loadProgressStatusChart() {
+    // Get actual progress data from enterprises
+    fetch('/enterprise/api/enterprises?page=1&limit=9999') // Get all enterprises to analyze progress
+        .then(response => response.json())
+        .then(data => {
+            // Analyze progress status based on progress field
+            let completed = 0;    // Enterprises with progress containing "完成", "验收", "上线"
+            let ongoing = 0;      // Enterprises with progress containing "进行", "部署", "测试", "对接"
+            let pending = 0;      // Enterprises with no progress or empty progress
+            let paused = 0;       // Enterprises with progress containing "暂停", "中止"
+            
+            data.enterprises.forEach(enterprise => {
+                if (enterprise.progress && enterprise.progress.length > 0) {
+                    // Check the latest progress entry for status indicators
+                    const latestProgress = enterprise.progress[0];
+                    const progressText = latestProgress.content.toLowerCase();
+                    
+                    if (progressText.includes('完成') || progressText.includes('验收') || 
+                        progressText.includes('上线') || progressText.includes('达成')) {
+                        completed++;
+                    } else if (progressText.includes('进行') || progressText.includes('部署') || 
+                               progressText.includes('测试') || progressText.includes('对接')) {
+                        ongoing++;
+                    } else if (progressText.includes('暂停') || progressText.includes('中止')) {
+                        paused++;
+                    } else {
+                        ongoing++; // Default to ongoing if has progress but unclear status
+                    }
+                } else {
+                    pending++; // No progress records
+                }
+            });
+            
+            const labels = ['已达成', '进行中', '待开始', '已暂停'];
+            const values = [completed, ongoing, pending, paused];
+            const colors = ['#74c69d', '#ffd93d', '#667eea', '#ff6b6b'];
+            
+            const trace = {
+                labels: labels,
+                values: values,
+                type: 'pie',
+                marker: {colors: colors},
+                textinfo: 'label+percent',
+                textposition: 'inside',
+                hovertemplate: '%{label}: %{value} 家企业<br>(%{percent})<extra></extra>',
+            };
+            
+            const layout = {
+                title: '企业进展状态',
+                height: 400,
+                showlegend: true,
+                margin: { t: 50, l: 50, r: 50, b: 50 }
+            };
+            
+            Plotly.newPlot('progressStatusChart', [trace], layout);
+        })
+        .catch(error => {
+            console.error('Error loading progress status data:', error);
+            
+            // Fallback to mock data
+            const labels = ['已达成', '进行中', '待开始', '已暂停'];
+            const values = [15, 22, 8, 3];
+            const colors = ['#74c69d', '#ffd93d', '#667eea', '#ff6b6b'];
+            
+            const trace = {
+                labels: labels,
+                values: values,
+                type: 'pie',
+                marker: {colors: colors},
+                textinfo: 'label+percent',
+                textposition: 'inside',
+                hovertemplate: '%{label}: %{value} 家企业<br>(%{percent})<extra></extra>',
+            };
+            
+            const layout = {
+                title: '企业进展状态',
+                height: 400,
+                showlegend: true,
+                margin: { t: 50, l: 50, r: 50, b: 50 }
+            };
+            
+            Plotly.newPlot('progressStatusChart', [trace], layout);
+        });
+}
+
+// Load priority and partner level chart
+function loadPriorityPartnerChart() {
+    // Get data from API endpoints
+    Promise.all([
+        fetch('/enterprise/api/enterprises?priority=P0').then(r => r.json()),
+        fetch('/enterprise/api/enterprises?priority=P1').then(r => r.json()),
+        fetch('/enterprise/api/enterprises?priority=P2').then(r => r.json())
+    ])
+    .then(([p0Data, p1Data, p2Data]) => {
+        // Calculate partner level distribution for each priority
+        const analyzePartnerLevels = (enterprises) => {
+            let certified = 0, preferred = 0, none = 0;
+            
+            enterprises.forEach(enterprise => {
+                if (enterprise.partner_level === '认证级') certified++;
+                else if (enterprise.partner_level === '优选级') preferred++;
+                else none++;
+            });
+            
+            return { certified, preferred, none };
+        };
+        
+        const p0Stats = analyzePartnerLevels(p0Data.enterprises);
+        const p1Stats = analyzePartnerLevels(p1Data.enterprises);
+        const p2Stats = analyzePartnerLevels(p2Data.enterprises);
+        
+        const priorities = ['P0', 'P1', 'P2'];
+        const certified = [p0Stats.certified, p1Stats.certified, p2Stats.certified];
+        const preferred = [p0Stats.preferred, p1Stats.preferred, p2Stats.preferred];
+        const none = [p0Stats.none, p1Stats.none, p2Stats.none];
+        
+        const trace1 = {
+            x: priorities,
+            y: certified,
+            name: '认证级',
+            type: 'bar',
+            marker: {color: 'rgba(33, 150, 243, 0.7)'}
+        };
+        
+        const trace2 = {
+            x: priorities,
+            y: preferred,
+            name: '优选级',
+            type: 'bar',
+            marker: {color: 'rgba(156, 39, 176, 0.7)'}
+        };
+        
+        const trace3 = {
+            x: priorities,
+            y: none,
+            name: '无等级',
+            type: 'bar',
+            marker: {color: 'rgba(158, 158, 158, 0.7)'}
+        };
+        
+        const layout = {
+            title: '企业优先级与合作伙伴等级分布',
+            barmode: 'stack',
+            height: 400,
+            xaxis: {title: '优先级'},
+            yaxis: {title: '企业数量'},
+            margin: { t: 50, l: 50, r: 50, b: 50 }
+        };
+        
+        Plotly.newPlot('priorityPartnerChart', [trace1, trace2, trace3], layout);
+    })
+    .catch(error => {
+        console.error('Error loading priority partner data:', error);
+        
+        // Fallback to mock data
+        const priorities = ['P0', 'P1', 'P2'];
+        const certified = [5, 3, 1];
+        const preferred = [3, 4, 2];
+        const none = [0, 3, 5];
+        
+        const trace1 = {
+            x: priorities,
+            y: certified,
+            name: '认证级',
+            type: 'bar',
+            marker: {color: 'rgba(33, 150, 243, 0.7)'}
+        };
+        
+        const trace2 = {
+            x: priorities,
+            y: preferred,
+            name: '优选级',
+            type: 'bar',
+            marker: {color: 'rgba(156, 39, 176, 0.7)'}
+        };
+        
+        const trace3 = {
+            x: priorities,
+            y: none,
+            name: '无等级',
+            type: 'bar',
+            marker: {color: 'rgba(158, 158, 158, 0.7)'}
+        };
+        
+        const layout = {
+            title: '企业优先级与合作伙伴等级分布',
+            barmode: 'stack',
+            height: 400,
+            margin: { t: 50, l: 50, r: 50, b: 50 }
+        };
+        
+        Plotly.newPlot('priorityPartnerChart', [trace1, trace2, trace3], layout);
+    });
+}
+
+// Load progress trend chart
+function loadProgressTrendChart() {
+    fetch('/enterprise/api/enterprise/charts/trend')
+        .then(response => response.json())
+        .then(data => {
+            // Create trend data from API response
+            const weeks = data.data.map(item => item.week);
+            const counts = data.data.map(item => item.count);
+            
+            const trace1 = {
+                x: weeks,
+                y: counts,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'P0企业趋势',
+                line: {color: 'rgb(255, 107, 107)', width: 3},
+                marker: {size: 8, color: 'rgb(255, 107, 107)'},
+                fill: 'tonexty',
+                fillcolor: 'rgba(255, 107, 107, 0.1)',
+            };
+            
+            const layout = {
+                title: 'P0优先级企业趋势',
+                xaxis: {title: '周次', tickangle: -45},
+                yaxis: {title: 'P0企业数量'},
+                height: 400,
+                showlegend: true,
+                margin: { t: 50, l: 50, r: 50, b: 100 }
+            };
+            
+            Plotly.newPlot('progressTrendChart', [trace1], layout);
+        })
+        .catch(error => {
+            console.error('Error loading trend data:', error);
+            
+            // Fallback to mock data
+            const weeks = ['W20', 'W21', 'W22', 'W23', 'W24', 'W25', 'W26'];
+            const newEnterprises = [3, 2, 4, 1, 5, 3, 2];
+            const completedDeals = [1, 0, 2, 1, 3, 2, 1];
+            const activeDeals = [10, 12, 11, 13, 12, 14, 15];
+            
+            const trace1 = {
+                x: weeks,
+                y: newEnterprises,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '新增企业',
+                line: {color: 'rgb(102, 126, 234)'},
+                marker: {size: 8}
+            };
+            
+            const trace2 = {
+                x: weeks,
+                y: completedDeals,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '完成合作',
+                line: {color: 'rgb(116, 198, 157)'},
+                marker: {size: 8}
+            };
+            
+            const trace3 = {
+                x: weeks,
+                y: activeDeals,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '活跃合作',
+                line: {color: 'rgb(255, 217, 61)'},
+                marker: {size: 8}
+            };
+            
+            const layout = {
+                title: '企业合作进展趋势',
+                xaxis: {title: '周次'},
+                yaxis: {title: '数量'},
+                height: 400,
+                margin: { t: 50, l: 50, r: 50, b: 50 }
+            };
+            
+            Plotly.newPlot('progressTrendChart', [trace1, trace2, trace3], layout);
+        });
+}
+
+// Load industry and AI platform chart
+function loadIndustryAiPlatformChart() {
+    Promise.all([
+        fetch('/enterprise/api/enterprise/charts/industry').then(r => r.json()),
+        fetch('/enterprise/api/enterprise/charts/ai-platform').then(r => r.json())
+    ])
+    .then(([industryData, platformData]) => {
+        // Use the industry data
+        const industries = industryData.labels.slice(0, 8);  // Top 8 industries
+        const counts = industryData.values.slice(0, 8);
+        
+        // Create a simple bar chart for top industries
+        const trace1 = {
+            x: industries,
+            y: counts,
+            type: 'bar',
+            name: '企业数量',
+            marker: {color: 'rgba(102, 126, 234, 0.7)'},
+            text: counts,
+            textposition: 'auto',
+        };
+        
+        const layout = {
+            title: '行业企业数量分布',
+            xaxis: {title: '行业', tickangle: -45},
+            yaxis: {title: '企业数量'},
+            height: 400,
+            showlegend: true,
+            margin: { t: 50, l: 50, r: 50, b: 100 }
+        };
+        
+        Plotly.newPlot('industryAiPlatformChart', [trace1], layout);
+    })
+    .catch(error => {
+        console.error('Error loading industry platform data:', error);
+        
+        // Fallback to mock data
+        const industries = ['人工智能', '智能制造', '云计算', '大数据', '物联网', '金融科技', '医疗健康', '智慧城市'];
+        const paddleUsage = [8, 5, 3, 4, 2, 6, 4, 3];
+        const wenxinUsage = [4, 3, 2, 3, 1, 2, 3, 2];
+        
+        const trace1 = {
+            x: industries,
+            y: paddleUsage,
+            name: '飞桨',
+            type: 'bar',
+            marker: {color: 'rgba(52, 161, 235, 0.7)'}
+        };
+        
+        const trace2 = {
+            x: industries,
+            y: wenxinUsage,
+            name: '文心',
+            type: 'bar',
+            marker: {color: 'rgba(76, 175, 80, 0.7)'}
+        };
+        
+        const layout = {
+            title: '各行业AI平台使用情况',
+            barmode: 'group',
+            height: 400,
+            xaxis: {tickangle: -45},
+            margin: { t: 50, l: 50, r: 50, b: 100 }
+        };
+        
+        Plotly.newPlot('industryAiPlatformChart', [trace1, trace2], layout);
+    });
+}
+
+// Load capital and employee chart
+function loadCapitalEmployeeChart() {
+    fetch('/enterprise/api/enterprises?page=1&limit=20') // Get sample of enterprises
+        .then(response => response.json())
+        .then(data => {
+            // Filter enterprises that have both capital and employee data
+            const validEnterprises = data.enterprises.filter(e =>
+                e.registered_capital !== null && e.employee_count !== null &&
+                e.registered_capital > 0 && e.employee_count > 0
+            ).slice(0, 15); // Limit to top 15 for readability
+
+            if (validEnterprises.length === 0) {
+                // If no valid data, show a message
+                const layout = {
+                    title: '企业规模分析 (注册资本 vs 参保人数) - 暂无数据',
+                    height: 400,
+                    margin: { t: 50, l: 50, r: 50, b: 100 }
+                };
+                Plotly.newPlot('capitalEmployeeChart', [], layout);
+                return;
+            }
+
+            const enterprises = validEnterprises.map(e =>
+                e.enterprise_name.length > 10 ? e.enterprise_name.substring(0, 10) + '...' : e.enterprise_name
+            );
+            const capital = validEnterprises.map(e => e.registered_capital);
+            const employees = validEnterprises.map(e => e.employee_count);
+
+            const trace1 = {
+                x: enterprises,
+                y: capital,
+                name: '注册资本(万)',
+                type: 'bar',
+                marker: {color: 'rgba(156, 39, 176, 0.7)'},
+                yaxis: 'y'
+            };
+
+            const trace2 = {
+                x: enterprises,
+                y: employees,
+                name: '参保人数',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {color: 'rgb(255, 152, 0)'},
+                yaxis: 'y2'
+            };
+
+            const layout = {
+                title: '企业规模分析 (注册资本 vs 参保人数)',
+                yaxis: {title: '注册资本 (万)', side: 'left'},
+                yaxis2: {title: '参保人数', side: 'right', overlaying: 'y'},
+                height: 400,
+                showlegend: true,
+                margin: { t: 50, l: 50, r: 50, b: 100 }
+            };
+
+            Plotly.newPlot('capitalEmployeeChart', [trace1, trace2], layout);
+        })
+        .catch(error => {
+            console.error('Error loading capital employee data:', error);
+
+            // Fallback to mock data
+            const enterprises = ['企业A', '企业B', '企业C', '企业D', '企业E', '企业F', '企业G', '企业H', '企业I', '企业J'];
+            const capital = [5000, 3000, 8000, 6000, 4500, 7000, 2500, 9000, 3500, 6500]; // 万
+            const employees = [120, 80, 200, 150, 100, 180, 70, 220, 90, 160];
+
+            const trace1 = {
+                x: enterprises,
+                y: capital,
+                name: '注册资本',
+                type: 'bar',
+                marker: {color: 'rgba(156, 39, 176, 0.7)'},
+                yaxis: 'y'
+            };
+
+            const trace2 = {
+                x: enterprises,
+                y: employees,
+                name: '参保人数',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {color: 'rgb(255, 152, 0)'},
+                yaxis: 'y2'
+            };
+
+            const layout = {
+                title: '企业规模分析 (注册资本 vs 参保人数)',
+                yaxis: {title: '注册资本 (万)', side: 'left'},
+                yaxis2: {title: '参保人数', side: 'right', overlaying: 'y'},
+                height: 400,
+                margin: { t: 50, l: 50, r: 50, b: 100 }
+            };
+
+            Plotly.newPlot('capitalEmployeeChart', [trace1, trace2], layout);
+        });
+}
+
+// Export report function
+function exportReport(type) {
+    let message = '';
+    switch(type) {
+        case 'excel':
+            message = 'Excel报告已生成并下载';
+            break;
+        case 'pdf':
+            message = 'PDF报告已生成并下载';
+            break;
+        case 'charts':
+            message = '所有图表已打包下载';
+            break;
+        case 'all':
+            message = '完整报告包(Excel+PDF+图表)已生成并下载';
+            break;
+        default:
+            message = '报告已导出';
+    }
+    alert(message + ' (演示功能)');
+}
+
+// Initialize all charts when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadComprehensiveAnalysisChart();
+    loadProgressStatusChart();
+    loadPriorityPartnerChart();
+    loadProgressTrendChart();
+    loadIndustryAiPlatformChart();
+    loadCapitalEmployeeChart();
+    
+    // Add floating animation to the header
+    document.querySelector('.dashboard-header').classList.add('floating-element');
+    
+    // Add interactive effects
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.transition = 'transform 0.3s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Add animation to AI insights
+    document.querySelectorAll('.ai-insight-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02)';
+            this.style.transition = 'transform 0.2s';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+
+<style>
+.dashboard-header {
+    background: linear-gradient(90deg, #6f42c1 0%, #20c997 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(111, 66, 193, 0.3);
+}
+
+.nav-pills .nav-link {
+    border: none;
+    transition: all 0.3s;
+    font-weight: 600;
+    padding: 12px 24px;
+    color: #6c757d;
+    background-color: transparent;
+    border-radius: 0.5rem !important;
+}
+
+.nav-pills .nav-link.active {
+    color: white;
+    background: linear-gradient(35deg, #6f42c1 0, #20c997 100%);
+}
+
+.nav-pills .nav-link:hover:not(.active) {
+    background-color: #e9ecef;
+}
+
+.card {
+    border-radius: 1rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem 1.5rem;
+}
+
+.alert {
+    border-radius: 0.5rem;
+}
+
+.list-group-item {
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.ai-insight .alert {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+}
+
+.ai-insight .alert h6 {
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.dropdown-menu {
+    border-radius: 0.75rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
+}
+
+.dropdown-item {
+    border-radius: 0.5rem;
+    margin: 2px 0;
+}
+
+.table th {
+    border-top: none;
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.progress-timeline-item {
+    min-height: 40px;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+</style>
+{% endblock %}
