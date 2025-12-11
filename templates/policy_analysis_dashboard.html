@@ -468,9 +468,6 @@
                     <button class="btn sidebar-btn" id="batchActionsBtn" data-bs-toggle="modal" data-bs-target="#batchActionsModal">
                         <i class="fas fa-bolt"></i> 批量操作
                     </button>
-                    <button class="btn sidebar-btn" id="qwenCliAnalysisBtn">
-                        <i class="fas fa-robot"></i> Qwen CLI分析
-                    </button>
                 </div>
                 
                 <div class="sidebar-section">
@@ -513,7 +510,7 @@
             <!-- Main Content -->
             <div class="main-content">
                 <div class="main-header d-flex justify-content-between align-items-center mb-4">
-                    <h2><i class="fas fa-code me-3"></i>Qwen Code 政策解读</h2>
+                    <h2><i class="fas fa-code me-3"></i>政策解读</h2>
                     <div class="d-flex align-items-center gap-3">
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPolicyModal">
                             <i class="fas fa-plus me-1"></i>手动添加
@@ -825,8 +822,6 @@
             // Execute batch action
             document.getElementById('executeBatchActionBtn')?.addEventListener('click', executeBatchAction);
 
-            // Set up Qwen CLI analysis button
-            document.getElementById('qwenCliAnalysisBtn')?.addEventListener('click', qwenCliAnalysisHandler);
         }
 
         function updateSelectedCount() {
@@ -973,36 +968,6 @@
             }
         }
 
-        async function qwenCliAnalysisHandler() {
-            const url = prompt('请输入政策URL进行Qwen CLI分析:');
-            if (!url) return;
-
-            try {
-                showNotification('正在提交URL到Qwen CLI分析...', 'info');
-
-                // Submit URL for analysis
-                const response = await fetch('/api/add-policy-url', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        url: url
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showNotification('URL已提交给Qwen CLI分析', 'success');
-                    // Refresh the policy list to show the newly added item
-                    loadPolicies();
-                } else {
-                    showNotification(`分析失败: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                console.error('Error with Qwen CLI analysis:', error);
-                showNotification('Qwen CLI分析请求失败', 'error');
-            }
-        }
 
         // Initialize batch operations when page loads
         document.addEventListener('DOMContentLoaded', function() {
