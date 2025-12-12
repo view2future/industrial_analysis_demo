@@ -1,0 +1,267 @@
+name: "Structured Showcase - Detailed Flow"
+description: "首页→生成报告→上传报告→地图看板→政策解读→区域了解→收尾"
+base_url: "http://localhost:5000"
+
+config:
+  action_delay: 1.2
+  slow_motion: 40
+
+steps:
+  # 1. 首页展示阶段
+  - action: navigate
+    url: "/"
+    description: "打开首页"
+    subtitle: "系统主界面与核心模块"
+  - action: wait
+    duration: 4
+    description: "停留熟悉布局"
+    subtitle: "架构与功能区域概览"
+  - action: highlight
+    selector: "a[href='/generate-report']"
+    duration: 1.5
+    description: "高亮生成报告入口"
+    subtitle: "生成报告模块入口"
+  - action: highlight
+    selector: "a[href='/upload']"
+    duration: 1.5
+    description: "高亮上传报告入口"
+    subtitle: "上传报告模块入口"
+  - action: highlight
+    selector: "a[href='/poi-map-visualization']"
+    duration: 1.5
+    description: "高亮地图看板入口"
+    subtitle: "地图看板模块入口"
+
+  # 2. 生成报告功能演示
+  - action: click
+    selector: "a[href='/generate-report']"
+    description: "进入生成报告页面"
+    subtitle: "进入生成报告模块"
+    fallback:
+      - selector: "text=生成AI报告"
+  - action: wait
+    duration: 1.5
+    description: "页面加载"
+    subtitle: "加载完成"
+  - action: select
+    selector: "#llm_service"
+    value: "kimi"
+    description: "选择报告类型：Kimi"
+    subtitle: "示例类型1：Kimi"
+  - action: select
+    selector: "#llm_service"
+    value: "gemini"
+    description: "选择报告类型：Gemini"
+    subtitle: "示例类型2：Gemini"
+  - action: select
+    selector: "#llm_service"
+    value: "doubao"
+    description: "选择报告类型：豆包"
+    subtitle: "示例类型3：豆包"
+  - action: fill
+    selector: "#city"
+    value: "成都市"
+    description: "填写必填项：城市"
+    subtitle: "城市：成都市"
+  - action: fill
+    selector: "#industry"
+    value: "人工智能"
+    description: "填写必填项：行业"
+    subtitle: "行业：人工智能"
+  - action: fill
+    selector: "#additional_context"
+    value: "重点分析政策环境、投融资与生态建设"
+    description: "填写选填项：补充信息"
+    subtitle: "补充信息"
+  - action: click
+    selector: "button[type='submit']:has-text('开始生成报告')"
+    description: "点击生成"
+    subtitle: "启动报告生成流程"
+    fallback:
+      - selector: ".btn-generate"
+      - selector: "button:has-text('生成报告')"
+  - action: wait
+    duration: 3
+    description: "展示生成进度"
+    subtitle: "报告生成中"
+  - action: click
+    selector: "text=后台运行"
+    description: "后台运行(可选)"
+    subtitle: "后台生成，继续演示"
+    optional: true
+    fallback:
+      - selector: "#backgroundRunBtn"
+      - selector: "button:has-text('后台')"
+
+  # 3. 上传报告功能演示
+  - action: navigate
+    url: "/upload"
+    description: "进入上传报告页面"
+    subtitle: "上传并自动分析"
+  - action: wait
+    duration: 1.5
+    description: "页面加载"
+    subtitle: "加载完成"
+  - action: upload
+    selector: "#fileInput"
+    files:
+      - "auto_demo/test_files/chengdu_ai_demo.md"
+    description: "选择示例文件1（Markdown）"
+    subtitle: "示例格式1：MD"
+  - action: wait
+    duration: 2
+    description: "展示上传进度"
+    subtitle: "上传与校验"
+  - action: upload
+    selector: "#fileInput"
+    files:
+      - "auto_demo/test_files/sample_report.txt"
+    description: "选择示例文件2（TXT）"
+    subtitle: "示例格式2：TXT"
+  - action: wait
+    duration: 2
+    description: "展示进度与校验"
+    subtitle: "分析准备中"
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "展示分析结果"
+    subtitle: "数据概览与图表"
+
+  # 4. 地图看板功能演示
+  - action: navigate
+    url: "/poi-map-visualization"
+    description: "进入地图看板"
+    subtitle: "区域与POI展示"
+  - action: wait
+    duration: 1.2
+    description: "页面加载"
+    subtitle: "加载完成"
+  - action: select
+    selector: "#region-select"
+    value: "成都市"
+    description: "选择区域：成都市"
+    subtitle: "展示成都市边界"
+  - action: select
+    selector: "#region-select"
+    value: "成都市武侯区"
+    description: "切换区域：武侯区"
+    subtitle: "展示武侯区边界"
+  - action: select
+    selector: "#region-select"
+    value: "成都市锦江区"
+    description: "切换区域：锦江区"
+    subtitle: "展示锦江区边界"
+  - action: fill
+    selector: "#keywords-input"
+    value: "人工智能,高校,科研院所,创新中心,孵化器"
+    description: "填写POI关键词"
+    subtitle: "5类预设标签"
+  - action: click
+    selector: "#search-btn"
+    description: "执行搜索"
+    subtitle: "在地图显示POI"
+  - action: click
+    selector: "#show-heatmap"
+    description: "启用热力图"
+    subtitle: "热力图层"
+    optional: true
+  - action: click
+    selector: "#show-clusters"
+    description: "启用聚合"
+    subtitle: "聚类层"
+    optional: true
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "展示数据联动"
+    subtitle: "统计面板更新"
+
+  # 5. 政策解读功能演示
+  - action: navigate
+    url: "/policy-analysis"
+    description: "进入政策解读"
+    subtitle: "列表与搜索"
+  - action: wait
+    duration: 1.5
+    description: "页面加载"
+    subtitle: "加载完成"
+  - action: fill
+    selector: "#regionInput"
+    value: "四川省 成都市"
+    description: "填写区域"
+    subtitle: "示例：四川省 成都市"
+  - action: fill
+    selector: "#industryTagsInput"
+    value: "人工智能,AI芯片"
+    description: "填写产业标签"
+    subtitle: "示例：人工智能,AI芯片"
+  - action: click
+    selector: "#searchPoliciesBtn"
+    description: "开始检索"
+    subtitle: "展示检索与分类"
+  - action: wait
+    duration: 2
+    description: "展示结果"
+    subtitle: "列表与图表"
+  - action: click
+    selector: "text=查看详情"
+    description: "查看政策详情"
+    subtitle: "原文与智能摘要"
+    optional: true
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "展示影响评估与推荐"
+    subtitle: "评估与关联政策"
+
+  # 6. 顺手了解功能演示（区域概况）
+  - action: fill
+    selector: "#regionInput"
+    value: "成都市"
+    description: "区域概况：成都市"
+    subtitle: "成都市概况"
+  - action: click
+    selector: "#searchPoliciesBtn"
+    description: "检索并展示"
+    subtitle: "更新概况"
+  - action: wait
+    duration: 1.2
+    description: "展示数据"
+    subtitle: "概况与指标"
+  - action: fill
+    selector: "#regionInput"
+    value: "重庆市"
+    description: "区域概况：重庆市"
+    subtitle: "重庆市概况"
+  - action: click
+    selector: "#searchPoliciesBtn"
+    description: "检索并展示"
+    subtitle: "更新概况"
+  - action: wait
+    duration: 1.2
+    description: "展示数据"
+    subtitle: "概况与指标"
+  - action: fill
+    selector: "#regionInput"
+    value: "四川省"
+    description: "区域概况：四川省"
+    subtitle: "四川省概况"
+  - action: click
+    selector: "#searchPoliciesBtn"
+    description: "检索并展示"
+    subtitle: "更新概况"
+  - action: wait
+    duration: 1.2
+    description: "展示数据"
+    subtitle: "概况与指标"
+
+  # 7. 演示收尾
+  - action: navigate
+    url: "/"
+    description: "返回首页"
+    subtitle: "功能快速访问入口"
+  - action: wait
+    duration: 5
+    description: "停留结束演示"
+    subtitle: "感谢观看"

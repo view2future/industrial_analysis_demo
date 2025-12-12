@@ -164,6 +164,12 @@ class DemoEngine:
                 return await self._action_scroll_smooth(step)
             elif action == 'message':
                 return await self._action_message(step)
+            elif action == 'select':
+                return await self._action_select(step)
+            elif action == 'upload':
+                return await self._action_upload(step)
+            elif action == 'highlight':
+                return await self._action_highlight(step)
             else:
                 logger.warning(f"Unknown action: {action}")
                 return False
@@ -180,6 +186,12 @@ class DemoEngine:
         try:
             await self.page.goto(full_url, wait_until='domcontentloaded')
             await asyncio.sleep(0.5)  # Extra time for JS to execute
+            waits = step.get('wait_for') or []
+            for sel in waits:
+                try:
+                    await self.page.wait_for_selector(sel, state='visible', timeout=5000)
+                except Exception:
+                    pass
             
             # Re-display subtitle after navigation
             await self._display_subtitle(step)
@@ -197,6 +209,7 @@ class DemoEngine:
         
         # Try primary selector
         try:
+            await self.page.wait_for_selector(selector, state='visible', timeout=5000)
             await self.page.click(selector, timeout=5000)
             await asyncio.sleep(0.3)
             return True
@@ -207,6 +220,7 @@ class DemoEngine:
         for fb in fallbacks:
             fb_selector = fb.get('selector') if isinstance(fb, dict) else fb
             try:
+                await self.page.wait_for_selector(fb_selector, state='visible', timeout=5000)
                 await self.page.click(fb_selector, timeout=5000)
                 await asyncio.sleep(0.3)
                 logger.info(f"Fallback selector succeeded: {fb_selector}")
@@ -227,6 +241,7 @@ class DemoEngine:
         value = step.get('value', '')
         
         try:
+            await self.page.wait_for_selector(selector, state='visible', timeout=5000)
             # Clear existing value first
             await self.page.fill(selector, '')
             await asyncio.sleep(0.2)
@@ -294,6 +309,45 @@ class DemoEngine:
         print(f"  {text}")
         print(f"{'='*50}\n")
         return True
+
+    async def _action_select(self, step: Dict[str, Any]) -> bool:
+        selector = step.get('selector')
+        value = step.get('value') or step.get('values')
+        try:
+            await self.page.select_option(selector, value)
+            await asyncio.sleep(0.2)
+            return True
+        except Exception as e:
+            logger.error(f"Select failed for {selector}: {e}")
+            return False
+
+    async def _action_upload(self, step: Dict[str, Any]) -> bool:
+        selector = step.get('selector')
+        files = step.get('files') or []
+        try:
+            resolved = []
+            for f in files:
+                p = Path(f)
+                if not p.is_absolute():
+                    p = Path.cwd() / p
+                resolved.append(str(p))
+            await self.page.set_input_files(selector, resolved)
+            await asyncio.sleep(0.3)
+            return True
+        except Exception as e:
+            logger.error(f"Upload failed for {selector}: {e}")
+            return False
+
+    async def _action_highlight(self, step: Dict[str, Any]) -> bool:
+        selector = step.get('selector')
+        duration = float(step.get('duration', 1.5))
+        try:
+            script = f"(function(){{var el=document.querySelector('{selector}');if(!el) return false;var old=el.style.boxShadow;var old2=el.style.outline;el.style.outline='3px solid #f59e0b';el.style.boxShadow='0 0 18px rgba(245,158,11,0.8)';setTimeout(function(){{el.style.boxShadow=old;el.style.outline=old2;}}, {int(duration*1000)});return true;}})();"
+            await self.page.evaluate(script)
+            return True
+        except Exception as e:
+            logger.error(f"Highlight failed for {selector}: {e}")
+            return False
     
     async def _display_subtitle(self, step: Dict[str, Any]) -> bool:
         """Display subtitle on the page - STABLE VERSION BASED ON WORKING DEBUG SCRIPT"""

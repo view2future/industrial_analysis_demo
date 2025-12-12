@@ -1,0 +1,291 @@
+name: "8-Minutes Core Showcase"
+description: "开场→功能演示(生成/上传/地图/政策/顺手了解)→探索V3→收尾，全程≤8分钟"
+base_url: "http://localhost:5000"
+
+config:
+  action_delay: 1.0
+  slow_motion: 30
+
+steps:
+  - action: navigate
+    url: "/"
+    description: "开场：进入首页"
+    subtitle: "这是一个智能区域产业分析平台"
+  - action: wait
+    duration: 3
+    description: "开场停留"
+    subtitle: "快速预览5大核心模块"
+  - action: highlight
+    selector: "a[href='/generate-report']"
+    duration: 1.5
+    description: "高亮生成报告入口"
+    subtitle: "生成报告"
+  - action: highlight
+    selector: "a[href='/upload']"
+    duration: 1.5
+    description: "高亮上传入口"
+    subtitle: "上传报告"
+  - action: highlight
+    selector: "a[href='/poi-map-visualization']"
+    duration: 1.5
+    description: "高亮地图入口"
+    subtitle: "地图看板"
+  - action: highlight
+    selector: "a[href='/policy-analysis']"
+    duration: 1.5
+    description: "高亮政策入口"
+    subtitle: "政策解读"
+  - action: highlight
+    selector: "a[href='/v3_roadmap']"
+    duration: 1.5
+    description: "高亮V3入口"
+    subtitle: "探索V3.0"
+  - action: scroll_smooth
+    direction: "down"
+    duration: 6
+    description: "首页概览滚动"
+    subtitle: "架构与主要功能区域"
+
+  - action: click
+    selector: "a[href='/generate-report']"
+    description: "进入生成报告"
+    subtitle: "生成报告完整流程"
+    fallback:
+      - selector: "text=生成AI报告"
+  - action: wait
+    duration: 2
+    description: "加载生成页"
+    subtitle: "页面加载完成"
+  - action: select
+    selector: "#llm_service"
+    value: "kimi"
+    description: "选择类型：Kimi"
+    subtitle: "类型示例1"
+  - action: select
+    selector: "#llm_service"
+    value: "gemini"
+    description: "选择类型：Gemini"
+    subtitle: "类型示例2"
+  - action: select
+    selector: "#llm_service"
+    value: "doubao"
+    description: "选择类型：豆包"
+    subtitle: "类型示例3"
+  - action: fill
+    selector: "#city"
+    value: "成都市"
+    description: "填写城市"
+    subtitle: "城市：成都市"
+  - action: fill
+    selector: "#industry"
+    value: "人工智能"
+    description: "填写行业"
+    subtitle: "行业：人工智能"
+  - action: fill
+    selector: "#additional_context"
+    value: "重点分析政策与生态建设，生成区域经济分析报告"
+    description: "填写选填项"
+    subtitle: "补充分析要点"
+  - action: highlight
+    selector: "button[type='submit']:has-text('开始生成报告')"
+    duration: 1.5
+    description: "高亮生成按钮"
+    subtitle: "准备生成"
+  - action: click
+    selector: "button[type='submit']:has-text('开始生成报告')"
+    description: "提交生成"
+    subtitle: "启动AI分析与可视化"
+    fallback:
+      - selector: ".btn-generate"
+      - selector: "button:has-text('生成报告')"
+  - action: wait
+    duration: 8
+    description: "展示生成进度"
+    subtitle: "实时进度与可视化"
+  - action: click
+    selector: "text=后台运行"
+    description: "后台运行"
+    subtitle: "后台继续生成"
+    optional: true
+    fallback:
+      - selector: "#backgroundRunBtn"
+      - selector: "button:has-text('后台')"
+
+  - action: navigate
+    url: "/upload"
+    description: "进入上传报告"
+    subtitle: "多格式上传与解析"
+  - action: wait
+    duration: 2
+    description: "加载上传页"
+    subtitle: "页面加载完成"
+  - action: upload
+    selector: "#fileInput"
+    files:
+      - "auto_demo/test_files/chengdu_ai_demo.md"
+    description: "上传示例MD"
+    subtitle: "自动解析与摘要"
+  - action: wait
+    duration: 3
+    description: "展示上传进度"
+    subtitle: "解析中"
+  - action: upload
+    selector: "#fileInput"
+    files:
+      - "auto_demo/test_files/sample_report.txt"
+    description: "上传示例TXT"
+    subtitle: "关键提取"
+  - action: wait
+    duration: 3
+    description: "展示解析结果"
+    subtitle: "数据概览与图表"
+  - action: upload
+    selector: "#fileInput"
+    files:
+      - "auto_demo/test_files/sample_policy.docx"
+    description: "上传DOCX(可选)"
+    subtitle: "格式兼容演示"
+    optional: true
+  - action: upload
+    selector: "#fileInput"
+    files:
+      - "auto_demo/test_files/sample_policy.pdf"
+    description: "上传PDF(可选)"
+    subtitle: "格式兼容演示"
+    optional: true
+  - action: scroll_smooth
+    direction: "down"
+    duration: 6
+    description: "滚动查看分析"
+    subtitle: "指标面板与详细结果"
+
+  - action: navigate
+    url: "/poi-map-visualization"
+    description: "进入地图看板"
+    subtitle: "交互式地理可视化"
+  - action: wait
+    duration: 2
+    description: "加载地图页"
+    subtitle: "页面加载完成"
+  - action: select
+    selector: "#region-select"
+    value: "成都市"
+    description: "选择成都市"
+    subtitle: "展示区域边界"
+  - action: select
+    selector: "#region-select"
+    value: "成都市武侯区"
+    description: "切换武侯区"
+    subtitle: "对比边界"
+  - action: select
+    selector: "#region-select"
+    value: "成都市锦江区"
+    description: "切换锦江区"
+    subtitle: "完成三种区域展示"
+  - action: fill
+    selector: "#keywords-input"
+    value: "人工智能,高校,科研院所,创新中心,孵化器"
+    description: "填写POI标签"
+    subtitle: "至少5类"
+  - action: click
+    selector: "#search-btn"
+    description: "执行搜索"
+    subtitle: "显示标记点"
+  - action: click
+    selector: "#show-heatmap"
+    description: "启用热力图"
+    subtitle: "热力图层"
+    optional: true
+  - action: click
+    selector: "#show-clusters"
+    description: "启用聚合"
+    subtitle: "聚类图层"
+    optional: true
+  - action: scroll_smooth
+    direction: "down"
+    duration: 8
+    description: "联动统计面板"
+    subtitle: "数据面板更新"
+
+  - action: navigate
+    url: "/policy-analysis"
+    description: "进入政策解读"
+    subtitle: "智能解析与推荐"
+  - action: wait
+    duration: 2
+    description: "加载政策页"
+    subtitle: "页面加载完成"
+  - action: fill
+    selector: "#regionInput"
+    value: "四川省 成都市"
+    description: "填写区域"
+    subtitle: "区域：四川省 成都市"
+  - action: fill
+    selector: "#industryTagsInput"
+    value: "人工智能,AI芯片"
+    description: "填写产业标签"
+    subtitle: "标签：人工智能,AI芯片"
+  - action: click
+    selector: "#searchPoliciesBtn"
+    description: "开始检索"
+    subtitle: "展示列表与分类"
+  - action: wait
+    duration: 4
+    description: "展示结果"
+    subtitle: "摘要与影响评估"
+  - action: click
+    selector: "text=查看详情"
+    description: "进入详情(可选)"
+    subtitle: "原文与推荐"
+    optional: true
+  - action: scroll_smooth
+    direction: "down"
+    duration: 4
+    description: "滚动查看"
+    subtitle: "评估与关联政策"
+
+  - action: navigate
+    url: "/terminology"
+    description: "进入顺手了解"
+    subtitle: "知识图谱问答与关联推荐"
+  - action: wait
+    duration: 1.5
+    description: "加载术语页"
+    subtitle: "页面加载完成"
+  - action: fill
+    selector: "#searchTerm"
+    value: "营商环境"
+    description: "查询营商环境"
+    subtitle: "展示相关指标"
+  - action: wait
+    duration: 3
+    description: "展示结果"
+    subtitle: "关联数据智能推荐"
+
+  - action: navigate
+    url: "/v3_roadmap"
+    description: "进入探索V3.0"
+    subtitle: "新功能与UI升级预览"
+  - action: wait
+    duration: 2
+    description: "加载V3页"
+    subtitle: "页面加载完成"
+  - action: scroll_smooth
+    direction: "down"
+    duration: 10
+    description: "滚动预览"
+    subtitle: "性能优化与智能预测"
+  - action: scroll_smooth
+    direction: "up"
+    duration: 8
+    description: "返回顶部"
+    subtitle: "模块总览"
+
+  - action: navigate
+    url: "/"
+    description: "收尾：返回首页"
+    subtitle: "核心价值与体验渠道"
+  - action: wait
+    duration: 5
+    description: "停留展示"
+    subtitle: "欢迎试用，Q&A时间"

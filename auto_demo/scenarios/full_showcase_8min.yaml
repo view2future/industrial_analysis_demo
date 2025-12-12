@@ -1,0 +1,285 @@
+name: "Full Showcase - Under 8 Minutes"
+description: "首页→报告生成→报告列表→多维可视化→政策与POI→路线图的完整演示"
+base_url: "http://localhost:5000"
+
+config:
+  action_delay: 1.2
+  slow_motion: 40
+
+steps:
+  - action: navigate
+    url: "/"
+    description: "打开首页"
+    subtitle: "欢迎进入首页"
+
+  - action: wait
+    duration: 1
+    description: "页面加载"
+    subtitle: "首页加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 6
+    description: "平滑滚动查看首页"
+    subtitle: "展示核心指标与入口"
+
+  - action: click
+    selector: "a[href='/generate-report']"
+    description: "进入AI报告生成页"
+    subtitle: "进入报告生成"
+    fallback:
+      - selector: "text=生成AI报告"
+
+  - action: wait
+    duration: 1.5
+    description: "等待生成页加载"
+    subtitle: "生成页加载完成"
+
+  - action: fill
+    selector: "#city"
+    value: "成都"
+    description: "填写城市：成都"
+    subtitle: "城市：成都"
+
+  - action: fill
+    selector: "#industry"
+    value: "人工智能"
+    description: "填写行业：人工智能"
+    subtitle: "行业：人工智能"
+
+  - action: click
+    selector: "button[type='submit']:has-text('开始生成报告')"
+    description: "提交生成"
+    subtitle: "开始生成AI报告"
+    fallback:
+      - selector: ".btn-generate"
+      - selector: "button:has-text('生成报告')"
+
+  - action: wait
+    duration: 3
+    description: "等待任务创建/跳转"
+    subtitle: "报告生成中"
+
+  - action: click
+    selector: "text=后台运行"
+    description: "后台运行(可选)"
+    subtitle: "后台生成，继续演示"
+    optional: true
+    fallback:
+      - selector: "#backgroundRunBtn"
+      - selector: "button:has-text('后台')"
+
+  - action: navigate
+    url: "/reports"
+    description: "查看报告列表"
+    subtitle: "打开报告列表页"
+
+  - action: wait
+    duration: 1
+    description: "页面加载"
+    subtitle: "列表加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "滚动查看列表"
+    subtitle: "浏览历史报告"
+
+  - action: navigate
+    url: "/comparison"
+    description: "进入对比分析"
+    subtitle: "展示报告对比分析"
+
+  - action: wait
+    duration: 1.2
+    description: "页面加载"
+    subtitle: "对比分析加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "滚动查看对比"
+    subtitle: "查看对比图表"
+
+  - action: navigate
+    url: "/trend-analysis"
+    description: "进入趋势分析"
+    subtitle: "展示趋势分析"
+
+  - action: wait
+    duration: 1.2
+    description: "页面加载"
+    subtitle: "趋势分析加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "滚动查看趋势"
+    subtitle: "浏览趋势图"
+
+  - action: navigate
+    url: "/knowledge-graph"
+    description: "进入知识图谱"
+    subtitle: "展示知识图谱"
+
+  - action: wait
+    duration: 1
+    description: "页面加载"
+    subtitle: "图谱加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 4
+    description: "滚动查看图谱"
+    subtitle: "浏览实体关系"
+
+  - action: navigate
+    url: "/map-visualization"
+    description: "进入地图可视化"
+    subtitle: "展示地图可视化"
+
+  - action: wait
+    duration: 1
+    description: "页面加载"
+    subtitle: "地图加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 4
+    description: "滚动查看地图"
+    subtitle: "查看地理分布"
+
+  - action: navigate
+    url: "/poi-map-visualization"
+    description: "进入POI可视化"
+    subtitle: "展示POI功能"
+
+  - action: wait
+    duration: 1.2
+    description: "页面加载"
+    subtitle: "POI加载完成"
+
+  - action: click
+    selector: "#show-heatmap"
+    description: "切换热力图"
+    subtitle: "启用热力图"
+    optional: true
+
+  - action: click
+    selector: "#show-clusters"
+    description: "切换聚合"
+    subtitle: "启用聚合显示"
+    optional: true
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "滚动查看POI"
+    subtitle: "查看POI分布"
+
+  - action: navigate
+    url: "/industry-chain"
+    description: "进入产业链分析"
+    subtitle: "展示产业链分析"
+
+  - action: wait
+    duration: 1
+    description: "页面加载"
+    subtitle: "产业链加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 4
+    description: "滚动查看产业链"
+    subtitle: "浏览上下游关系"
+
+  - action: navigate
+    url: "/policy-analysis"
+    description: "进入政策分析工作台"
+    subtitle: "展示政策分析"
+
+  - action: wait
+    duration: 1.5
+    description: "页面加载"
+    subtitle: "政策工作台加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "滚动查看政策模块"
+    subtitle: "筛选与可视化"
+
+  - action: navigate
+    url: "/terminology"
+    description: "进入术语管理"
+    subtitle: "展示术语管理"
+
+  - action: wait
+    duration: 1
+    description: "页面加载"
+    subtitle: "术语页加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 3
+    description: "滚动查看术语"
+    subtitle: "浏览术语列表"
+
+  - action: navigate
+    url: "/settings"
+    description: "进入设置页"
+    subtitle: "展示系统设置"
+
+  - action: wait
+    duration: 1
+    description: "页面加载"
+    subtitle: "设置页加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 3
+    description: "滚动查看设置"
+    subtitle: "浏览配置项"
+
+  - action: navigate
+    url: "/about"
+    description: "进入关于页"
+    subtitle: "展示项目介绍"
+
+  - action: wait
+    duration: 1
+    description: "页面加载"
+    subtitle: "关于页加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 3
+    description: "滚动查看说明"
+    subtitle: "浏览项目说明"
+
+  - action: navigate
+    url: "/v3_roadmap"
+    description: "进入V3.0功能蓝图"
+    subtitle: "展示版本规划"
+
+  - action: wait
+    duration: 1.5
+    description: "页面加载"
+    subtitle: "蓝图页加载完成"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "滚动查看蓝图"
+    subtitle: "查看详细规划"
+
+  - action: scroll_smooth
+    direction: "up"
+    duration: 5
+    description: "返回顶部"
+    subtitle: "演示接近尾声"
+
+  - action: message
+    text: "演示完成！感谢观看"
+    description: "结束演示"
+    subtitle: "全流程演示完成"
