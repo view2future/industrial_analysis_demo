@@ -77,9 +77,8 @@ class ToasterSystem {
         // Click to toggle panel (short click)
         this.toasterBody.addEventListener('click', (e) => {
             if (e.detail === 1) { // Simple click
-                if (this.tasks.length > 0) {
-                    this.togglePanel();
-                }
+                // Always allow toggling the panel, regardless of task count
+                this.togglePanel();
             }
         });
     }

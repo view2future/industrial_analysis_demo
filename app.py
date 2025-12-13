@@ -1430,7 +1430,7 @@ def view_report(report_id):
                 try:
                     import json as json_module  # Use alias to avoid scoping conflicts
                     parsed_data = json_module.loads(content_str)
-                    return convert_json_to_readable_html(parsed_data)
+                    return f'<div class="json-container">{convert_json_to_readable_html(parsed_data)}</div>'
                 except json_module.JSONDecodeError:
                     # If not valid JSON, continue with string processing
                     pass
@@ -1440,43 +1440,63 @@ def view_report(report_id):
             formatted_content = content_str
             # Replace common JSON-like patterns with readable format
             import re as re_module  # Use alias to avoid scoping conflicts
-            formatted_content = re_module.sub(r'"([^"]+)"\s*:\s*', r'<strong>\1:</strong> ', formatted_content)
+            
+            # Format keys
+            formatted_content = re_module.sub(r'"([^"]+)"\s*:\s*', r'<span class="json-key">\1:</span> ', formatted_content)
             # Remove quotes around values
-            formatted_content = re_module.sub(r':\s*"([^"]*)"', r': \1', formatted_content)
+            formatted_content = re_module.sub(r':\s*"([^"]*)"', r': <span class="json-value">\1</span>', formatted_content)
+            
             # Add line breaks for new JSON objects/arrays
             formatted_content = formatted_content.replace('}, {', '},<br>{')
             formatted_content = formatted_content.replace('], [', '],<br>[')
             formatted_content = formatted_content.replace('\\n', '<br>')
+            formatted_content = formatted_content.replace('\n', '<br>')
+            
+            # Wrap in paragraph if it's a long text block
+            if len(formatted_content) > 100 and '<div' not in formatted_content:
+                 formatted_content = f'<div class="text-content">{formatted_content}</div>'
 
             return formatted_content
 
         def convert_json_to_readable_html(data, level=0):
             """Recursively convert JSON data to readable HTML format."""
-            indent = "&nbsp;" * (level * 4)  # 4 spaces per indentation level
+            indent_style = f'style="padding-left: {level * 20}px;"'
             import html as html_module  # Use alias to avoid scoping conflicts
+            
             if isinstance(data, dict):
                 items = []
                 for key, value in data.items():
-                    key_html = f'<strong>{html_module.escape(str(key))}:</strong>'
+                    key_html = f'<span class="json-key">{html_module.escape(str(key))}:</span>'
                     if isinstance(value, (dict, list)):
                         value_html = convert_json_to_readable_html(value, level + 1)
-                        items.append(f'{indent}{key_html}<br>{value_html}')
+                        items.append(f'<div class="json-row" {indent_style}>{key_html}<div class="json-nested">{value_html}</div></div>')
                     else:
-                        value_html = html_module.escape(str(value))
-                        items.append(f'{indent}{key_html} {value_html}<br>')
+                        value_str = str(value)
+                        # Handle basic HTML tags in value if present (e.g. from LLM)
+                        # We allow simple formatting tags
+                        clean_value = value_str
+                        if not ('<br>' in value_str or '<b>' in value_str or '<p>' in value_str):
+                             clean_value = html_module.escape(value_str)
+                        
+                        value_html = f'<span class="json-value">{clean_value}</span>'
+                        items.append(f'<div class="json-row" {indent_style}>{key_html} {value_html}</div>')
                 return ''.join(items)
             elif isinstance(data, list):
                 items = []
                 for i, item in enumerate(data):
                     if isinstance(item, (dict, list)):
                         item_html = convert_json_to_readable_html(item, level + 1)
-                        items.append(f'{indent}Item {i+1}:<br>{item_html}')
+                        items.append(f'<div class="json-row" {indent_style}><span class="json-index">-</span> <div class="json-nested">{item_html}</div></div>')
                     else:
-                        item_html = html_module.escape(str(item))
-                        items.append(f'{indent}- {item_html}<br>')
+                        item_str = str(item)
+                        clean_item = item_str
+                        if not ('<br>' in item_str or '<b>' in item_str or '<p>' in item_str):
+                             clean_item = html_module.escape(item_str)
+                        
+                        items.append(f'<div class="json-row" {indent_style}><span class="json-index">-</span> <span class="json-value">{clean_item}</span></div>')
                 return ''.join(items)
             else:
-                return f'{indent}{html_module.escape(str(data))}'
+                return f'<div class="json-row" {indent_style}>{html_module.escape(str(data))}</div>'
 
         def is_json_content(content):
             """Check if content appears to be converted from JSON for special formatting."""

@@ -1,0 +1,295 @@
+# Comprehensive Demo Scenario for Regional Industrial Dashboard
+# 全流程自动化演示脚本 - 区域产业分析小工作台
+
+name: "Comprehensive Demo Flow"
+description: "Professional and smooth automated demo covering all major features"
+base_url: "http://localhost:5000"
+
+# Demo configuration
+config:
+  scroll_duration: 10
+  action_delay: 2.0
+  slow_motion: 100
+
+# Demo steps
+steps:
+  # 1. 首页浏览 (Home Page Browsing)
+  - action: navigate
+    url: "/"
+    description: "进入首页"
+    subtitle: "欢迎进入区域产业分析小工作台，您的智能产业参谋"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 6
+    description: "向下滚动浏览首页（上半部分）"
+    subtitle: "平台汇聚了报告生成、上传分析、地图看板等五大核心功能模块"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 6
+    description: "向下滚动浏览首页（下半部分）"
+    subtitle: "集成了政策解读与顺手了解功能，构建全方位的产业认知体系"
+    
+  - action: wait
+    duration: 3
+    description: "底部停留"
+    subtitle: "简洁直观的操作界面，让复杂的数据分析变得触手可及"
+
+  - action: scroll_smooth
+    direction: "up"
+    duration: 2
+    description: "返回顶部"
+    subtitle: "演示即将开始，首先为您展示AI智能报告生成功能"
+
+  # 2. 生成报告功能 (Generate Report)
+  - action: click
+    selector: "a[href*='generate']"
+    description: "点击'生成报告'按钮"
+    subtitle: "模块一：AI智能报告生成引擎，一键启动深度分析"
+    fallback:
+      - selector: "text=生成报告"
+
+  - action: fill
+    selector: "#city"
+    value: "成都市"
+    description: "填写地区：成都市"
+    subtitle: "精准定位目标区域，系统自动关联本地化数据"
+
+  - action: fill
+    selector: "#industry"
+    value: "人工智能"
+    description: "填写行业：人工智能"
+    subtitle: "聚焦核心产业领域，定制化生成行业分析模型"
+
+  - action: click
+    selector: "button[type='submit']"
+    description: "点击'开始生成报告'"
+    subtitle: "启动大模型引擎，执行多维度、全视角的产业扫描"
+
+  - action: wait
+    duration: 3
+    description: "等待报告生成（阶段1：数据聚合）"
+    subtitle: "正在实时聚合全网产业数据，构建分析知识库"
+
+  - action: wait
+    duration: 4
+    description: "等待报告生成（阶段2：模型推理）"
+    subtitle: "AI模型正在进行深度推理，提炼关键产业特征"
+
+  - action: wait
+    duration: 3
+    description: "等待报告生成（阶段3：内容生成）"
+    subtitle: "实时流式生成报告内容，图文并茂呈现分析结果"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "查看生成的报告内容"
+    subtitle: "报告涵盖七大维度解析，深度剖析产业现状与机遇"
+
+  - action: click
+    selector: "a:has-text('返回')" 
+    description: "点击返回/后台运行"
+    subtitle: "支持后台异步处理，您可随时切换任务，提升效率"
+    fallback:
+      - selector: "text=后台运行"
+      - selector: "a[href='/generate_report']"
+
+  - action: navigate
+    url: "/"
+    description: "返回首页"
+    subtitle: "返回主控台，继续探索平台的其他强大功能"
+
+  # 3. 任务列表展示 (Task List) - REMOVED INTERACTIVE PART
+  - action: wait
+    duration: 6
+    description: "等待后台任务动画"
+    subtitle: "请注意右下角：后台任务正在平稳运行，系统实时反馈状态"
+
+  # 4. 上传报告功能 (Upload Report)
+  - action: click
+    selector: "a[href*='upload']"
+    description: "点击'上传报告'按钮"
+    subtitle: "模块二：非结构化文档智能解析，挖掘沉睡数据价值"
+    fallback:
+      - selector: "text=上传报告"
+
+  - action: upload
+    selector: "#fileInput"
+    files: 
+      - "/Users/wangyu94/regional-industrial-dashboard/data/output/llm_reports/成都_人工智能_20251212093342611355.json"
+    description: "上传已有报告文件"
+    subtitle: "支持多种格式文档上传，系统自动进行结构化处理"
+
+  - action: click
+    selector: "#submitBtn"
+    description: "点击'开始分析'按钮"
+    subtitle: "运用NLP自然语言处理技术，重构文档数据逻辑"
+
+  - action: wait
+    duration: 2
+    description: "等待解析加载"
+    subtitle: "解析完成，瞬间生成可视化分析图表与关键结论"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 8
+    description: "浏览解析结果（上半部分）"
+    subtitle: "智能提取核心指标，数据价值通过图表直观呈现"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 8
+    description: "浏览解析结果（下半部分）"
+    subtitle: "核心结论自动提炼，辅助您快速进行科学决策"
+
+  # Return to home page to access main navigation
+  - action: navigate
+    url: "/"
+    description: "返回首页，访问主导航菜单"
+    subtitle: "返回平台主页，准备进入地图可视化模块"
+  
+  - action: wait
+    duration: 3
+    description: "等待首页加载"
+    subtitle: "主界面加载完成，导航菜单已就绪"
+
+  # 5. 地图看板功能 (Map Dashboard)
+  - action: click
+    selector: "a[href='/poi-map-visualization']"
+    description: "点击'地图看板'按钮"
+    subtitle: "模块三：GIS地理信息可视化看板，透视产业空间布局"
+    fallback:
+      - selector: "a[href*='poi-map']"
+      - selector: "text=地图看板"
+
+  - action: wait
+    duration: 5
+    description: "等待地图加载"
+    subtitle: "加载高精度行政区划地图，构建空间分析的数字基座"
+
+  - action: select
+    selector: "#region-select"
+    value: "成都市武侯区"
+    description: "选择区域：成都市武侯区"
+    subtitle: "支持区域下钻分析：精准聚焦成都市武侯区"
+
+  - action: wait
+    duration: 3
+    description: "展示边界"
+    subtitle: "行政边界精确匹配，明确产业分析的空间范围"
+
+  - action: select
+    selector: "#region-select"
+    value: "成都市锦江区"
+    description: "选择区域：成都市锦江区"
+    subtitle: "多区域快速切换，支持跨区域产业对比分析"
+
+  - action: wait
+    duration: 3
+    description: "展示边界"
+    subtitle: "动态渲染区域边界，空间布局特征清晰呈现"
+
+  - action: click
+    selector: "#search-btn"
+    description: "点击'搜索'展示POI"
+    subtitle: "叠加产业POI数据，透视产业集聚与分布特征"
+
+  - action: wait
+    duration: 5
+    description: "等待POI加载"
+    subtitle: "企业机构精准落点，一图统览区域产业生态全貌"
+
+  # Return to home page to access main navigation
+  - action: navigate
+    url: "/"
+    description: "返回首页，访问主导航菜单"
+    subtitle: "返回平台主页，准备进入政策解读模块"
+  
+  - action: wait
+    duration: 3
+    description: "等待首页加载"
+    subtitle: "主界面加载完成，导航菜单已就绪"
+
+  # 6. 政策解读功能 (Policy Interpretation)
+  - action: click
+    selector: "a[href*='policy']"
+    description: "点击'政策解读'按钮"
+    subtitle: "模块四：智能政策解读助手，不仅是搜索，更是解读"
+    fallback:
+      - selector: "text=政策解读"
+
+  - action: wait
+    duration: 5
+    description: "等待政策分析页面完全加载"
+    subtitle: "政策分析页面初始化完成，检索功能就绪"
+
+  # Make sure the search tab is active (in case there are multiple tabs)
+  - action: click
+    selector: "#search-tab"
+    description: "确保智能检索标签页激活"
+    subtitle: "切换到政策智能检索界面"
+    optional: true  # This might already be active
+
+  - action: wait
+    duration: 2
+    description: "等待检索界面加载"
+    subtitle: "检索界面加载完成，输入框已就绪"
+
+  - action: click
+    selector: "#searchPoliciesBtn"
+    description: "点击'开始检索'"
+    subtitle: "多维政策检索引擎，覆盖央地各级产业政策文件"
+
+  - action: wait
+    duration: 5
+    description: "等待列表展示"
+    subtitle: "智能匹配相关政策，构建结构化的政策知识图谱"
+
+  - action: click
+    selector: "#policySearchResults button:first-of-type"
+    description: "选择第一条政策"
+    subtitle: "深度解读政策条款，挖掘企业申报机会与红利"
+    fallback:
+      - selector: ".list-group-item button"
+
+  - action: wait
+    duration: 5
+    description: "展示政策内容（概览）"
+    subtitle: "自动提取核心条款，量化评估政策对产业的支持力度"
+
+  - action: wait
+    duration: 5
+    description: "展示政策内容（详情）"
+    subtitle: "提供申报条件精准匹配，辅助企业高效获取政策支持"
+
+  # 7. 探索V3.0内容 (Explore V3.0)
+  - action: navigate
+    url: "/"
+    description: "返回首页"
+    subtitle: "演示接近尾声，让我们展望平台的未来规划"
+
+  - action: click
+    selector: "a[href*='v3_roadmap']"
+    description: "点击'探索V3.0'"
+    subtitle: "探索V3.0蓝图：从数据分析迈向智能决策"
+    fallback:
+      - selector: "text=探索 V3.0"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "浏览新功能（上半部分）"
+    subtitle: "引入交互式决策引擎，引领产业分析进入智能化时代"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 5
+    description: "浏览新功能（下半部分）"
+    subtitle: "持续迭代升级，致力于为您提供更卓越的分析体验"
+
+  - action: wait
+    duration: 3
+    description: "停留展示"
+    subtitle: "感谢您的观看，期待与您共创产业未来"

@@ -284,3 +284,100 @@ tr:hover {
 .mt-2 {
     margin-top: 2rem;
 }
+
+/* Typography Enhancement & JSON Formatting */
+.json-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.json-row {
+    margin-bottom: 8px;
+    /* Intelligent line breaking */
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.json-key {
+    font-weight: 600;
+    color: #333;
+}
+
+.json-value {
+    color: #4a5568;
+}
+
+.json-index {
+    color: #718096;
+    margin-right: 4px;
+}
+
+.json-nested {
+    margin-top: 4px;
+}
+
+.text-content {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 1.5rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Print Styles */
+@media print {
+    body {
+        font-size: 12pt;
+        background: white;
+        color: black;
+    }
+    
+    .header, .footer, .btn, .gradient-bg, .no-print {
+        display: none !important;
+    }
+    
+    .main-content {
+        padding: 0;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .chart-container, .metric-card, .sector-card, .bg-white {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        margin-bottom: 1rem;
+    }
+    
+    /* Improve text readability for print */
+    p, .json-row, .text-content, li, td, th {
+        color: #000 !important;
+        widows: 3;
+        orphans: 3;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #000 !important;
+        page-break-after: avoid;
+    }
+    
+    a {
+        text-decoration: underline;
+        color: #000 !important;
+    }
+    
+    /* Ensure background graphics are printed if user enables them, otherwise provide fallbacks */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

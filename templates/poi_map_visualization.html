@@ -156,7 +156,39 @@
 <!-- Google Maps API -->
 <script async defer
         id="google-maps-script"
-        src="https://maps.googleapis.com/maps/api/js?key={{ google_map_key|default('') }}&libraries=visualization,marker&callback=initGoogleMapLoader">
+        src="https://maps.googleapis.com/maps/api/js?key={{ google_map_key|default('') }}&libraries=visualization,marker&callback=initGoogleMapLoader"
+        onerror="handleGoogleMapsError()">
+</script>
+
+<script>
+function handleGoogleMapsError() {
+    console.error('Google Maps API failed to load, switching to Baidu Maps');
+    // Try to initialize Baidu Maps if available
+    if (typeof BMap !== 'undefined') {
+        if (typeof visualizer !== 'undefined') {
+            document.getElementById('google-map').style.display = 'none';
+            document.getElementById('baidu-map').style.display = 'block';
+            visualizer.initBaiduMap();
+        } else {
+            // If visualizer isn't defined yet, set a timeout to try again
+            setTimeout(() => {
+                if (typeof visualizer !== 'undefined') {
+                    document.getElementById('google-map').style.display = 'none';
+                    document.getElementById('baidu-map').style.display = 'block';
+                    visualizer.initBaiduMap();
+                }
+            }, 1000);
+        }
+    }
+}
+
+// Also add a timeout to handle cases where the callback doesn't fire for other reasons
+setTimeout(() => {
+    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+        // Google Maps API didn't load properly within timeout
+        handleGoogleMapsError();
+    }
+}, 5000);  // 5 second timeout
 </script>
 <!-- Load Google Maps marker clusterer and delegate to global init -->
 <script>
@@ -516,6 +548,19 @@ class PoiMapVisualizer {
     }
 
     init() {
+        // Set a timeout to show Baidu map if Google Maps doesn't initialize in time
+        setTimeout(() => {
+            if (!this.googleMapReady && !this.baiduMapReady) {
+                // If Google Maps still not ready after timeout, initialize Baidu if available
+                if (typeof BMap !== 'undefined') {
+                    // Switch to Baidu Map view first
+                    document.getElementById('google-map').style.display = 'none';
+                    document.getElementById('baidu-map').style.display = 'block';
+                    this.initBaiduMap();
+                }
+            }
+        }, 3000); // 3 seconds timeout for Google Maps initialization
+        
         // Prefer Google Maps; if not ready yet, wait briefly before fallback to Baidu
         if (typeof google !== 'undefined' && google.maps) {
             this.initGoogleMap();
@@ -524,7 +569,24 @@ class PoiMapVisualizer {
                 if (typeof google !== 'undefined' && google.maps) {
                     this.initGoogleMap();
                 } else {
-                    this.initBaiduMap();
+                    // Google Maps still not available, initialize Baidu Maps
+                    if (typeof BMap !== 'undefined') {
+                        document.getElementById('google-map').style.display = 'none';
+                        document.getElementById('baidu-map').style.display = 'block';
+                        this.initBaiduMap();
+                    } else {
+                        // Neither map is available, show error message
+                        console.error('Neither Google Maps nor Baidu Maps APIs are available');
+                        const googleMapContainer = document.getElementById('google-map');
+                        const baiduMapContainer = document.getElementById('baidu-map');
+                        if (googleMapContainer) {
+                            googleMapContainer.innerHTML = '<div class="text-center p-8 text-gray-600">地图服务暂不可用，请检查网络连接或API配置</div>';
+                            googleMapContainer.style.display = 'block';
+                        }
+                        if (baiduMapContainer) {
+                            baiduMapContainer.style.display = 'none';
+                        }
+                    }
                 }
             }, 1200);
         }

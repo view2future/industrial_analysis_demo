@@ -178,6 +178,36 @@ class DemoEngine:
             logger.error(f"Action '{action}' failed: {e}")
             return False
     
+    async def _move_mouse_to(self, selector: str) -> bool:
+        """Smoothly move mouse to element"""
+        try:
+            # Wait for element
+            element = await self.page.wait_for_selector(selector, state='visible', timeout=5000)
+            if not element:
+                return False
+
+            # Scroll into view if needed
+            await element.scroll_into_view_if_needed()
+            
+            # Get bounding box
+            box = await element.bounding_box()
+            if not box:
+                return False
+
+            # Calculate target position (center of element)
+            target_x = box['x'] + box['width'] / 2
+            target_y = box['y'] + box['height'] / 2
+            
+            # Move mouse smoothly
+            # steps=25 gives a nice visible movement (approx 0.5s depending on distance)
+            await self.page.mouse.move(target_x, target_y, steps=25)
+            await asyncio.sleep(0.3) # Pause after reaching target to simulate human hesitation
+            
+            return True
+        except Exception as e:
+            # Non-critical failure
+            return False
+
     async def _action_navigate(self, step: Dict[str, Any]) -> bool:
         """Navigate to a URL"""
         url = step.get('url', '/')
@@ -209,17 +239,21 @@ class DemoEngine:
         
         # Try primary selector
         try:
+            # Simulate human behavior: Look and Move
+            await self._move_mouse_to(selector)
+            
             await self.page.wait_for_selector(selector, state='visible', timeout=5000)
             await self.page.click(selector, timeout=5000)
             await asyncio.sleep(0.3)
             return True
         except Exception as e:
-            logger.warning(f"Primary selector failed: {selector}")
+            logger.warning(f"Primary selector failed: {selector} - {str(e)}")
         
         # Try fallback selectors
         for fb in fallbacks:
             fb_selector = fb.get('selector') if isinstance(fb, dict) else fb
             try:
+                await self._move_mouse_to(fb_selector)
                 await self.page.wait_for_selector(fb_selector, state='visible', timeout=5000)
                 await self.page.click(fb_selector, timeout=5000)
                 await asyncio.sleep(0.3)
@@ -228,6 +262,23 @@ class DemoEngine:
             except Exception:
                 continue
         
+        # If normal click failed, try force click on primary
+        try:
+            logger.info(f"Attempting force click on {selector}")
+            await self.page.click(selector, force=True, timeout=2000)
+            return True
+        except Exception:
+            pass
+            
+        # If force click also failed, try JavaScript click (last resort)
+        try:
+            logger.info(f"Attempting JS click on {selector}")
+            await self.page.eval_on_selector(selector, 'el => el.click()')
+            await asyncio.sleep(0.3)
+            return True
+        except Exception as e:
+            logger.warning(f"JS click failed: {e}")
+
         if optional:
             logger.info("Optional click failed, continuing...")
             return True
@@ -241,6 +292,8 @@ class DemoEngine:
         value = step.get('value', '')
         
         try:
+            await self._move_mouse_to(selector)
+            
             await self.page.wait_for_selector(selector, state='visible', timeout=5000)
             # Clear existing value first
             await self.page.fill(selector, '')
@@ -314,6 +367,7 @@ class DemoEngine:
         selector = step.get('selector')
         value = step.get('value') or step.get('values')
         try:
+            await self._move_mouse_to(selector)
             await self.page.select_option(selector, value)
             await asyncio.sleep(0.2)
             return True
@@ -325,6 +379,14 @@ class DemoEngine:
         selector = step.get('selector')
         files = step.get('files') or []
         try:
+            # For upload, we often click a label or the input itself, but input[type=file] might be hidden.
+            # If visible, move to it. If not, this might fail silently (which is fine).
+            try:
+                if await self.page.is_visible(selector):
+                    await self._move_mouse_to(selector)
+            except Exception:
+                pass
+                
             resolved = []
             for f in files:
                 p = Path(f)

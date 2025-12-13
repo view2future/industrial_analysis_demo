@@ -122,7 +122,12 @@ async def main():
     print_banner()
     
     # Determine headless mode
-    headless = not args.headed if args.headed else True
+    if args.headed:
+        headless = False
+    elif args.headless:
+        headless = True
+    else:
+        headless = True  # Default to headless if neither flag is specified
     
     # Prompt for recording if not specified
     record_video = args.record
