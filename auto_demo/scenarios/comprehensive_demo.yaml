@@ -17,7 +17,7 @@ steps:
   - action: navigate
     url: "/"
     description: "进入首页"
-    subtitle: "欢迎进入区域产业分析小工作台，您的智能产业参谋"
+    subtitle: "欢迎使用『区域产业分析小工作台』，帮助我们区域的同学进行区域产业分析"
 
   - action: scroll_smooth
     direction: "down"
@@ -42,11 +42,59 @@ steps:
     description: "返回顶部"
     subtitle: "演示即将开始，首先为您展示AI智能报告生成功能"
 
-  # 2. 生成报告功能 (Generate Report)
+  # 2. 上传报告功能 (Upload Report)
+  - action: click
+    selector: "a[href*='upload']"
+    description: "点击'上传报告'按钮"
+    subtitle: "模块一：非结构化文档智能解析，挖掘沉睡数据价值"
+    fallback:
+      - selector: "text=上传报告"
+
+  - action: upload
+    selector: "#fileInput"
+    files: 
+      - "/Users/wangyu94/regional-industrial-dashboard/data/output/llm_reports/成都_人工智能_20251212093342611355.json"
+    description: "上传已有报告文件"
+    subtitle: "支持多种格式文档上传，系统自动进行结构化处理"
+
+  - action: click
+    selector: "#submitBtn"
+    description: "点击'开始分析'按钮"
+    subtitle: "运用NLP自然语言处理技术，重构文档数据逻辑"
+
+  - action: wait
+    duration: 2
+    description: "等待解析加载"
+    subtitle: "解析完成，瞬间生成可视化分析图表与关键结论"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 8
+    description: "浏览解析结果（上半部分）"
+    subtitle: "智能提取核心指标，数据价值通过图表直观呈现"
+
+  - action: scroll_smooth
+    direction: "down"
+    duration: 8
+    description: "浏览解析结果（下半部分）"
+    subtitle: "核心结论自动提炼，辅助您快速进行科学决策"
+
+  # Return to home page to access main navigation
+  - action: navigate
+    url: "/"
+    description: "返回首页，访问主导航菜单"
+    subtitle: "返回平台主页，准备进入地图可视化模块"
+  
+  - action: wait
+    duration: 3
+    description: "等待首页加载"
+    subtitle: "主界面加载完成，导航菜单已就绪"
+
+  # 3. 生成报告功能 (Generate Report)
   - action: click
     selector: "a[href*='generate']"
     description: "点击'生成报告'按钮"
-    subtitle: "模块一：AI智能报告生成引擎，一键启动深度分析"
+    subtitle: "模块二：AI智能报告生成引擎，一键启动深度分析"
     fallback:
       - selector: "text=生成报告"
 
@@ -101,59 +149,11 @@ steps:
     description: "返回首页"
     subtitle: "返回主控台，继续探索平台的其他强大功能"
 
-  # 3. 任务列表展示 (Task List) - REMOVED INTERACTIVE PART
+  # 4. 任务列表展示 (Task List) - REMOVED INTERACTIVE PART
   - action: wait
     duration: 6
     description: "等待后台任务动画"
     subtitle: "请注意右下角：后台任务正在平稳运行，系统实时反馈状态"
-
-  # 4. 上传报告功能 (Upload Report)
-  - action: click
-    selector: "a[href*='upload']"
-    description: "点击'上传报告'按钮"
-    subtitle: "模块二：非结构化文档智能解析，挖掘沉睡数据价值"
-    fallback:
-      - selector: "text=上传报告"
-
-  - action: upload
-    selector: "#fileInput"
-    files: 
-      - "/Users/wangyu94/regional-industrial-dashboard/data/output/llm_reports/成都_人工智能_20251212093342611355.json"
-    description: "上传已有报告文件"
-    subtitle: "支持多种格式文档上传，系统自动进行结构化处理"
-
-  - action: click
-    selector: "#submitBtn"
-    description: "点击'开始分析'按钮"
-    subtitle: "运用NLP自然语言处理技术，重构文档数据逻辑"
-
-  - action: wait
-    duration: 2
-    description: "等待解析加载"
-    subtitle: "解析完成，瞬间生成可视化分析图表与关键结论"
-
-  - action: scroll_smooth
-    direction: "down"
-    duration: 8
-    description: "浏览解析结果（上半部分）"
-    subtitle: "智能提取核心指标，数据价值通过图表直观呈现"
-
-  - action: scroll_smooth
-    direction: "down"
-    duration: 8
-    description: "浏览解析结果（下半部分）"
-    subtitle: "核心结论自动提炼，辅助您快速进行科学决策"
-
-  # Return to home page to access main navigation
-  - action: navigate
-    url: "/"
-    description: "返回首页，访问主导航菜单"
-    subtitle: "返回平台主页，准备进入地图可视化模块"
-  
-  - action: wait
-    duration: 3
-    description: "等待首页加载"
-    subtitle: "主界面加载完成，导航菜单已就绪"
 
   # 5. 地图看板功能 (Map Dashboard)
   - action: click
@@ -221,29 +221,53 @@ steps:
       - selector: "text=政策解读"
 
   - action: wait
-    duration: 5
+    duration: 8
     description: "等待政策分析页面完全加载"
     subtitle: "政策分析页面初始化完成，检索功能就绪"
+
+  # Wait for the tab system to be initialized
+  - action: wait
+    selector: "#policyTabs"
+    duration: 5
+    description: "等待标签页系统初始化"
+    subtitle: "页面内容初始化完成"
+
+  # Wait for the search tab to be present and clickable
+  - action: wait
+    selector: "#search-tab"
+    duration: 5
+    description: "等待搜索标签页激活"
+    subtitle: "切换到政策智能检索界面"
 
   # Make sure the search tab is active (in case there are multiple tabs)
   - action: click
     selector: "#search-tab"
     description: "确保智能检索标签页激活"
     subtitle: "切换到政策智能检索界面"
-    optional: true  # This might already be active
 
+  # Wait for the search tab content to be visible before proceeding
   - action: wait
-    duration: 2
-    description: "等待检索界面加载"
+    selector: "#searchPane"
+    duration: 5
+    description: "等待检索界面加载完成"
     subtitle: "检索界面加载完成，输入框已就绪"
+
+  # Wait for search button to be visible in the active tab before clicking
+  - action: wait
+    selector: "#searchPoliciesBtn"
+    duration: 5
+    description: "等待开始检索按钮变为可用"
+    subtitle: "多维政策检索引擎，覆盖央地各级产业政策文件"
 
   - action: click
     selector: "#searchPoliciesBtn"
     description: "点击'开始检索'"
     subtitle: "多维政策检索引擎，覆盖央地各级产业政策文件"
 
+  # Wait for search results to start loading
   - action: wait
-    duration: 5
+    selector: "#policySearchResults"
+    duration: 8
     description: "等待列表展示"
     subtitle: "智能匹配相关政策，构建结构化的政策知识图谱"
 
@@ -292,4 +316,4 @@ steps:
   - action: wait
     duration: 3
     description: "停留展示"
-    subtitle: "感谢您的观看，期待与您共创产业未来"
+    subtitle: "感谢您的观看"

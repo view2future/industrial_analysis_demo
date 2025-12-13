@@ -4,6 +4,189 @@
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+.original-content-readable {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #333;
+    max-width: 100%;
+    overflow-x: auto;
+}
+.original-content-readable p {
+    margin-bottom: 1.5rem;
+    text-align: justify;
+    hyphens: auto;
+}
+.original-content-readable h1, 
+.original-content-readable h2, 
+.original-content-readable h3,
+.original-content-readable h4,
+.original-content-readable h5,
+.original-content-readable h6 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #2d3748;
+    font-weight: 600;
+}
+.original-content-readable h1 {
+    font-size: 1.8rem;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.3rem;
+}
+.original-content-readable h2 {
+    font-size: 1.6rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.3rem;
+}
+.original-content-readable h3 {
+    font-size: 1.4rem;
+}
+.original-content-readable h4 {
+    font-size: 1.2rem;
+}
+.original-content-readable h5 {
+    font-size: 1.1rem;
+}
+.original-content-readable h6 {
+    font-size: 1.0rem;
+    color: #4a5568;
+}
+.original-content-readable pre {
+    background: #f7fafc;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 1px solid #e2e8f0;
+}
+.original-content-readable code {
+    background: #edf2f7;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+.original-content-readable blockquote {
+    border-left: 4px solid #cbd5e0;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #4a5568;
+    font-style: italic;
+}
+.original-content-readable ul, .original-content-readable ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+.original-content-readable li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+.original-content-readable table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    overflow-x: auto;
+}
+.original-content-readable table, 
+.original-content-readable th, 
+.original-content-readable td {
+    border: 1px solid #cbd5e0;
+}
+.original-content-readable th, .original-content-readable td {
+    padding: 0.5rem 1rem;
+    text-align: left;
+}
+.original-content-readable th {
+    background-color: #f7fafc;
+    font-weight: 600;
+}
+.original-content-readable a {
+    color: #4299e1;
+    text-decoration: underline;
+}
+.original-content-readable a:hover {
+    color: #2b6cb0;
+}
+.original-content-readable strong {
+    font-weight: 600;
+}
+.original-content-readable em {
+    font-style: italic;
+}
+.original-content-readable hr {
+    border: 0;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 2rem 0;
+}
+
+.json-container {
+    font-family: 'Courier New', Consolas, Monaco, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.json-row {
+    margin: 0.25rem 0;
+    display: block;
+}
+
+.json-key {
+    color: #b16286;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.json-value {
+    color: #458588;
+    margin-left: 0.5rem;
+}
+
+.json-index {
+    color: #d79921;
+    font-weight: bold;
+}
+
+.json-nested {
+    border-left: 2px solid #cbd5e0;
+    margin-left: 0.5rem;
+    padding-left: 1rem;
+}
+
+.text-content {
+    line-height: 1.8;
+    color: #333;
+}
+
+
+/* Basic word break for mixed content */
+.bg-gray-50, .text-gray-800 {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Basic word break support for mixed Chinese-English content */
+.original-content-readable,
+.json-container,
+.bg-gray-50,
+.content-item {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-break: loose;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    hyphens: auto;
+    line-height: 1.7;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -202,19 +385,23 @@
             <h3 class="text-2xl font-bold text-gray-800 mb-6">
                 <i class="fas fa-folder-open mr-2 text-indigo-600"></i>详细内容
             </h3>
-            <div class="space-y-6">
+            <div class="space-y-8">
                 {% for category_name, category_data in report_data.categories.items() %}
-                <div class="border-b pb-6 last:border-b-0">
-                    <h4 class="text-xl font-semibold text-gray-800 mb-3">
-                        {{ category_name }}
-                        <span class="text-sm text-gray-500 ml-2">(相关度: {{ category_data.relevance_score }})</span>
-                    </h4>
+                <div class="border border-gray-200 rounded-xl p-6 last:border-b-0 transition-all hover:shadow-md">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-xl font-semibold text-gray-800">
+                            {{ category_name }}
+                        </h4>
+                        <span class="text-sm bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full">
+                            相关度: {{ category_data.relevance_score }}
+                        </span>
+                    </div>
                     {% if category_data.top_content %}
-                    <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                    <div class="prose max-w-none">
                         {% for content in category_data.top_content %}
-                        <div class="text-gray-800 leading-relaxed pb-3 border-b last:border-b-0" style="word-break: break-word; overflow-wrap: anywhere;">
+                        <div class="mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-indigo-500">
                             {% if is_json_content(content) %}
-                                <div class="bg-white p-3 rounded border-l-4 border-blue-500">{{ format_json_content(content) | safe }}</div>
+                                <div class="json-container">{{ format_json_content(content) | safe }}</div>
                             {% else %}
                                 {{ content }}
                             {% endif %}
@@ -222,16 +409,18 @@
                         {% endfor %}
                     </div>
                     {% elif category_data.key_points %}
-                    <div class="bg-gray-50 p-4 rounded-lg space-y-3">
-                        {% for point in category_data.key_points %}
-                        <div class="text-gray-800 leading-relaxed pb-3 border-b last:border-b-0" style="word-break: break-word; overflow-wrap: anywhere;">
-                            {% if is_json_content(point) %}
-                                <div class="bg-white p-3 rounded border-l-4 border-blue-500">{{ format_json_content(point) | safe }}</div>
-                            {% else %}
-                                {{ point }}
-                            {% endif %}
-                        </div>
-                        {% endfor %}
+                    <div class="prose max-w-none">
+                        <ul class="space-y-3">
+                            {% for point in category_data.key_points %}
+                            <li class="p-3 bg-gray-50 rounded-lg border-l-4 border-indigo-500">
+                                {% if is_json_content(point) %}
+                                    <div class="json-container">{{ format_json_content(point) | safe }}</div>
+                                {% else %}
+                                    {{ point }}
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
                     </div>
                     {% endif %}
                 </div>
@@ -386,16 +575,28 @@
                 <i class="fas fa-file-alt mr-2 text-gray-600"></i>报告原文
             </h2>
             <div class="border border-gray-200 rounded-lg p-6 bg-white">
-                <div class="markdown-content" style="word-break: break-word; overflow-wrap: anywhere;">
+                <div class="markdown-content max-w-none">
                     {% if report_data.full_content %}
                         {{ render_markdown(report_data.full_content) | safe }}
                     {% elif report.original_content %}
                         {% if is_json_content(report.original_content) %}
-                            <div class="bg-gray-50 p-4 rounded">{{ format_json_content(report.original_content) | safe }}</div>
+                            <div class="bg-gray-50 p-4 rounded font-mono text-sm overflow-x-auto">{{ format_json_content(report.original_content) | safe }}</div>
                         {% else %}
-                            <div style="white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;">
-                                {{ report.original_content }}
-                            </div>
+                            <!-- Try to convert plain original content to markdown format for better readability -->
+                            {% set original_md = report.original_content %}
+                            {% if original_md %}
+                                <!-- Replace double newlines with markdown paragraphs, but keep the content readable -->
+                                <div class="original-content-readable">
+                                    {% set paragraphs = original_md.split('\n\n') %}
+                                    {% for para in paragraphs %}
+                                        {% if para.strip() %}
+                                            <p class="mb-4 text-gray-700 leading-relaxed">{{ para.strip() | replace('\n', '<br>') | safe }}</p>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-gray-500">原文内容不可用</p>
+                            {% endif %}
                         {% endif %}
                     {% else %}
                         <p class="text-gray-500">原文内容不可用</p>
@@ -405,4 +606,5 @@
         </div>
     </div>
     {% endif %}
+
 {% endblock %}

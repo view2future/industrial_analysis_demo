@@ -123,7 +123,7 @@
                         <a class="nav-link" href="{{ url_for('poi_map_visualization_page') }}"><i class="bi bi-map"></i> 地图看板</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('policy_analysis_page') }}"><i class="bi bi-file-earmark-ruled"></i> 政策解读</a>
+                        <a class="nav-link" href="{{ url_for('policy_analysis_dashboard') }}"><i class="bi bi-file-earmark-ruled"></i> 政策解读</a>
                     </li>
                     <!-- More Functions Dropdown -->
                     <li class="nav-item dropdown">
@@ -180,18 +180,6 @@
         <!-- Core Functionality Modules - 2x2 Grid Layout -->
         <div class="row mb-5">
             <div class="col-md-6 mb-4">
-                <div class="card feature-card h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <img class="feature-logo" src="{{ url_for('static', filename='img/custom_logos/generate_logo.jpg') }}" alt="生成报告" width="64" height="64">
-                        </div>
-                        <h5 class="card-title">生成报告</h5>
-                        <p class="card-text">使用AI大模型自动生成7大模块的产业分析报告，提供智能化数据洞察</p>
-                        <a href="{{ url_for('generate_report') }}" class="btn btn-light btn-sm">开始生成</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-4">
                 <div class="card feature-card h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
                     <div class="card-body text-center">
                         <div class="mb-3">
@@ -200,6 +188,18 @@
                         <h5 class="card-title">上传报告</h5>
                         <p class="card-text">上传您的文档，系统将自动提取关键信息并生成结构化分析报告</p>
                         <a href="{{ url_for('upload_file') }}" class="btn btn-light btn-sm">上传报告</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card feature-card h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <img class="feature-logo" src="{{ url_for('static', filename='img/custom_logos/generate_logo.jpg') }}" alt="生成报告" width="64" height="64">
+                        </div>
+                        <h5 class="card-title">生成报告</h5>
+                        <p class="card-text">使用AI大模型自动生成7大模块的产业分析报告，提供智能化数据洞察</p>
+                        <a href="{{ url_for('generate_report') }}" class="btn btn-light btn-sm">开始生成</a>
                     </div>
                 </div>
             </div>
@@ -226,7 +226,7 @@
                         </div>
                         <h5 class="card-title">政策解读</h5>
                         <p class="card-text">自动提取政策要点、补贴信息、税收优惠，助力产业政策分析决策</p>
-                        <a href="{{ url_for('policy_analysis_page') }}" class="btn btn-light btn-sm">解读政策</a>
+                        <a href="{{ url_for('policy_analysis_dashboard') }}" class="btn btn-light btn-sm">解读政策</a>
                     </div>
                 </div>
             </div>

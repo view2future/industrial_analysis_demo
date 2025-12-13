@@ -474,6 +474,9 @@ class PoiMapVisualizer {
             mapId: '{{ google_map_id|default("") }}',
             // Add map controls
             zoomControl: true,
+            zoomControlOptions: {
+                position: google.maps.ControlPosition.LEFT_BOTTOM
+            },
             mapTypeControl: true,
             scaleControl: true,
             streetViewControl: false, // Disable street view for cleaner UI
@@ -1313,10 +1316,8 @@ class PoiMapVisualizer {
                     const geom = f.getGeometry();
                     geom.forEachLatLng && geom.forEachLatLng(latlng => bounds.extend(latlng));
                 });
-                // Only fit bounds if zoom level hasn't been explicitly set
-                if (!bounds.isEmpty() && this.currentMap.getZoom() < 5) { // If zoom level is very low, then fit bounds
-                    this.currentMap.fitBounds(bounds);
-                }
+                // Skip auto-fitting bounds to prevent overriding the centering and zoom set by adjustZoomForRegion
+                // We want the zoom and center to be controlled by adjustZoomForRegion function
             } else {
                 console.warn(`Could not load precise boundary for region: ${region}`, result.error);
                 // Fallback: Use Google Geocoding API to get region boundaries
@@ -1345,6 +1346,9 @@ class PoiMapVisualizer {
 
                             // Add to the boundaries array
                             this.regionBoundaries.push(boundary);
+
+                            // Skip auto-fitting bounds to prevent overriding the centering and zoom set by adjustZoomForRegion
+                            // We want the zoom and center to be controlled by adjustZoomForRegion function
                         }
                     } else {
                         console.warn(`Could not geocode region: ${region}, status: ${status}`);
@@ -1376,6 +1380,71 @@ class PoiMapVisualizer {
 
         // Show precise boundary for the selected region
         await this.showRegionBoundary(selectedRegion);
+
+        // Auto-adjust zoom based on the selected region
+        this.adjustZoomForRegion(selectedRegion);
+    }
+
+    adjustZoomForRegion(region) {
+        if (this.mapType !== 'google' || !this.currentMap) {
+            return;
+        }
+
+        // Use Google Geocoding API to find the center of the selected region
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: region }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+                const location = results[0].geometry.location;
+
+                // Define appropriate zoom levels for different administrative levels
+                // Higher zoom = more detailed (closer) view
+                let zoomLevel = 10; // Default zoom level
+
+                if (region.includes('市')) {
+                    if (region.includes('区') || region.includes('县')) {
+                        zoomLevel = 12; // City district level needs closer view
+                    } else {
+                        zoomLevel = 9;  // Province/city level
+                    }
+                } else if (region.includes('省')) {
+                    zoomLevel = 7;  // Province level
+                } else if (region.includes('北京') || region.includes('上海') || region.includes('广州') ||
+                          region.includes('深圳') || region.includes('天津') || region.includes('重庆')) {
+                    // Major cities get closer zoom
+                    zoomLevel = 10;
+                } else {
+                    zoomLevel = 10; // Default for other regions
+                }
+
+                // Set the center and zoom level for the map
+                this.currentMap.setCenter(location);
+                this.currentMap.setZoom(zoomLevel);
+            } else {
+                console.warn(`Could not geocode region: ${region}, status: ${status}`);
+
+                // Define appropriate zoom levels for different administrative levels as fallback
+                let zoomLevel = 10; // Default zoom level
+
+                if (region.includes('市')) {
+                    if (region.includes('区') || region.includes('县')) {
+                        zoomLevel = 12; // City district level needs closer view
+                    } else {
+                        zoomLevel = 9;  // Province/city level
+                    }
+                } else if (region.includes('省')) {
+                    zoomLevel = 7;  // Province level
+                } else if (region.includes('北京') || region.includes('上海') || region.includes('广州') ||
+                          region.includes('深圳') || region.includes('天津') || region.includes('重庆')) {
+                    // Major cities get closer zoom
+                    zoomLevel = 10;
+                } else {
+                    zoomLevel = 10; // Default for other regions
+                }
+
+                // Just adjust the zoom without centering if geocoding fails
+                this.currentMap.setZoom(zoomLevel);
+            }
+        });
     }
 
     applyBoundaryStyle() {

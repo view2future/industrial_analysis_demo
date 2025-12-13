@@ -23,9 +23,10 @@ logger = logging.getLogger(__name__)
 class DemoEngine:
     """Main automation engine for running demo scenarios"""
     
-    def __init__(self, scenario_path: str, headless: bool = True, record_video: bool = False, screen_size: Optional[str] = None):
+    def __init__(self, scenario_path: str, headless: bool = True, record_video: bool = False, screen_size: Optional[str] = None, kiosk: bool = False):
         self.scenario_path = Path(scenario_path)
         self.headless = headless
+        self.kiosk = kiosk
         self.record_video = record_video
         self.scenario: Dict[str, Any] = {}
         self.browser: Optional[Browser] = None
@@ -70,7 +71,28 @@ class DemoEngine:
                 'headless': self.headless,
                 'slow_mo': self.scenario.get('config', {}).get('slow_motion', 50)
             }
-            
+
+            # Add additional arguments for headed mode to minimize UI elements
+            if not self.headless:
+                launch_options['args'] = [
+                    '--start-maximized',  # Start maximized
+                    '--disable-infobars',  # Remove infobars
+                    '--disable-extensions',  # Remove extensions bar
+                    '--disable-web-security',  # Reduce security prompts
+                ]
+
+                # Add kiosk mode if enabled (fullscreen with minimal UI)
+                if hasattr(self, 'kiosk') and self.kiosk:
+                    # Remove --start-maximized and add kiosk for true fullscreen
+                    launch_options['args'] = [
+                        '--kiosk',  # Fullscreen kiosk mode
+                        '--disable-infobars',
+                        '--disable-extensions',
+                        '--disable-web-security',
+                        '--noerrdialogs',
+                        '--disable-session-crashed-bubble',
+                    ]
+
             self.browser = await playwright.chromium.launch(**launch_options)
             
             # Resolve viewport
@@ -236,44 +258,68 @@ class DemoEngine:
         selector = step.get('selector')
         fallbacks = step.get('fallback', [])
         optional = step.get('optional', False)
-        
+
+        # Check if this is a tab selector (for Bootstrap tabs)
+        is_tab = 'tab' in selector.lower()
+
         # Try primary selector
         try:
             # Simulate human behavior: Look and Move
             await self._move_mouse_to(selector)
-            
+
             await self.page.wait_for_selector(selector, state='visible', timeout=5000)
             await self.page.click(selector, timeout=5000)
+
+            # If this is a tab selector, wait a bit more for the content to become visible
+            if is_tab:
+                await asyncio.sleep(1.0)  # Wait longer for tab content to load/transition
+
             await asyncio.sleep(0.3)
             return True
         except Exception as e:
             logger.warning(f"Primary selector failed: {selector} - {str(e)}")
-        
+
         # Try fallback selectors
         for fb in fallbacks:
             fb_selector = fb.get('selector') if isinstance(fb, dict) else fb
+            is_fallback_tab = 'tab' in fb_selector.lower()
             try:
                 await self._move_mouse_to(fb_selector)
                 await self.page.wait_for_selector(fb_selector, state='visible', timeout=5000)
                 await self.page.click(fb_selector, timeout=5000)
+
+                # If this is a tab selector, wait a bit more for the content to become visible
+                if is_fallback_tab:
+                    await asyncio.sleep(1.0)  # Wait longer for tab content to load/transition
+
                 await asyncio.sleep(0.3)
                 logger.info(f"Fallback selector succeeded: {fb_selector}")
                 return True
             except Exception:
                 continue
-        
+
         # If normal click failed, try force click on primary
         try:
             logger.info(f"Attempting force click on {selector}")
             await self.page.click(selector, force=True, timeout=2000)
+
+            # If this is a tab selector, wait a bit more for the content to become visible
+            if is_tab:
+                await asyncio.sleep(1.0)  # Wait longer for tab content to load/transition
+
             return True
         except Exception:
             pass
-            
+
         # If force click also failed, try JavaScript click (last resort)
         try:
             logger.info(f"Attempting JS click on {selector}")
             await self.page.eval_on_selector(selector, 'el => el.click()')
+
+            # If this is a tab selector, wait a bit more for the content to become visible
+            if is_tab:
+                await asyncio.sleep(1.0)  # Wait longer for tab content to load/transition
+
             await asyncio.sleep(0.3)
             return True
         except Exception as e:
@@ -282,7 +328,7 @@ class DemoEngine:
         if optional:
             logger.info("Optional click failed, continuing...")
             return True
-        
+
         logger.error(f"All click attempts failed for: {selector}")
         return False
     
@@ -308,8 +354,31 @@ class DemoEngine:
             return False
     
     async def _action_wait(self, step: Dict[str, Any]) -> bool:
-        """Wait for a specified duration"""
+        """Wait for a specified duration or for a selector to be available"""
         duration = step.get('duration', 1)
+        selector = step.get('selector')
+
+        # If a selector is provided, wait for it specifically
+        if selector:
+            try:
+                # Check if it's a tab-related selector to wait for tab content
+                if 'tab' in selector.lower():
+                    # For tabs, we need to wait for the content to be visible, not just present
+                    await self.page.wait_for_selector(selector, state='visible', timeout=10000)
+                    # Additional wait for transition to complete
+                    await asyncio.sleep(0.5)
+                else:
+                    await self.page.wait_for_selector(selector, timeout=10000)
+                await asyncio.sleep(0.3)  # Small buffer after selector is ready
+                return True
+            except Exception as e:
+                logger.warning(f"Wait for selector '{selector}' failed: {e}")
+                # If optional, continue anyway
+                if step.get('optional', False):
+                    return True
+                return False
+
+        # Otherwise, perform duration-based wait
         total = 0.0
         interval = 0.1
         while total < duration:

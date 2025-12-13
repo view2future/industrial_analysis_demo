@@ -67,6 +67,7 @@ async def main():
 示例用法:
   python start_demo.py                                    # 运行默认演示（headless模式）
   python start_demo.py --headed                           # 可视化浏览器模式
+  python start_demo.py --kiosk                            # 全屏模式（演示模式，隐藏大部分UI）
   python start_demo.py --record                           # 启用屏幕录制
   python start_demo.py --scenario auto_demo/scenarios/quick_demo.yaml
   python start_demo.py --headed --record                  # 可视化 + 录制
@@ -89,6 +90,12 @@ async def main():
         '--headless',
         action='store_true',
         help='Run browser in headless mode (no window, default)'
+    )
+
+    parser.add_argument(
+        '--kiosk',
+        action='store_true',
+        help='Run browser in kiosk/fullscreen mode (hides most UI elements)'
     )
     
     parser.add_argument(
@@ -115,19 +122,25 @@ async def main():
         default='normal',
         help='demo speed profile'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Print banner
     print_banner()
-    
+
     # Determine headless mode
     if args.headed:
         headless = False
+        kiosk = False
+    elif args.kiosk:
+        headless = False  # Browser visible but in kiosk mode
+        kiosk = True
     elif args.headless:
         headless = True
+        kiosk = False
     else:
         headless = True  # Default to headless if neither flag is specified
+        kiosk = False
     
     # Prompt for recording if not specified
     record_video = args.record
@@ -182,7 +195,10 @@ async def main():
     print("\n" + "-"*60)
     print("配置信息:")
     print(f"  场景文件:  {scenario_path}")
-    print(f"  浏览器模式: {'可视化 (Headed)' if not headless else '无头 (Headless)'}")
+    if kiosk:
+        print(f"  浏览器模式: 全屏模式 (Kiosk)")
+    else:
+        print(f"  浏览器模式: {'可视化 (Headed)' if not headless else '无头 (Headless)'}")
     print(f"  屏幕录制:  {'启用 ✅' if record_video else '禁用'}")
     print(f"  屏幕尺寸:  {'1920x1080' if args.ss=='big' else '1280x720'}")
     print(f"  演示速度:  {args.speed}")
@@ -202,7 +218,8 @@ async def main():
             scenario_path=str(scenario_path),
             headless=headless,
             record_video=record_video,
-            screen_size=args.ss
+            screen_size=args.ss,
+            kiosk=kiosk
         )
         
         print_progress("开始执行演示场景...\n")
