@@ -2207,6 +2207,176 @@ def v3_roadmap():
     """Display the V3.0 roadmap page."""
     return render_template('v3_roadmap.html')
 
+@app.route('/api/ai-tech-matrix')
+def api_ai_tech_matrix():
+    try:
+        industries = ['生物医药','高端制造','新能源','现代农业','汽车']
+        techs = ['计算机视觉','NLP','预测性维护','知识图谱']
+        import random
+        matrix = {}
+        for t in techs:
+            matrix[t] = {ind: random.randint(30,95) for ind in industries}
+        return jsonify({'industries': industries, 'techs': techs, 'matrix': matrix})
+    except Exception as e:
+        logger.error(f"ai-tech-matrix error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ai-tech-matrix/drilldown')
+def api_ai_tech_drilldown():
+    try:
+        industry = request.args.get('industry') or '生物医药'
+        tech = request.args.get('tech') or 'NLP'
+        region = request.args.get('region') or '苏州'
+        enterprises = [
+            {'name': f'{region}{industry}龙头A', 'score': 92, 'advice': f'引入{tech}提升研发效率'},
+            {'name': f'{region}{industry}成长B', 'score': 85, 'advice': f'部署{tech}优化生产流程'},
+            {'name': f'{region}{industry}创新C', 'score': 78, 'advice': f'探索{tech}在质控场景'}
+        ]
+        policies = [
+            {'title': f'{region}产业扶持政策摘要', 'points': ['税收减免','研发补贴','人才引进']},
+            {'title': f'{region}{industry}专项支持', 'points': ['试点示范','设备补贴','金融支持']}
+        ]
+        integrators = [
+            {'name': f'{region}本地集成商X', 'skills': ['PaddlePaddle','数据中台','边缘部署']},
+            {'name': f'{region}技术服务Y', 'skills': ['模型微调','MLOps','可视化集成']}
+        ]
+        return jsonify({'region': region, 'industry': industry, 'tech': tech, 'enterprises': enterprises, 'policies': policies, 'integrators': integrators})
+    except Exception as e:
+        logger.error(f"ai-tech-drilldown error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ai-partner-pdf', methods=['POST'])
+def api_ai_partner_pdf():
+    try:
+        from datetime import datetime
+        data = request.get_json() or {}
+        region = data.get('region','未知区域')
+        industry = data.get('industry','未知产业')
+        tech = data.get('tech','未知技术')
+        enterprises = data.get('enterprises', [])
+        policies = data.get('policies', [])
+        integrators = data.get('integrators', [])
+        from src.export.report_exporter import ReportExporter
+        exporter = ReportExporter()
+        report_data = {
+            'title': f'{region} · {industry} × {tech} 百度AI生态伙伴潜力名单',
+            'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'summary': {
+                'key_highlights': [
+                    f'{industry}与{tech}适配度较高',
+                    f'推荐企业数量: {len(enterprises)}'
+                ]
+            },
+            'sections': {
+                'executive_summary': f'{region}{industry}与{tech}融合具备较强潜力，建议优先推进生态合作。',
+                'ai_integration': '\n'.join([f"企业: {e.get('name')}，匹配度: {e.get('score')}，建议: {e.get('advice')}" for e in enterprises])
+            },
+            'ai_opportunities': {
+                tech: {'potential_score': 90, 'priority_level': 'high', 'recommendation': '开展试点与联合方案'}
+            },
+            'key_insights': [
+                {'title':'政策支持', 'text':'；'.join([p.get('title') for p in policies])},
+                {'title':'本地集成商网络', 'text':'；'.join([i.get('name') for i in integrators])}
+            ]
+        }
+        safe_name = f"{region}_{industry}_{tech}_伙伴潜力名单".replace('/', '_').replace('\\', '_')
+        export_path = exporter.export_to_pdf(report_data, safe_name)
+        from flask import send_file
+        return send_file(export_path, as_attachment=True, download_name=f"{safe_name}.pdf")
+    except Exception as e:
+        logger.error(f"ai-partner-pdf error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/monitoring/news')
+def api_monitoring_news():
+    try:
+        from datetime import datetime
+        now = datetime.now().strftime('%Y-%m-%d %H:%M')
+        items = [
+            {'title':'本地发布AI算力券政策', 'summary':'对模型训练给予补贴，提升企业算力可及性', 'time': now},
+            {'title':'龙头企业获亿元融资', 'summary':'加码智能制造与数据中台建设', 'time': now}
+        ]
+        return jsonify({'items': items, 'updated_at': now})
+    except Exception as e:
+        logger.error(f"monitoring-news error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/monitoring/events')
+def api_monitoring_events():
+    try:
+        from datetime import datetime
+        now = datetime.now().strftime('%Y-%m-%d %H:%M')
+        items = [
+            {'title':'政策变更提醒', 'type':'税收优惠更新', 'time': now},
+            {'title':'投融资事件', 'type':'并购公告', 'time': now}
+        ]
+        return jsonify({'items': items, 'updated_at': now})
+    except Exception as e:
+        logger.error(f"monitoring-events error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/monitoring/core')
+def api_monitoring_core():
+    try:
+        from datetime import datetime
+        import random
+        core_index = random.randint(68,88)
+        gdp_yoy = round(random.uniform(6.2, 7.8), 1)
+        gdp_mom = round(random.uniform(0.4, 1.2), 1)
+        gdp_series = [round(random.uniform(5.8, 8.2), 1) for _ in range(24)]
+        base_mix = [6, 37, 28, 29]
+        delta = [random.uniform(-1.5, 1.5) for _ in range(4)]
+        mix_vals = [max(3, min(50, round(base_mix[i] + delta[i], 1))) for i in range(4)]
+        total = sum(mix_vals)
+        mix_vals = [round(v * 100 / total, 1) for v in mix_vals]
+        industry_mix = {'agri': mix_vals[0], 'manu': mix_vals[1], 'elec': mix_vals[2], 'service': mix_vals[3]}
+        projects = [
+            {'name':'生物医药产业园', 'progress': random.randint(30,95), 'status': 'on_track', 'risk_level': 'low'},
+            {'name':'智能制造示范区', 'progress': random.randint(20,85), 'status': 'at_risk', 'risk_level': 'medium'},
+            {'name':'算力中心二期', 'progress': random.randint(10,80), 'status': 'delayed', 'risk_level': 'high'}
+        ]
+        warnings = []
+        if core_index < 70:
+            warnings.append('核心指数低于70：建议启动专项评估')
+        if gdp_mom < 0.5:
+            warnings.append('GDP环比低于0.5%：关注短期波动')
+        ticker = warnings or ['政策动态：发布算力券试点', '项目进度：示范区主体封顶', '投融资：AI企业获亿元融资']
+        historical = []
+        now = datetime.now()
+        for i in range(30):
+            ts = now.replace(minute=now.minute, second=0)
+            val = max(50, min(95, core_index + random.randint(-5, 5)))
+            historical.append({'t': (ts).strftime('%H:%M'), 'v': val})
+        return jsonify({
+            'demo': True,
+            'core_index': core_index,
+            'gdp_growth': gdp_yoy,
+            'gdp_yoy': gdp_yoy,
+            'gdp_mom': gdp_mom,
+            'gdp_series': gdp_series,
+            'industry_mix': industry_mix,
+            'projects': projects,
+            'warnings': warnings,
+            'ticker': ticker,
+            'historical': historical,
+            'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
+    except Exception as e:
+        logger.error(f"monitoring-core error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/monitoring/map')
+def api_monitoring_map():
+    try:
+        from datetime import datetime
+        import random
+        districts = ['武侯区','锦江区','双流区','高新区','天府新区','青羊区','成华区','龙泉驿区','郫都区','新都区']
+        points = [[d, random.randint(20,95)] for d in districts]
+        return jsonify({'demo': True, 'points': points, 'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
+    except Exception as e:
+        logger.error(f"monitoring-map error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/knowledge-graph')
 @login_required

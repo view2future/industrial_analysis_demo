@@ -17,6 +17,38 @@
     .heatmap-medium { background-color: rgba(251, 146, 60, 0.7); }
     .heatmap-low { background-color: rgba(59, 130, 246, 0.6); }
     .heatmap-none { background-color: rgba(209, 213, 219, 0.3); }
+    :root {
+        --bg-deep: #0f172a;
+        --bg-panel: rgba(31, 41, 55, 0.6);
+        --text-primary: #e5e7eb;
+        --text-secondary: #9ca3af;
+        --accent-blue: #3b82f6;
+        --accent-cyan: #22d3ee;
+        --accent-green: #22c55e;
+        --accent-orange: #f59e0b;
+        --accent-red: #ef4444;
+        --border-soft: #374151;
+        --shadow-strong: 0 20px 40px rgba(0,0,0,0.35);
+        --radius-xl: 16px;
+    }
+    .theme-dark {
+        --bg-deep: #0f172a;
+        --bg-panel: rgba(31, 41, 55, 0.6);
+        --text-primary: #e5e7eb;
+        --text-secondary: #9ca3af;
+    }
+    .theme-light {
+        --bg-deep: #f8fafc;
+        --bg-panel: rgba(255, 255, 255, 0.85);
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+    }
+    .dashboard-panel { background: var(--bg-panel); border: 1px solid var(--border-soft); border-radius: var(--radius-xl); box-shadow: var(--shadow-strong); }
+    .panel-title { color: var(--accent-cyan); font-size: 12px; margin-bottom: 8px; letter-spacing: 0.02em; }
+    .smooth-transition { transition: all 240ms ease; }
+    .smooth-transition:hover { transform: translateY(-2px); }
+    @keyframes scrollLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .marquee { display:inline-block; white-space: nowrap; animation: scrollLeft 30s linear infinite; }
 </style>
 {% endblock %}
 
@@ -35,11 +67,11 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-        <!-- 1. 统一的“分析驾驶舱” -->
+        <!-- 1. 生态基础 -->
         <div class="mb-20 bg-gray-50 p-8 rounded-2xl shadow-sm">
             <div class="text-center mb-10">
-                <h2 class="text-3xl font-bold gradient-text">1. 统一的“分析驾驶舱”</h2>
-                <p class="text-gray-600 mt-2">在一个屏幕内整合所有关键信息，实现模块化、可定制的单页应用（SPA）体验。</p>
+                <h2 class="text-3xl font-bold gradient-text">1. 生态基础</h2>
+                <p class="text-gray-600 mt-2">对于一个区域的初探，偏宏观。在一个屏幕内整合关键信息，实现模块化、可定制的单页应用（SPA）体验。</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div class="grid grid-cols-2 gap-4">
@@ -68,7 +100,7 @@
                 <div class="space-y-6">
                     <div>
                         <h4 class="font-semibold text-lg"><i class="fas fa-glasses mr-2 text-gray-700"></i>使用场景</h4>
-                        <p class="text-gray-600 mt-1">百度AI技术生态部的区域合作经理打开驾驶舱，迅速评估目标区域（如苏州市）的AI生态健康度。通过宏观经济、重点产业（如汽车、生物医药）和创新资源（高校、实验室）的综合视图，快速判断该区域与百度AI战略的契合度，为后续的合作拓展确定优先级。</p>
+                        <p class="text-gray-600 mt-1">通过区域产业驾驶舱，迅速评估目标区域的AI生态健康度与成熟度。通过宏观经济、重点产业（如汽车、生物医药）和创新资源（高校、实验室）的综合视图，快速判断该区域与百度AI的契合度，为后续的合作拓展确定优先级。</p>
                     </div>
                     <div>
                         <h4 class="font-semibold text-lg"><i class="fas fa-medal mr-2 text-gray-700"></i>核心价值</h4>
@@ -83,10 +115,10 @@
             </div>
         </div>
 
-        <!-- 2. AI融合潜力分析 (机会矩阵) -->
+        <!-- 2. AI+产业融合 -->
         <div class="mb-20 bg-gray-50 p-8 rounded-2xl shadow-sm">
             <div class="text-center mb-10">
-                <h2 class="text-3xl font-bold gradient-text">2. AI融合潜力分析 (机会矩阵)</h2>
+                <h2 class="text-3xl font-bold gradient-text">2. AI+产业融合</h2>
                 <p class="text-gray-600 mt-2">动态计算“产业 × AI技术”的融合潜力，将“数据”转化为“机会”。</p>
             </div>
              <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
@@ -118,7 +150,7 @@
                 <div class="space-y-6">
                     <div>
                         <h4 class="font-semibold text-lg"><i class="fas fa-glasses mr-2 text-gray-700"></i>使用场景</h4>
-                        <p class="text-gray-600 mt-1">生态拓展总监在矩阵中发现“高端制造 × 飞桨(PaddlePaddle)”热力值很高。他点击该单元格，系统立即下钻展示出该区域内所有适合应用飞桨的制造企业、相关政策支持、以及潜在的技术集成商伙伴，形成一份精准的“飞桨生态伙伴潜力名单”。</p>
+                        <p class="text-gray-600 mt-1">通过行业*AI的区域产业矩阵计算，系统下钻展示出该区域内该行业适合应用百度AI的企业、相关政策支持、以及潜在的技术集成商伙伴，形成一份“百度AI生态伙伴潜力名单”。</p>
                     </div>
                     <div>
                         <h4 class="font-semibold text-lg"><i class="fas fa-medal mr-2 text-gray-700"></i>核心价值</h4>
@@ -133,11 +165,11 @@
             </div>
         </div>
 
-        <!-- 3. 动态监测与信号捕捉 -->
+        <!-- 3. 动态关注 -->
         <div class="mb-20 bg-gray-50 p-8 rounded-2xl shadow-sm">
             <div class="text-center mb-10">
-                <h2 class="text-3xl font-bold gradient-text">3. 动态监测与信号捕捉</h2>
-                <p class="text-gray-600 mt-2">7×24小时的行业雷达，将静态报告升级为动态、实时的“战场情报系统”。</p>
+                <h2 class="text-3xl font-bold gradient-text">3. 动态关注</h2>
+                <p class="text-gray-600 mt-2">7×24小时的区域产业雷达，将静态报告升级为动态、实时的“情报系统”。</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                  <div class="bg-white p-6 rounded-lg shadow-md">
@@ -169,7 +201,7 @@
                 <div class="space-y-6">
                     <div>
                         <h4 class="font-semibold text-lg"><i class="fas fa-glasses mr-2 text-gray-700"></i>使用场景</h4>
-                        <p class="text-gray-600 mt-1">系统自动推送一条预警：“某市发布‘算力券’新政，重点补贴本地AI模型训练”。生态合作团队收到信号后，立即启动预案，对接该市经信局，探讨将百度的文心大模型和飞桨平台纳入其补贴范围，抢占合作先机。</p>
+                        <p class="text-gray-600 mt-1">关注该区域重点产业动态。</p>
                     </div>
                     <div>
                         <h4 class="font-semibold text-lg"><i class="fas fa-medal mr-2 text-gray-700"></i>核心价值</h4>
@@ -185,40 +217,13 @@
         </div>
 
 
-        <!-- 4. 可行动的机会简报 -->
-        <div class="bg-gray-50 p-8 rounded-2xl shadow-sm">
-            <div class="text-center mb-10">
-                <h2 class="text-3xl font-bold gradient-text">4. 可行动的机会简报</h2>
-                <p class="text-gray-600 mt-2">打通分析的“最后一公里”，将所有洞察凝聚为可交付、可行动的成果。</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div class="bg-white p-6 rounded-lg shadow-lg">
-                    <h3 class="font-bold text-xl mb-4">简报生成器：AI+生物医药</h3>
-                    <p class="text-sm text-gray-700 mb-1"><span class="font-semibold">机会评分：</span> <span class="text-red-500 font-bold">92/100</span></p>
-                    <p class="text-sm text-gray-700 mb-1"><span class="font-semibold">核心摘要：</span> 利用AI加速新药研发，降低临床试验成本...</p>
-                    <p class="text-sm text-gray-700 mb-3"><span class="font-semibold">已整合数据：</span> 政策依据(3)、龙头企业(8)、专家学者(5)...</p>
-                    <button class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-file-download mr-2"></i>一键生成简报 (PDF/Word)
-                    </button>
-                </div>
-                <div class="space-y-6">
-                     <div>
-                        <h4 class="font-semibold text-lg"><i class="fas fa-glasses mr-2 text-gray-700"></i>使用场景</h4>
-                        <p class="text-gray-600 mt-1">在确定与某区域的“智慧城市”项目合作意向后，区域销售负责人一键生成《百度AI赋能XX市智慧城市建设合作建议简报》。这份报告自动整合了该市的产业现状、AI需求、以及百度对应的技术方案（如文心、Apollo），成为提交给地方政府的标准化、高质量“敲门砖”。</p>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-lg"><i class="fas fa-medal mr-2 text-gray-700"></i>核心价值</h4>
-                        <p class="text-gray-600 mt-1"><strong>加速价值转化</strong>：将复杂的分析过程凝聚成一个可交付、可沟通的标准化产品，极大缩短从“洞察”到“行动”的周期，赋能业务一线。</p>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-lg"><i class="fas fa-cogs mr-2 text-gray-700"></i>数据与技术栈</h4>
-                        <p class="text-gray-600 mt-1"><strong class="text-sm">数据来源:</strong> 聚合系统内所有模块的分析结果。</p>
-                        <p class="text-gray-600 mt-1"><strong class="text-sm">技术依赖:</strong> 文档生成库 (python-docx, WeasyPrint for PDF)、内容模板引擎 (Jinja2)。</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
+<script>
+</script>
 {% endblock %}
