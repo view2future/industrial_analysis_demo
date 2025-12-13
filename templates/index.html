@@ -8,61 +8,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-modern.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Enhanced floating task system for homepage */
-        #floating-icon {
-            position: fixed;
-            right: 24px;
-            bottom: 24px;
-            z-index: 10060;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ffd54f 0%, #ff9800 100%);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            color: #fff;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-
-        #floating-icon:hover {
-            box-shadow: 0 14px 32px rgba(0,0,0,0.25);
-        }
-
-        #floating-icon:active {
-            transform: scale(0.97);
-        }
-
-        #floating-icon.processing {
-            /* Animated conic gradient for processing state */
-        }
-
-        #floating-icon.completed {
-            background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
-        }
-
-        #floating-icon .icon-content {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        #floating-icon .icon-text {
-            font-weight: 700;
-            font-size: 12px;
-        }
+        /* Toaster system replaces floating icon */
     </style>
 </head>
 <body>
-    <!-- Enhanced Floating Background Tasks Icon -->
-    <div id="floating-icon" style="right:24px;bottom:24px;z-index:10002;display:none;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg, #ffd54f 0%, #ff9800 100%);box-shadow:0 10px 25px rgba(0,0,0,0.2);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-        <div style="display:flex;align-items:center;gap:6px;">
-            <i class="fas fa-activity" style="font-size:20px;"></i>
-            <span class="icon-text" style="font-weight:700;font-size:12px;">0</span>
-        </div>
-    </div>
+    <!-- Toaster System will inject its own UI -->
     <header class="header">
         <div class="container">
             <h1>Regional Industrial Analysis Dashboard</h1>
@@ -180,98 +130,7 @@
 
     <script src="js/data.js"></script>
     <script src="js/dashboard.js"></script>
-    <script>
-        // Global variable to track background tasks
-        let backgroundTasks = [];
-        
-        // Function to handle floating icon click
-        function handleFloatingIconClick() {
-            // Open the enhanced task manager panel
-            if (typeof window.floatingTaskManager !== 'undefined') {
-                window.floatingTaskManager.showTaskPanel();
-            } else {
-                // Fallback to original behavior
-                const icon = document.getElementById('floating-icon');
-                if (icon.classList.contains('completed') && backgroundTasks.length > 0) {
-                    // Navigate to the latest completed report
-                    const latestTask = backgroundTasks[backgroundTasks.length - 1];
-                    if (latestTask.reportId) {
-                        window.location.href = '/report/' + latestTask.reportId;
-                    }
-                }
-            }
-        }
-        
-        // Function to show floating icon
-        function showFloatingIcon() {
-            const icon = document.getElementById('floating-icon');
-            if (icon) {
-                icon.style.display = 'flex';
-            }
-        }
-        
-        // Function to update floating icon status
-        function updateFloatingIconStatus(isCompleted, reportId = null, progress = 0) {
-            const icon = document.getElementById('floating-icon');
-            if (icon) {
-                if (isCompleted) {
-                    icon.classList.remove('processing');
-                    icon.classList.add('completed');
-                    // Update icon text
-                    const iconText = icon.querySelector('.icon-text');
-                    if (iconText) {
-                        iconText.textContent = '!';
-                    }
-                    // Store reportId for navigation
-                    if (reportId && backgroundTasks.length > 0) {
-                        backgroundTasks[backgroundTasks.length - 1].reportId = reportId;
-                    }
-                } else {
-                    icon.classList.remove('completed');
-                    icon.classList.add('processing');
-                    // Update icon with progress
-                    const iconText = icon.querySelector('.icon-text');
-                    if (iconText) {
-                        iconText.textContent = Math.round(progress) + '%';
-                    }
-                    // Apply animated gradient based on progress
-                    const pct = Math.round(progress);
-                    const deg = Math.min(Math.max(pct * 3.6, 0), 360); // Convert percentage to degrees (0-360)
-                    icon.style.backgroundImage = `linear-gradient(135deg, #ffd54f 0%, #ff9800 100%)`; // Keep consistent look
-                }
-            }
-        }
-        
-        // Function to create floating icon in current window (fallback)
-        function createFloatingIconInCurrentWindow() {
-            // Check if icon already exists
-            if (document.getElementById('floating-icon')) {
-                showFloatingIcon();
-                updateFloatingIconStatus(false); // Yellow/processing state
-                return;
-            }
-            
-            // Create floating icon
-            const icon = document.createElement('div');
-            icon.id = 'floating-icon';
-            icon.innerHTML = '<div class="spinner"></div><div class="icon-text">!</div>';
-            icon.onclick = function() {
-                if (this.classList.contains('completed') && backgroundTasks.length > 0) {
-                    const latestTask = backgroundTasks[backgroundTasks.length - 1];
-                    if (latestTask.reportId) {
-                        window.location.href = '/report/' + latestTask.reportId;
-                    }
-                }
-            };
-            document.body.appendChild(icon);
-            showFloatingIcon();
-            updateFloatingIconStatus(false); // Yellow/processing state
-        }
-        // Initialize floating task manager on page load if not already defined
-        if (typeof window.floatingTaskManager === 'undefined' && typeof FloatingTaskManager !== 'undefined') {
-            window.floatingTaskManager = new FloatingTaskManager();
-        }
-    </script>
-    <script src="{{ url_for('static', filename='js/floating_task.js') }}"></script>
+    <!-- Toaster System -->
+    <script src="{{ url_for('static', filename='js/toaster.js') }}"></script>
 </body>
 </html>

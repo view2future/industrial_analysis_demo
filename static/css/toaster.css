@@ -1,0 +1,441 @@
+:root {
+    --toaster-body-color: #FFD700;
+    --toaster-rim-color: #C0C0C0;
+    --toaster-width: 80px;
+    --toaster-height: 60px;
+    --toast-color: #f4d03f;
+    --toast-crust-color: #d4ac0d;
+    --indicator-idle: #ffd700; /* same as body or slightly different? spec says breathing light */
+    --indicator-processing: #4285F4;
+    --indicator-fail: #ff0000;
+    --toast-fail-color: #333333;
+}
+
+.toaster-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: var(--toaster-width);
+    height: 200px; /* Allow space for flying toasts */
+    z-index: 10000;
+    pointer-events: none; /* Let clicks pass through empty space */
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+}
+
+.toaster-body {
+    width: var(--toaster-width);
+    height: var(--toaster-height);
+    background-color: var(--toaster-body-color);
+    border: 4px solid var(--toaster-rim-color);
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    pointer-events: auto;
+    transition: transform 0.2s;
+    cursor: pointer;
+    z-index: 10;
+}
+
+/* Slots */
+.toaster-slot {
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 8px;
+    background-color: #333;
+    border-radius: 4px;
+}
+
+/* Knob */
+.toaster-knob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background-color: #555;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+}
+
+/* Indicator Light */
+.toaster-light {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 0 5px #fff;
+}
+
+/* Idle State */
+.toaster-body.idle {
+    animation: float 2s ease-in-out infinite;
+}
+.toaster-body.idle .toaster-light {
+    animation: breathe 2s ease-in-out infinite;
+    background-color: #00ff00; /* Default ready light */
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+@keyframes breathe {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* Processing State */
+.toaster-body.processing {
+    animation: vibrate 0.2s linear infinite;
+}
+.toaster-body.processing .toaster-light {
+    background-color: var(--indicator-processing);
+    box-shadow: 0 0 8px var(--indicator-processing);
+    animation: pulse 0.5s infinite alternate;
+}
+
+@keyframes vibrate {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-1px, 1px); }
+    50% { transform: translate(0, -1px); }
+    75% { transform: translate(1px, 0); }
+    100% { transform: translate(0, 0); }
+}
+
+@keyframes pulse {
+    from { opacity: 0.5; }
+    to { opacity: 1; }
+}
+
+/* Prep Animation */
+.toaster-body.prep {
+    animation: prep-tilt 0.3s forwards;
+    box-shadow: 0 0 15px gold;
+}
+
+@keyframes prep-tilt {
+    to { transform: rotateX(-5deg); }
+}
+
+/* Toast */
+.toast-item {
+    width: 50px;
+    height: 50px;
+    background-color: var(--toast-color);
+    border: 2px solid var(--toast-crust-color);
+    border-radius: 8px 8px 4px 4px;
+    position: absolute;
+    bottom: 50px; /* Start inside/near slot */
+    left: 50%;
+    margin-left: -25px;
+    z-index: 5;
+    pointer-events: auto;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: #5d4037;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Toast Animations */
+@keyframes toast-pop {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-40px); }
+}
+
+@keyframes toast-air {
+    0% { transform: translateY(-40px) rotate(0deg); }
+    50% { transform: translateY(-80px) rotate(360deg); }
+    100% { transform: translateY(-80px) rotate(720deg); }
+}
+
+@keyframes toast-fall {
+    0% { transform: translateY(-80px) rotate(0deg); }
+    100% { transform: translateY(0) rotate(0deg); } /* Land back in toaster? Or stack? Spec says "Contact toaster produces elastic effect" */
+}
+
+/* Spec says: Eject (+40px), Air (+80px), Fall (back to toaster?)
+   If multiple tasks, they queue. "Max 3 toasts".
+   I will make them stack or fan out.
+*/
+
+.toast-item.popping {
+    animation: toast-pop 0.5s ease-out forwards;
+}
+
+.toast-item.flying {
+    animation: toast-air 1.2s ease-in-out forwards;
+}
+
+.toast-item.falling {
+    animation: toast-fall 1.0s ease-in forwards;
+}
+
+.toast-item.landed {
+    /* Resting state in queue */
+    transition: transform 0.3s;
+}
+
+/* Failed Toast */
+.toast-item.failed {
+    background-color: var(--toast-fail-color);
+    border-color: #000;
+}
+.toast-item.failed.shatter {
+    animation: shatter 0.5s forwards;
+}
+
+@keyframes shatter {
+    to { transform: scale(0); opacity: 0; }
+}
+
+/* Paused Toast */
+.toast-item.paused {
+    opacity: 0.6;
+    transform: translateY(-20px) !important;
+}
+
+/* Task Count Badge */
+.toaster-count {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: red;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.toaster-body:hover .toaster-count {
+    opacity: 1;
+}
+
+/* Details Card */
+.toast-card {
+    position: absolute;
+    right: 90px;
+    bottom: 50px;
+    width: 200px;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+    z-index: 10001;
+}
+.toast-card.visible {
+    display: block;
+    animation: fade-in 0.2s;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Particles (Smoke) */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(200, 200, 200, 0.5);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Task List Panel - Enhanced */
+.toaster-panel {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 340px; /* Slightly wider for actions */
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 0;
+    display: none;
+    z-index: 10002;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    pointer-events: auto;
+    transition: all 0.2s ease;
+}
+
+.toaster-panel.visible {
+    display: block;
+    animation: slide-up 0.2s ease-out;
+}
+
+.toaster-panel-header {
+    background: #f8f9fa;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-header {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    padding: 4px;
+    border-radius: 4px;
+}
+.btn-header:hover {
+    background: #eee;
+    color: #333;
+}
+
+.toaster-panel-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.toaster-task-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.toaster-task-item:last-child {
+    border-bottom: none;
+}
+
+.toaster-task-item:hover {
+    background: #f9f9f9;
+}
+
+.toaster-task-item.dragging {
+    opacity: 0.5;
+    background: #f0f0f0;
+}
+
+/* Checkbox */
+.task-checkbox {
+    margin-top: 4px;
+    cursor: pointer;
+}
+
+/* Content Layout */
+.task-content-wrapper {
+    flex: 1;
+}
+
+.task-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+.task-meta {
+    font-size: 12px;
+    color: #999;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.task-status {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* Optimized Status Colors per User Request */
+/* Processing: Green */
+.status-processing { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+/* Completed: Blue */
+.status-completed { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+/* Paused: Gray */
+.status-paused { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
+/* Failed: Red (implicit) */
+.status-failed { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+/* Pending: Yellow-ish */
+.status-pending { background: #fffde7; color: #f9a825; border: 1px solid #fff9c4; }
+
+/* Action Buttons Group */
+.task-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.toaster-task-item:hover .task-actions {
+    opacity: 1;
+}
+
+.btn-task-action {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: none;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.btn-task-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.btn-edit:hover { color: #1976d2; }
+.btn-toggle:hover { color: #f57c00; }
+.btn-delete:hover { color: #d32f2f; }
+
+/* Drag Handle */
+.drag-handle {
+    color: #ccc;
+    cursor: grab;
+    padding: 4px 0;
+}
+.drag-handle:hover { color: #999; }
+
