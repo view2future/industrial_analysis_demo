@@ -83,43 +83,6 @@
             transition: width 0.3s ease;
         }
         
-        .floating-tasks {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            z-index: 1000;
-            max-width: 350px;
-        }
-        
-        .floating-task-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-        
-        .floating-task-header {
-            padding: 10px 15px;
-            background: var(--primary-gradient);
-            color: white;
-            font-weight: bold;
-        }
-        
-        .floating-task-body {
-            padding: 15px;
-        }
-        
-        .floating-task-actions {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .floating-task-actions button {
-            flex: 1;
-        }
-        
         .report-content {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
@@ -206,80 +169,6 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
-        
-        .floating-task-toggle {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            z-index: 999;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .floating-task-toggle:hover {
-            transform: scale(1.1);
-        }
-        
-        .floating-tasks-panel {
-            position: fixed;
-            right: 20px;
-            bottom: 80px;
-            z-index: 998;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            width: 350px;
-            max-height: 400px;
-            overflow-y: auto;
-            display: none;
-        }
-        
-        .floating-tasks-panel.show {
-            display: block;
-        }
-        
-        .task-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        .task-item:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .task-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .task-meta {
-            font-size: 0.85rem;
-            color: #666;
-        }
-        
-        .task-actions {
-            display: flex;
-            gap: 5px;
-            margin-top: 10px;
-        }
-        
-        .task-actions button {
-            padding: 4px 8px;
-            font-size: 0.8rem;
-        }
     </style>
 </head>
 <body>
@@ -348,16 +237,7 @@
                         </div>
                         
                         <div class="row g-3 mt-3">
-                            <div class="col-md-6">
-                                <label for="llmSelect" class="form-label text-white">选择AI模型</label>
-                                <select class="form-select" id="llmSelect">
-                                    <option value="kimi" selected>Kimi (Moonshot)</option>
-                                    <option value="gemini">Google Gemini</option>
-                                    <option value="ernie">百度ERNIE Bot</option>
-                                    <option value="doubao">字节豆包</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label for="contextInput" class="form-label text-white">补充要求（可选）</label>
                                 <input type="text" class="form-control" id="contextInput" placeholder="例如：重点关注政策环境...">
                             </div>
@@ -410,29 +290,7 @@
         </div>
     </div>
 
-    <!-- Floating Task Toggle Button -->
-    <div class="floating-task-toggle" id="floatingTaskToggle">
-        <i class="bi bi-list-task" style="font-size: 1.5rem;"></i>
-    </div>
-
-    <!-- Floating Tasks Panel -->
-    <div class="floating-tasks-panel" id="floatingTasksPanel">
-        <div class="p-3" style="background: var(--primary-gradient); color: white;">
-            <h6 class="mb-0">后台任务管理</h6>
-        </div>
-        <div id="tasksList">
-            <div class="task-item text-center text-muted p-4">
-                暂无后台任务
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Task manager for floating tasks
-        let activeTasks = [];
-        let eventSource = null;
-        let currentTaskId = null;
-
         // DOM elements
         const reportForm = document.getElementById('reportForm');
         const progressSection = document.getElementById('progressSection');
@@ -443,19 +301,8 @@
         const reportContent = document.getElementById('reportContent');
         const downloadBtn = document.getElementById('downloadBtn');
         const shareBtn = document.getElementById('shareBtn');
-        const floatingTaskToggle = document.getElementById('floatingTaskToggle');
-        const floatingTasksPanel = document.getElementById('floatingTasksPanel');
 
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load tasks from localStorage or fetch from server
-            loadTasks();
-            
-            // Set up floating task toggle
-            floatingTaskToggle.addEventListener('click', function() {
-                floatingTasksPanel.classList.toggle('show');
-            });
-        });
+        let currentTaskId = null;
 
         // Form submission handler
         reportForm.addEventListener('submit', async function(e) {
@@ -463,7 +310,6 @@
             
             const city = document.getElementById('citySelect').value;
             const industry = document.getElementById('industrySelect').value;
-            const llmService = document.getElementById('llmSelect').value;
             const additionalContext = document.getElementById('contextInput').value;
 
             // Show progress section
@@ -477,7 +323,7 @@
 
             try {
                 // Start streaming report generation
-                startStreamingReport(city, industry, llmService, additionalContext);
+                startStreamingReport(city, industry, additionalContext);
             } catch (error) {
                 console.error('Error starting report generation:', error);
                 statusIndicator.className = 'status-indicator status-error';
@@ -486,23 +332,7 @@
             }
         });
 
-        function startStreamingReport(city, industry, llmService, additionalContext) {
-            // Create task object
-            const task = {
-                id: 'task_' + Date.now(),
-                city: city,
-                industry: industry,
-                llm_service: llmService,
-                status: 'pending',
-                created_at: new Date().toISOString(),
-                progress: 0,
-                content: ''
-            };
-            
-            // Add to active tasks
-            activeTasks.push(task);
-            updateFloatingTasks();
-            
+        function startStreamingReport(city, industry, additionalContext, force = false) {
             // Send request to create task
             fetch('/api/stream/generate-report', {
                 method: 'POST',
@@ -512,11 +342,28 @@
                 body: JSON.stringify({
                     city: city,
                     industry: industry,
-                    llm_service: llmService,
-                    additional_context: additionalContext
+                    additional_context: additionalContext,
+                    force: force
                 })
             })
             .then(response => {
+                // Handle duplicate task conflict
+                if (response.status === 409) {
+                    return response.json().then(data => {
+                        if (confirm(`检测到重复任务：\n${data.message}\n\n是否要查看现有任务？\n(点击"取消"将强制创建新任务)`)) {
+                            // User chose to view existing task
+                            // We need to redirect or handle it. Since this page is for generating,
+                            // we can perhaps redirect to the stream view of that task.
+                            window.location.href = `/stream-report/${data.task_id}?city=${encodeURIComponent(city)}&industry=${encodeURIComponent(industry)}`;
+                        } else {
+                            // User chose to force create
+                            startStreamingReport(city, industry, additionalContext, true);
+                        }
+                        // Stop further processing for this chain
+                        throw new Error('Duplicate task handled'); 
+                    });
+                }
+                
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
@@ -538,8 +385,12 @@
                         
                         lines.forEach(line => {
                             if (line.startsWith('data: ')) {
-                                const data = JSON.parse(line.substring(6));
-                                processEvent(data);
+                                try {
+                                    const data = JSON.parse(line.substring(6));
+                                    processEvent(data);
+                                } catch (e) {
+                                    // Ignore parse errors for incomplete chunks
+                                }
                             }
                         });
                         
@@ -572,6 +423,10 @@
                     statusIndicator.className = 'status-indicator status-processing';
                     statusIndicator.textContent = '生成中';
                     progressText.textContent = '正在生成报告...';
+                    // Trigger global floating task manager to update if present
+                    if (window.floatingTaskManager) {
+                        window.floatingTaskManager.fetchTaskUpdates();
+                    }
                     break;
                     
                 case 'report_chunk':
@@ -628,8 +483,10 @@
                     downloadBtn.style.display = 'inline-block';
                     shareBtn.style.display = 'inline-block';
                     
-                    // Update task status
-                    updateTaskStatus(currentTaskId, 'completed');
+                    // Trigger global floating task manager to update if present
+                    if (window.floatingTaskManager) {
+                        window.floatingTaskManager.fetchTaskUpdates();
+                    }
                     break;
                     
                 case 'error':
@@ -637,223 +494,8 @@
                     statusIndicator.textContent = '生成错误';
                     progressText.textContent = '生成过程中出现错误';
                     console.error('Generation error:', data);
-                    
-                    // Update task status
-                    updateTaskStatus(currentTaskId, 'failed', data.error);
-                    break;
-                    
-                case 'service_fallback':
-                    progressText.textContent = `切换到 ${data.fallback_service} 服务`;
                     break;
             }
-        }
-
-        function updateTaskStatus(taskId, status, error = null) {
-            const task = activeTasks.find(t => t.id === taskId);
-            if (task) {
-                task.status = status;
-                task.error = error;
-                updateFloatingTasks();
-            }
-        }
-
-        // Timer tracking for each active task
-        let taskTimers = {};
-
-        function updateFloatingTasks() {
-            const tasksList = document.getElementById('tasksList');
-
-            if (activeTasks.length === 0) {
-                tasksList.innerHTML = '<div class="task-item text-center text-muted p-4">暂无后台任务</div>';
-                return;
-            }
-
-            tasksList.innerHTML = '';
-
-            activeTasks.forEach(task => {
-                const taskItem = document.createElement('div');
-                taskItem.className = 'task-item';
-
-                // Calculate duration for active tasks
-                let durationText = '';
-                if (task.status === 'processing' || task.status === 'pending') {
-                    const startTime = task.started_at ? new Date(task.started_at).getTime() : new Date(task.created_at).getTime();
-                    const currentTime = Date.now();
-                    const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
-
-                    durationText = ` | 用时: ${formatDuration(elapsedSeconds)}`;
-
-                    // Start or update timer if not already running
-                    if (!taskTimers[task.id]) {
-                        taskTimers[task.id] = setInterval(() => updateTaskTimer(task.id), 1000);
-                    }
-                } else if (task.status === 'completed' && task.completed_at) {
-                    // For completed tasks, show total duration
-                    if (task.started_at) {
-                        const start = new Date(task.started_at).getTime();
-                        const end = new Date(task.completed_at).getTime();
-                        const totalSeconds = Math.floor((end - start) / 1000);
-                        durationText = ` | 总用时: ${formatDuration(totalSeconds)}`;
-                    }
-                }
-
-                const statusClass = task.status === 'completed' ? 'text-success' :
-                                  task.status === 'failed' ? 'text-danger' :
-                                  'text-warning';
-
-                taskItem.innerHTML = `
-                    <div class="task-title">${task.city} - ${task.industry}</div>
-                    <div class="task-meta">
-                        <span class="${statusClass}">${getStatusText(task.status)}</span>
-                        <span id="timer-${task.id}">${durationText}</span> |
-                        ${new Date(task.created_at).toLocaleString('zh-CN')}
-                    </div>
-                    <div class="task-actions">
-                        <button class="btn btn-sm btn-outline-primary" onclick="switchToTask('${task.id}')">查看</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="removeTask('${task.id}')">删除</button>
-                    </div>
-                `;
-
-                tasksList.appendChild(taskItem);
-            });
-        }
-
-        function updateTaskTimer(taskId) {
-            const task = activeTasks.find(t => t.id === taskId);
-            if (!task) return;
-
-            if (task.status === 'processing' || task.status === 'pending') {
-                const startTime = task.started_at ? new Date(task.started_at).getTime() : new Date(task.created_at).getTime();
-                const currentTime = Date.now();
-                const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
-
-                const timerElement = document.getElementById(`timer-${taskId}`);
-                if (timerElement) {
-                    timerElement.textContent = ` | 用时: ${formatDuration(elapsedSeconds)}`;
-                }
-            } else {
-                // Stop timer for completed tasks
-                if (taskTimers[taskId]) {
-                    clearInterval(taskTimers[taskId]);
-                    delete taskTimers[taskId];
-                }
-
-                // Update the display to show total duration instead
-                const timerElement = document.getElementById(`timer-${taskId}`);
-                if (timerElement && task.status === 'completed' && task.completed_at) {
-                    const start = task.started_at ? new Date(task.started_at).getTime() : new Date(task.created_at).getTime();
-                    const end = new Date(task.completed_at).getTime();
-                    const totalSeconds = Math.floor((end - start) / 1000);
-                    timerElement.textContent = ` | 总用时: ${formatDuration(totalSeconds)}`;
-                }
-            }
-        }
-
-        function formatDuration(seconds) {
-            const hrs = Math.floor(seconds / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-
-            if (hrs > 0) {
-                return `${hrs}小时${mins}分钟${secs}秒`;
-            } else if (mins > 0) {
-                return `${mins}分钟${secs}秒`;
-            } else {
-                return `${secs}秒`;
-            }
-        }
-
-        // Clean up timers when tasks are removed
-        function cleanupTaskTimers() {
-            for (const taskId in taskTimers) {
-                clearInterval(taskTimers[taskId]);
-            }
-            taskTimers = {};
-        }
-
-        function getStatusText(status) {
-            switch(status) {
-                case 'pending': return '等待中';
-                case 'processing': return '处理中';
-                case 'completed': return '已完成';
-                case 'failed': return '失败';
-                default: return status;
-            }
-        }
-
-        function switchToTask(taskId) {
-            // In a real implementation, this would switch to the report page for that task
-            alert(`切换到任务 ${taskId} 的报告`);
-            floatingTasksPanel.classList.remove('show');
-        }
-
-        function removeTask(taskId) {
-            // Stop and clean up timer if it exists
-            if (taskTimers[taskId]) {
-                clearInterval(taskTimers[taskId]);
-                delete taskTimers[taskId];
-            }
-
-            activeTasks = activeTasks.filter(task => task.id !== taskId);
-            updateFloatingTasks();
-
-            // Also delete from server if needed
-            fetch(`/api/tasks/${taskId}`, {
-                method: 'DELETE'
-            }).catch(error => {
-                console.error('Error deleting task from server:', error);
-            });
-        }
-
-        function switchToTask(taskId) {
-            // Navigate to the appropriate report page based on task status
-            const task = activeTasks.find(t => t.id === taskId);
-            if (task) {
-                if (task.status === 'completed') {
-                    // If task is completed, try to navigate to the report analysis page
-                    // Assuming the report would have been saved with a report_id that matches the task_id or has some relationship
-                    // For now, we'll use the task_id directly if it looks like a report_id, otherwise we'll go to stream-report
-                    if (task.report_id) {
-                        // If the task has a specific report_id associated with it, navigate to the report view page
-                        window.location.href = `/report/${task.report_id}`;
-                    } else {
-                        // If no specific report_id, go to stream page which should have the completed content
-                        window.location.href = `/stream-report/${taskId}?city=${encodeURIComponent(task.city)}&industry=${encodeURIComponent(task.industry)}&llm_service=${task.llm_service}`;
-                    }
-                } else {
-                    // If task is still processing, go to the live streaming page
-                    window.location.href = `/stream-report/${taskId}?city=${encodeURIComponent(task.city)}&industry=${encodeURIComponent(task.industry)}&llm_service=${task.llm_service}`;
-                }
-            }
-        }
-
-        function loadTasks() {
-            // Fetch tasks from server
-            fetch('/api/tasks')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.tasks) {
-                        activeTasks = data.tasks.map(task => ({
-                            ...task,
-                            id: task.task_id,  // Use task_id as id for consistency
-                            city: task.city,
-                            industry: task.industry,
-                            llm_service: task.llm_service,
-                            status: task.status,
-                            created_at: task.created_at ? new Date(task.created_at * 1000).toISOString() : new Date().toISOString(),
-                            started_at: task.started_at ? new Date(task.started_at * 1000).toISOString() : null,
-                            completed_at: task.completed_at ? new Date(task.completed_at * 1000).toISOString() : null,
-                            report_id: task.report_id,  // Include the report ID
-                            error: task.error
-                        }));
-                        updateFloatingTasks();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading tasks:', error);
-                    activeTasks = [];
-                    updateFloatingTasks();
-                });
         }
 
         // Download button functionality

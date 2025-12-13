@@ -60,11 +60,19 @@ class TaskManager:
         self._cleanup_thread = threading.Thread(target=self._cleanup_old_tasks, daemon=True)
         self._cleanup_thread.start()
     
-    def create_task(self, city: str, industry: str, llm_service: str, additional_context: str, user_id: int = None) -> str:
-        """Create a new task and return task ID"""
-        task_id = str(uuid.uuid4())
-        
+    def create_task(self, city: str, industry: str, llm_service: str, additional_context: str, user_id: int = None, check_duplicate: bool = True) -> tuple[str, bool]:
+        """Create a new task and return (task ID, is_new)"""
         with self._lock:
+            # Check for duplicates if requested
+            if check_duplicate:
+                for tid, task in self._tasks.items():
+                    if (task.city == city and 
+                        task.industry == industry and 
+                        task.status in [TaskStatus.PENDING, TaskStatus.PROCESSING] and
+                        not task.cancelled):
+                        return tid, False
+
+            task_id = str(uuid.uuid4())
             self._tasks[task_id] = TaskInfo(
                 task_id=task_id,
                 city=city,
@@ -85,7 +93,7 @@ class TaskManager:
         # Submit to thread pool
         future = self._executor.submit(self._execute_task, task_id)
         
-        return task_id
+        return task_id, True
     
     def _execute_task(self, task_id: str):
         """Execute the report generation task in background"""
@@ -461,8 +469,10 @@ def stream_generate_report():
         data = request.get_json()
         city = data.get('city', '').strip()
         industry = data.get('industry', '').strip()
-        llm_service = data.get('llm_service', 'kimi')
+        # Enforce internal service selection, ignoring client parameter
+        llm_service = 'kimi'
         additional_context = data.get('additional_context', '')
+        force_create = data.get('force', False)
         
         # Validate input
         if not city or not industry:
@@ -471,7 +481,18 @@ def stream_generate_report():
         # Create task - get user ID if available
         from flask_login import current_user
         user_id = getattr(current_user, 'id', 1)  # Default to user 1 if not available
-        task_id = task_manager.create_task(city, industry, llm_service, additional_context, user_id)
+        task_id, is_new = task_manager.create_task(
+            city, industry, llm_service, additional_context, user_id, 
+            check_duplicate=not force_create
+        )
+
+        if not is_new:
+            # If task exists and force_create is False, return 409 Conflict
+            return jsonify({
+                'error': 'Duplicate task',
+                'message': f'Task for {city} - {industry} is already running',
+                'task_id': task_id
+            }), 409
 
         def generate_stream():
             """Generator function for SSE streaming"""
@@ -546,7 +567,7 @@ def get_task_status(task_id):
             'status': task_info.status.value,
             'city': task_info.city,
             'industry': task_info.industry,
-            'llm_service': task_info.llm_service,
+            # 'llm_service': task_info.llm_service,  # Removed from API response
             'created_at': task_info.created_at if isinstance(task_info.created_at, (int, float)) else int(task_info.created_at) if task_info.created_at else None,
             'started_at': task_info.started_at if isinstance(task_info.started_at, (int, float)) else int(task_info.started_at) if task_info.started_at else None,
             'completed_at': task_info.completed_at if isinstance(task_info.completed_at, (int, float)) else int(task_info.completed_at) if task_info.completed_at else None,
@@ -570,7 +591,7 @@ def get_all_tasks():
                 'status': task_info.status.value,
                 'city': task_info.city,
                 'industry': task_info.industry,
-                'llm_service': task_info.llm_service,
+                # 'llm_service': task_info.llm_service,  # Removed from API response
                 'created_at': task_info.created_at if isinstance(task_info.created_at, (int, float)) else int(task_info.created_at) if task_info.created_at else None,
                 'started_at': task_info.started_at if isinstance(task_info.started_at, (int, float)) else int(task_info.started_at) if task_info.started_at else None,
                 'completed_at': task_info.completed_at if isinstance(task_info.completed_at, (int, float)) else int(task_info.completed_at) if task_info.completed_at else None,
